@@ -96,7 +96,11 @@
   .footer-links a { color: #a09e94; }
 
   @media (max-width: 900px) {
-    .nav { padding: 18px 24px; }
+    .nav { padding: 16px 20px; flex-wrap: wrap; gap: 12px; row-gap: 10px; }
+    .nav-brand span { font-size: 15px; }
+    .nav-right { flex-wrap: wrap; gap: 10px; width: 100%; justify-content: space-between; }
+    .lang-btn { padding: 7px 12px; font-size: 12px; }
+    .nav-cta { padding: 8px 14px; font-size: 13px; }
     .section, .hero { flex-direction: column !important; padding: 56px 24px; gap: 40px; }
     .frame, .step-frame { flex: 1 1 auto; width: 100%; }
     .hero h1 { font-size: 40px; }
@@ -105,6 +109,11 @@
     .closing { padding: 64px 24px; }
     .closing-text { font-size: 26px; }
     .footer { padding: 18px 24px; }
+  }
+
+  @media (max-width: 420px) {
+    .nav-brand { flex: 1 1 auto; }
+    .nav-right { justify-content: flex-start; }
   }
 </style>
 </head>
