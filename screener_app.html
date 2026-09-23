@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shindo Screener</title>
+<style>
+  :root { --text-scale: 1; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bahnschrift', Arial, Helvetica, sans-serif;
+    overflow: hidden;
+  }
+  .screen {
+    width: 100vw;
+    height: 100vh;
+    padding: 4vh 5vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: background 700ms ease, color 700ms ease;
+    position: relative;
+  }
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    letter-spacing: 0.05em;
+  }
+  /* Typography tiers, per the agreed system: tier1 = the giant, dominant
+     element, tier2 = a smaller secondary reading, tier3 = event metadata /
+     monitored location / severity phrase, tier4 = distance / secondary
+     text / settings labels.
+     Tier1/tier2 dominance was swapped 9/2026: the real JMA Shindo value
+     (.code) is now the giant tier1 element, since it's the number that's
+     actually true. The Roman numeral (.numeral) is cosmetic, kept only as
+     a nod to the reference game's styling, so it now renders as the small
+     tier2 accent underneath rather than the biggest thing on screen. */
+  :root {
+    --tier3-size: calc(1.7vw * var(--text-scale));
+    --tier4-size: calc(1vw * var(--text-scale));
+  }
+  .meta-block { display: flex; flex-direction: column; gap: calc(0.4vh * var(--text-scale)); }
+  .meta-line-1 { font-size: var(--tier3-size); font-weight: 700; }
+  .meta-line-2 { font-size: var(--tier3-size); font-weight: 700; opacity: 0.85; }
+  .meta-line-3 { font-size: var(--tier4-size); font-weight: 600; opacity: 0.65; font-style: italic; }
+  .estimate-label {
+    font-size: var(--tier4-size);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    text-transform: uppercase;
+  }
+  .datetime { text-align: right; line-height: 1.5; font-weight: 700; font-size: var(--tier3-size); letter-spacing: 0.05em; }
+  .datetime .date {
+    display: block;
+    border-bottom: 2px solid currentColor;
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+    font-style: italic;
+  }
+  .mid {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .readout {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1vh;
+  }
+  .code { font-size: 14vw; font-weight: 700; line-height: 1; }
+  .rule { width: 20vw; height: 4px; background: currentColor; }
+  .numeral { font-size: calc(4vw * var(--text-scale)); font-weight: 700; line-height: 1; opacity: 0.6; }
+  .idle-line { width: 55%; height: 3px; background: currentColor; margin-top: 4vh; }
+  /* .label (severity phrase) and .location-label (monitored location)
+     are Tier 3 by the typography system's own definition, same as the
+     top-left event metadata and top-right datetime, so they now share
+     --tier3-size instead of each carrying a separate one-off value
+     that happened to be bigger. .meta (distance line) was already the
+     same size as --tier4-size by coincidence; switched to reference
+     the variable directly so it can't drift from it later. */
+  .label { font-size: var(--tier3-size); font-weight: 700; }
+  .meta { font-size: var(--tier4-size); opacity: 0.75; margin-top: 1vh; }
+  .tsunami-box {
+    margin-top: 1.5vh;
+    background: #b01010;
+    color: #f5f0e8;
+    font-size: calc(1.3vw * var(--text-scale));
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.6vh 1vw;
+    display: inline-block;
+    border: 2px solid #f5f0e8;
+  }
+  .location-label {
+    position: absolute;
+    bottom: 3vh;
+    right: 5vw;
+    font-size: var(--tier3-size);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: currentColor;
+  }
+
+  /* No longer absolutely positioned: the gear button now lives in normal
+     document flow alongside the bottom-left text block (see .bottom-row),
+     so it can never overlap that text regardless of how tall it grows
+     (longer phrases, Large/Extra-Large text scale, etc). */
+  .bottom-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+  }
+  .gear-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+    transition: opacity 150ms ease;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .gear-btn:hover { opacity: 1; }
+  .gear-btn svg { width: 22px; height: 22px; }
+
+  .rings { width: 72px; height: 72px; }
+
+  .setup {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #f5f5f0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-family: 'Bahnschrift', Arial, Helvetica, sans-serif;
+    text-align: center;
+    padding: 0 10vw;
+  }
+  .setup h1 { font-size: calc(28px * var(--text-scale)); margin: 4px 0 0; letter-spacing: 0.03em; }
+  .setup p { font-size: calc(14px * var(--text-scale)); opacity: 0.7; margin: 0; max-width: 440px; line-height: 1.5; }
+  .setup input, .settings-panel input {
+    font-size: calc(16px * var(--text-scale));
+    padding: 11px 16px;
+    width: 320px;
+    max-width: 80vw;
+    border-radius: 3px;
+    border: 2px solid #333;
+    background: transparent;
+    color: #f5f5f0;
+    text-align: center;
+    font-family: inherit;
+  }
+  .setup input:focus, .settings-panel input:focus { outline: none; border-color: #e8d842; }
+  .setup input:disabled, .settings-panel input:disabled { opacity: 0.4; cursor: wait; }
+  .setup input::placeholder, .settings-panel input::placeholder, .bug-report-box::placeholder { color: #666; }
+  button.primary {
+    font-size: calc(14px * var(--text-scale));
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 10px 28px;
+    border-radius: 3px;
+    border: 2px solid #f5f5f0;
+    background: transparent;
+    color: #f5f5f0;
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease;
+  }
+  button.primary:hover:not(:disabled) { background: #f5f5f0; color: #111; }
+  button.primary:disabled { opacity: 0.4; cursor: default; }
+  .error { color: #e8a04a; font-size: calc(13px * var(--text-scale)); min-height: 18px; }
+  .success { color: #a8e6a0; font-size: calc(13px * var(--text-scale)); min-height: 18px; }
+  .lang-switch { display: flex; gap: 6px; font-size: calc(13px * var(--text-scale)); }
+  .lang-switch button, .format-switch button {
+    background: transparent;
+    border: 1px solid #444;
+    color: #999;
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: calc(13px * var(--text-scale));
+  }
+  .lang-switch button.active, .format-switch button.active { border-color: #f5f5f0; color: #f5f5f0; }
+  .setup .top-corner { position: absolute; top: 3vh; right: 3vw; }
+
+  /* --- Candidate list (search results to choose from) --- */
+  .search-wrap { position: relative; width: 320px; max-width: 80vw; }
+  .candidates {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 3px;
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 20;
+  }
+  .candidates:empty { display: none; border: none; }
+  .candidates button {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #222;
+    color: #e8e6dc;
+    padding: 10px 14px;
+    border-radius: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: calc(14px * var(--text-scale));
+    text-align: left;
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+  .candidates button:last-child { border-bottom: none; }
+  .candidates button:hover { border-color: #333; background: rgba(232,216,66,0.10); }
+
+  /* --- Settings panel --- */
+  .settings-panel {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #f5f5f0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Bahnschrift', Arial, Helvetica, sans-serif;
+    z-index: 10;
+    overflow-y: auto;
+    padding: 5vh 0 4vh;
+  }
+  .settings-panel .rings { width: 52px; height: 52px; margin-bottom: 6px; }
+  .settings-panel h2 { font-size: calc(20px * var(--text-scale)); margin: 0 0 28px; letter-spacing: 0.03em; }
+  .settings-section {
+    width: 360px;
+    max-width: 85vw;
+    padding: 18px 0;
+    border-top: 1px solid #222;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .settings-section:first-of-type { border-top: none; }
+  .settings-group-header {
+    width: 360px;
+    max-width: 85vw;
+    font-size: calc(11px * var(--text-scale));
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.4;
+    margin-top: 22px;
+    padding-bottom: 4px;
+  }
+  #groupLocation { margin-top: 4px; }
+  .settings-section label {
+    font-size: calc(11px * var(--text-scale));
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.5;
+    align-self: flex-start;
+  }
+  .settings-panel .current-loc { font-size: calc(17px * var(--text-scale)); font-weight: 700; align-self: flex-start; }
+  .settings-panel .close-btn {
+    position: absolute;
+    top: 3vh;
+    right: 3vw;
+    background: transparent;
+    border: none;
+    color: #f5f5f0;
+    font-size: calc(22px * var(--text-scale));
+    cursor: pointer;
+    opacity: 0.6;
+  }
+  .settings-panel .close-btn:hover { opacity: 1; }
+  .settings-panel .row-inline { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+  .version-footer {
+    margin-top: 32px;
+    font-size: calc(10px * var(--text-scale));
+    letter-spacing: 0.08em;
+    opacity: 0.3;
+  }
+  .test-warning {
+    font-size: calc(14px * var(--text-scale));
+    font-weight: 600;
+    color: #1a1206;
+    background: #e8a04a;
+    border: none;
+    border-radius: 3px;
+    padding: 12px 14px;
+    text-align: left;
+    line-height: 1.6;
+    display: none;
+  }
+  .step-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    width: 100%;
+  }
+  .threshold-select-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+  .threshold-swatch-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(245, 245, 240, 0.35);
+  }
+  .threshold-select {
+    flex: 1 1 auto;
+    background: #14140f;
+    color: #f5f5f0;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: calc(14px * var(--text-scale));
+  }
+  .threshold-select:focus { outline: 2px solid #f5f5f0; outline-offset: 2px; }
+  .alert-threshold-hint {
+    font-size: calc(12px * var(--text-scale));
+    opacity: 0.6;
+    line-height: 1.5;
+    align-self: flex-start;
+  }
+  .bug-report-hint {
+    font-size: calc(12px * var(--text-scale));
+    opacity: 0.6;
+    line-height: 1.5;
+    align-self: flex-start;
+  }
+  .bug-report-box {
+    width: 100%;
+    min-height: 84px;
+    resize: vertical;
+    background: #14140f;
+    color: #d8d8d0;
+    border: 1px solid #333;
+    border-radius: 3px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: calc(11px * var(--text-scale));
+    line-height: 1.5;
+  }
+  .bug-report-actions {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    justify-content: center;
+  }
+  .bug-report-status {
+    font-size: calc(11px * var(--text-scale));
+    min-height: 1.2em;
+    text-align: center;
+  }
+  .bug-report-status.success { color: #8fd88f; }
+  .bug-report-status.error { color: #e0968a; }
+  .bug-report-status.pending { color: #b8b8ac; }
+  .bug-report-fallback-hint {
+    font-size: calc(10px * var(--text-scale));
+    opacity: 0.4;
+    margin-top: 4px;
+  }
+  .step-swatch {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: calc(14px * var(--text-scale));
+    cursor: pointer;
+    transition: transform 120ms ease, border-color 120ms ease, filter 120ms ease;
+  }
+  .step-swatch:hover { transform: scale(1.08); filter: brightness(1.15); border-color: #f5f5f0; }
+  button.text-btn {
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: calc(12px * var(--text-scale));
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+
+<div class="screen" id="screen">
+  <div class="top-row" id="topRow">
+    <div class="meta-block">
+      <div id="eventSummaryLine" class="meta-line-1"></div>
+      <div id="jmaMaxLine" class="meta-line-2"></div>
+      <div id="maturityLine" class="meta-line-3"></div>
+    </div>
+    <div class="datetime">
+      <span class="date" id="dateEl"></span>
+      <span class="time" id="timeEl"></span>
+    </div>
+  </div>
+  <div class="tsunami-box" id="tsunamiBox" style="display:none;"></div>
+  <div class="mid" id="mid">
+    <div class="readout">
+      <div class="estimate-label" id="estimateLabel"></div>
+      <div class="code" id="code"></div>
+      <div class="rule" id="rule"></div>
+      <div class="numeral" id="numeral"></div>
+    </div>
+  </div>
+  <div class="idle-line" id="idleLine"></div>
+  <div class="bottom-row">
+    <button class="gear-btn" id="gearBtn" onclick="openSettings()" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+    <div>
+      <div class="label" id="labelText"></div>
+      <div class="meta" id="metaText"></div>
+    </div>
+  </div>
+  <div class="location-label" id="locationLabel"></div>
+</div>
+
+<div class="setup" id="setup">
+  <div class="top-corner lang-switch">
+    <button id="langEnBtn" onclick="setLanguage('en')">EN</button>
+    <button id="langJaBtn" onclick="setLanguage('ja')">日本語</button>
+  </div>
+  <svg class="rings" viewBox="0 0 256 256">
+    <circle cx="128" cy="128" r="118" fill="none" stroke="#c21818" stroke-width="10"/>
+    <circle cx="128" cy="128" r="92" fill="none" stroke="#e08228" stroke-width="10"/>
+    <circle cx="128" cy="128" r="66" fill="none" stroke="#e8d842" stroke-width="10"/>
+    <circle cx="128" cy="128" r="40" fill="none" stroke="#a8e6e8" stroke-width="10"/>
+    <circle cx="128" cy="128" r="16" fill="none" stroke="#e8e6dc" stroke-width="10"/>
+    <circle cx="128" cy="128" r="6" fill="#f5f5f0"/>
+  </svg>
+  <h1 id="setupTitle">Shindo Screener</h1>
+  <p id="setupSubtitle">Type your city or town so this can tell you what you'd actually feel from a nearby earthquake. You only need to do this once.</p>
+  <div class="search-wrap">
+    <input type="text" id="cityInput" placeholder="e.g. Sapporo, Osaka, Naha" autofocus autocomplete="off">
+    <div class="candidates" id="setupCandidates"></div>
+  </div>
+  <button class="primary" id="setupSaveBtn" onclick="saveSelected('setup')" disabled>Save</button>
+  <div class="error" id="setupError"></div>
+</div>
+
+<div class="settings-panel" id="settingsPanel">
+  <button class="close-btn" onclick="closeSettings()">&times;</button>
+  <svg class="rings" viewBox="0 0 256 256">
+    <circle cx="128" cy="128" r="118" fill="none" stroke="#c21818" stroke-width="10"/>
+    <circle cx="128" cy="128" r="92" fill="none" stroke="#e08228" stroke-width="10"/>
+    <circle cx="128" cy="128" r="66" fill="none" stroke="#e8d842" stroke-width="10"/>
+    <circle cx="128" cy="128" r="40" fill="none" stroke="#a8e6e8" stroke-width="10"/>
+    <circle cx="128" cy="128" r="16" fill="none" stroke="#e8e6dc" stroke-width="10"/>
+    <circle cx="128" cy="128" r="6" fill="#f5f5f0"/>
+  </svg>
+  <h2 id="settingsTitle">Settings</h2>
+
+  <div class="settings-group-header" id="groupLocation">Location</div>
+  <div class="settings-section">
+    <label id="currentLocLabel">Current location</label>
+    <div class="current-loc" id="currentLocValue"></div>
+  </div>
+
+  <div class="settings-section">
+    <label id="changeLocLabel">Change location</label>
+    <div class="search-wrap">
+      <input type="text" id="settingsCityInput" placeholder="e.g. Sapporo, Osaka, Naha" autocomplete="off">
+      <div class="candidates" id="settingsCandidates"></div>
+    </div>
+    <button class="primary" id="settingsSaveBtn" onclick="saveSelected('settings')" disabled>Save</button>
+    <div class="error" id="settingsError"></div>
+    <div class="success" id="settingsSuccess"></div>
+  </div>
+
+  <div class="settings-group-header" id="groupDisplay">Display</div>
+  <div class="settings-section">
+    <div class="row-inline">
+      <label id="languageLabel" style="margin:0;">Language</label>
+      <div class="lang-switch">
+        <button id="settingsLangEnBtn" onclick="setLanguage('en')">EN</button>
+        <button id="settingsLangJaBtn" onclick="setLanguage('ja')">日本語</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="row-inline">
+      <label id="timeFormatLabel" style="margin:0;">Time format</label>
+      <div class="format-switch">
+        <button id="format24Btn" onclick="setTimeFormat('24h')">24h</button>
+        <button id="format12Btn" onclick="setTimeFormat('12h')">12h</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-group-header" id="groupAccessibility">Accessibility</div>
+  <div class="settings-section">
+    <div class="row-inline">
+      <label id="textSizeLabel" style="margin:0;">Text size</label>
+      <div class="format-switch">
+        <button id="textSizeNormalBtn" onclick="setTextScale('normal')" style="font-size:13px;">A</button>
+        <button id="textSizeLargeBtn" onclick="setTextScale('large')" style="font-size:17px;">A</button>
+        <button id="textSizeXLargeBtn" onclick="setTextScale('xlarge')" style="font-size:21px;">A</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-group-header" id="groupAlerts">Alerts</div>
+  <div class="settings-section">
+    <label id="alertThresholdLabel">Alert me at</label>
+    <div class="alert-threshold-hint" id="alertThresholdHint">Wakes the screen and plays a chime at this Shindo level or stronger.</div>
+    <div class="threshold-select-row">
+      <span class="threshold-swatch-dot" id="thresholdSwatchDot"></span>
+      <select class="threshold-select" id="thresholdSelect" onchange="setAlertMinStep(this.value)"></select>
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="row-inline">
+      <label id="alertWakeScreenLabel" style="margin:0;">Wake screen automatically</label>
+      <div class="format-switch">
+        <button id="wakeScreenOnBtn" onclick="setAlertWakeScreen('on')">On</button>
+        <button id="wakeScreenOffBtn" onclick="setAlertWakeScreen('off')">Off</button>
+      </div>
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="row-inline">
+      <label id="alertVolumeLabel" style="margin:0;">Chime volume</label>
+      <div class="format-switch">
+        <button id="volumeQuietBtn" onclick="setAlertVolume('quiet')">Quiet</button>
+        <button id="volumeNormalBtn" onclick="setAlertVolume('normal')">Normal</button>
+        <button id="volumeLoudBtn" onclick="setAlertVolume('loud')">Loud</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-group-header" id="groupTesting">Testing</div>
+  <div class="settings-section">
+    <label id="testEventLabel">Test event</label>
+    <button class="text-btn" id="testEventLink" onclick="showTestWarning()">Show a sample reading on the display</button>
+    <div class="test-warning" id="testWarning">
+      This puts a fake earthquake reading on your actual screen. If
+      anyone else can see this display, make sure they know it's a
+      test before you trigger it, a real-looking alert shown by
+      mistake is not a good surprise.
+    </div>
+    <div class="step-grid" id="stepGrid" style="display:none;"></div>
+  </div>
+
+  <div class="settings-group-header" id="groupSupport">Support</div>
+  <div class="settings-section">
+    <label id="bugReportLabel">Report a bug</label>
+    <div class="bug-report-hint" id="bugReportHint">Found something wrong? Send a quick report below (it already includes basic app info to help track down the issue).</div>
+    <textarea class="bug-report-box" id="bugReportBox"></textarea>
+    <button class="primary" id="bugReportSubmitBtn" onclick="submitBugReport()" style="width:100%;">Submit report</button>
+    <div class="bug-report-status" id="bugReportStatus"></div>
+    <div class="bug-report-fallback-hint" id="bugReportFallbackHint">Report not going through?</div>
+    <div class="bug-report-actions">
+      <button class="text-btn" id="bugReportOpenBtn" onclick="openBugReportEmail()">Open email app</button>
+      <button class="text-btn" id="bugReportCopyBtn" onclick="copyBugReportText()">Copy text</button>
+    </div>
+  </div>
+
+  <div class="version-footer" id="versionFooter">Shindo Screener: Beta 0.1.0</div>
+</div>
+
+<script>
+const BANDS = {
+  "0":  { bg: '#000000', fg: '#f5f5f0' },
+  "1":  { bg: '#e8e6dc', fg: '#0e0e0c' },
+  "2":  { bg: '#e8e6dc', fg: '#0e0e0c' },
+  "3":  { bg: '#a8e6e8', fg: '#0e0e0c' },
+  "4":  { bg: '#a8e6e8', fg: '#0e0e0c' },
+  "5-": { bg: '#e8d842', fg: '#0e0e0c' },
+  "5+": { bg: '#e8d842', fg: '#0e0e0c' },
+  "6-": { bg: '#e08228', fg: '#2a1c10' },
+  "6+": { bg: '#c21818', fg: '#f5f0e8' },
+  "7":  { bg: '#c21818', fg: '#f5f0e8' },
+};
+const LABELS_EN = {
+  "0": "Not felt", "1": "Very light indoor shaking", "2": "Very light indoor shaking",
+  "3": "Light indoor shaking", "4": "Moderate indoor shaking",
+  "5-": "Strong indoor shaking", "5+": "Very strong indoor shaking",
+  "6-": "Severe indoor shaking", "6+": "Violent indoor shaking", "7": "Extreme indoor shaking",
+};
+// Japanese phrasing below is a plain-language interpretation, not a
+// literal JMA official term (JMA doesn't have single-phrase official
+// labels either, same reasoning as the Roman-numeral/震度 split
+// earlier in this build). Worth re-checking natural phrasing with a
+// native speaker rather than treating this as verified terminology.
+const LABELS_JA = {
+  "0": "揺れなし", "1": "屋内でわずかな揺れ", "2": "屋内でわずかな揺れ",
+  "3": "屋内で弱い揺れ", "4": "屋内でやや強い揺れ",
+  "5-": "屋内で強い揺れ", "5+": "屋内で非常に強い揺れ",
+  "6-": "屋内で激しい揺れ", "6+": "屋内で猛烈な揺れ", "7": "屋内で極めて激しい揺れ",
+};
+
+const MATURITY_EN = { preliminary: "Preliminary estimate", updated: "Estimate updated", final: "Final JMA report" };
+const MATURITY_JA = { preliminary: "速報段階の推定", updated: "推定を更新", final: "気象庁の確定報" };
+const ROMAN = {
+  "0": "I", "1": "II", "2": "III", "3": "IV", "4": "V",
+  "5-": "VI", "5+": "VII", "6-": "VIII", "6+": "IX", "7": "X",
+};
+
+const STRINGS = {
+  en: {
+    appTitle: "Shindo Screener",
+    setupSubtitle: "Type your city or town so this can tell you what you'd actually feel from a nearby earthquake. You only need to do this once.",
+    inputPlaceholder: "e.g. Sapporo, Osaka, Naha",
+    search: "Search",
+    lookingUp: "Looking that up...",
+    somethingWrong: "Something went wrong, try again.",
+    monitoring: "Monitoring",
+    settingsTitle: "Settings",
+    currentLocation: "Current location",
+    changeLocation: "Change location",
+    language: "Language",
+    timeFormat: "Time format",
+    textSize: "Text size",
+    alertThreshold: "Alert me at",
+    alertThresholdHint: "Wakes the screen and plays a chime at this Shindo level or stronger.",
+    alertWakeScreen: "Wake screen automatically",
+    alertVolume: "Chime volume",
+    volumeQuiet: "Quiet",
+    volumeNormal: "Normal",
+    volumeLoud: "Loud",
+    onLabel: "On",
+    offLabel: "Off",
+    testEvent: "Test event",
+    testEventLink: "Show a sample reading on the display",
+    testWarningText: "This puts a fake earthquake reading on your actual screen. If anyone else can see this display, make sure they know it's a test before you trigger it, a real-looking alert shown by mistake is not a good surprise.",
+    confirmTest: "Trigger test reading",
+    saved: "Saved.",
+    betaLabel: "Beta",
+    bugReportLabel: "Report a bug",
+    bugReportHint: "Found something wrong? Send a quick report below (it already includes basic app info to help track down the issue).",
+    bugReportOpenEmail: "Open email app",
+    bugReportCopy: "Copy text",
+    bugReportCopied: "Copied to clipboard.",
+    bugReportSubject: "Shindo Screener bug report",
+    bugReportIntro: "Describe what happened here (what you expected vs. what you saw)",
+    bugReportEmptyNote: "(No description provided.)",
+    bugReportDiagnosticHeader: "Diagnostic info",
+    bugReportSubmit: "Submit report",
+    bugReportSending: "Sending...",
+    bugReportSent: "Sent, thank you.",
+    bugReportFailed: "Couldn't send; try email or copy below instead.",
+    bugReportFallbackHint: "Report not going through?",
+  },
+  ja: {
+    appTitle: "震度スクリーナー",
+    setupSubtitle: "お住まいの市区町村名を入力してください。近くで地震が発生した際に、実際に感じる揺れの強さをお知らせします。設定は最初の一度だけです。",
+    inputPlaceholder: "例：札幌、大阪、那覇",
+    search: "検索",
+    lookingUp: "検索中...",
+    somethingWrong: "エラーが発生しました。もう一度お試しください。",
+    monitoring: "監視地点",
+    settingsTitle: "設定",
+    currentLocation: "現在の地点",
+    changeLocation: "地点を変更",
+    language: "言語",
+    timeFormat: "時刻表示",
+    textSize: "文字サイズ",
+    alertThreshold: "アラートを鳴らす震度",
+    alertThresholdHint: "この震度以上になると、画面を起動しチャイムを鳴らします。",
+    alertWakeScreen: "画面を自動的に起動する",
+    alertVolume: "チャイムの音量",
+    volumeQuiet: "小さめ",
+    volumeNormal: "標準",
+    volumeLoud: "大きめ",
+    onLabel: "オン",
+    offLabel: "オフ",
+    testEvent: "テスト表示",
+    testEventLink: "サンプル表示を画面に出す",
+    testWarningText: "この機能は実際の画面に偽の地震情報を表示します。他の人がこの画面を見ている場合は、テストであることを事前に伝えてから実行してください。本物と間違われる表示は良い驚きではありません。",
+    confirmTest: "テスト表示を実行",
+    saved: "保存しました。",
+    betaLabel: "ベータ版",
+    bugReportLabel: "不具合を報告",
+    bugReportHint: "何か問題がありましたか？下のレポートを送信してください。問題の特定に役立つ基本的なアプリ情報があらかじめ含まれています。",
+    bugReportOpenEmail: "メールアプリを開く",
+    bugReportCopy: "テキストをコピー",
+    bugReportCopied: "コピーしました。",
+    bugReportSubject: "震度スクリーナー 不具合報告",
+    bugReportIntro: "何が起きたか（期待していた動作と実際の動作）をここに記入してください",
+    bugReportEmptyNote: "（説明は入力されていません。）",
+    bugReportDiagnosticHeader: "診断情報",
+    bugReportSubmit: "報告を送信",
+    bugReportSending: "送信中...",
+    bugReportSent: "送信しました。ありがとうございます。",
+    bugReportFailed: "送信できませんでした。下のメールまたはコピーをお試しください。",
+    bugReportFallbackHint: "うまく送信できませんか？",
+  },
+};
+
+const APP_VERSION = "0.1.0";
+const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
+// Replace with the deployed Google Apps Script Web App URL (see
+// BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
+// will fail fast and point people at the email/copy fallback instead.
+const BUG_REPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbyaELlLmHuC0Pppw3SrzPysjLEnLkNOBbLqQ7QW4vt9pdxjlXqXwZ9_oVUbAAqTMFpIIQ/exec";
+
+let currentLang = 'en';
+let currentTimeFormat = '24h';
+let currentHomeName = '';
+
+const els = {
+  screen: document.getElementById('screen'),
+  topRow: document.getElementById('topRow'),
+  eventSummaryLine: document.getElementById('eventSummaryLine'),
+  jmaMaxLine: document.getElementById('jmaMaxLine'),
+  maturityLine: document.getElementById('maturityLine'),
+  estimateLabel: document.getElementById('estimateLabel'),
+  dateEl: document.getElementById('dateEl'),
+  timeEl: document.getElementById('timeEl'),
+  mid: document.getElementById('mid'),
+  numeral: document.getElementById('numeral'),
+  rule: document.getElementById('rule'),
+  code: document.getElementById('code'),
+  labelText: document.getElementById('labelText'),
+  metaText: document.getElementById('metaText'),
+  idleLine: document.getElementById('idleLine'),
+  locationLabel: document.getElementById('locationLabel'),
+  tsunamiBox: document.getElementById('tsunamiBox'),
+  setup: document.getElementById('setup'),
+  cityInput: document.getElementById('cityInput'),
+  setupCandidates: document.getElementById('setupCandidates'),
+  setupError: document.getElementById('setupError'),
+  setupSaveBtn: document.getElementById('setupSaveBtn'),
+  setupTitle: document.getElementById('setupTitle'),
+  setupSubtitle: document.getElementById('setupSubtitle'),
+  settingsPanel: document.getElementById('settingsPanel'),
+  settingsTitle: document.getElementById('settingsTitle'),
+  currentLocLabel: document.getElementById('currentLocLabel'),
+  currentLocValue: document.getElementById('currentLocValue'),
+  changeLocLabel: document.getElementById('changeLocLabel'),
+  settingsCityInput: document.getElementById('settingsCityInput'),
+  settingsError: document.getElementById('settingsError'),
+  settingsSaveBtn: document.getElementById('settingsSaveBtn'),
+  settingsSuccess: document.getElementById('settingsSuccess'),
+  settingsCandidates: document.getElementById('settingsCandidates'),
+  languageLabel: document.getElementById('languageLabel'),
+  timeFormatLabel: document.getElementById('timeFormatLabel'),
+  textSizeLabel: document.getElementById('textSizeLabel'),
+  testEventLabel: document.getElementById('testEventLabel'),
+  testEventLink: document.getElementById('testEventLink'),
+  testWarning: document.getElementById('testWarning'),
+  stepGrid: document.getElementById('stepGrid'),
+  alertThresholdLabel: document.getElementById('alertThresholdLabel'),
+  alertThresholdHint: document.getElementById('alertThresholdHint'),
+  thresholdSwatchDot: document.getElementById('thresholdSwatchDot'),
+  thresholdSelect: document.getElementById('thresholdSelect'),
+  alertWakeScreenLabel: document.getElementById('alertWakeScreenLabel'),
+  wakeScreenOnBtn: document.getElementById('wakeScreenOnBtn'),
+  wakeScreenOffBtn: document.getElementById('wakeScreenOffBtn'),
+  alertVolumeLabel: document.getElementById('alertVolumeLabel'),
+  volumeQuietBtn: document.getElementById('volumeQuietBtn'),
+  volumeNormalBtn: document.getElementById('volumeNormalBtn'),
+  volumeLoudBtn: document.getElementById('volumeLoudBtn'),
+  versionFooter: document.getElementById('versionFooter'),
+  bugReportLabel: document.getElementById('bugReportLabel'),
+  bugReportHint: document.getElementById('bugReportHint'),
+  bugReportBox: document.getElementById('bugReportBox'),
+  bugReportSubmitBtn: document.getElementById('bugReportSubmitBtn'),
+  bugReportStatus: document.getElementById('bugReportStatus'),
+  bugReportFallbackHint: document.getElementById('bugReportFallbackHint'),
+  bugReportOpenBtn: document.getElementById('bugReportOpenBtn'),
+  bugReportCopyBtn: document.getElementById('bugReportCopyBtn'),
+};
+
+function applyLanguage() {
+  const s = STRINGS[currentLang];
+  els.setupTitle.textContent = s.appTitle;
+  els.setupSubtitle.textContent = s.setupSubtitle;
+  els.cityInput.placeholder = s.inputPlaceholder;
+  els.settingsTitle.textContent = s.settingsTitle;
+  els.currentLocLabel.textContent = s.currentLocation;
+  els.changeLocLabel.textContent = s.changeLocation;
+  els.settingsCityInput.placeholder = s.inputPlaceholder;
+  els.languageLabel.textContent = s.language;
+  els.timeFormatLabel.textContent = s.timeFormat;
+  els.textSizeLabel.textContent = s.textSize;
+  els.alertThresholdLabel.textContent = s.alertThreshold;
+  els.alertThresholdHint.textContent = s.alertThresholdHint;
+  els.alertWakeScreenLabel.textContent = s.alertWakeScreen;
+  els.wakeScreenOnBtn.textContent = s.onLabel;
+  els.wakeScreenOffBtn.textContent = s.offLabel;
+  els.alertVolumeLabel.textContent = s.alertVolume;
+  els.volumeQuietBtn.textContent = s.volumeQuiet;
+  els.volumeNormalBtn.textContent = s.volumeNormal;
+  els.volumeLoudBtn.textContent = s.volumeLoud;
+  els.testEventLabel.textContent = s.testEvent;
+  els.testEventLink.textContent = s.testEventLink;
+  els.testWarning.textContent = s.testWarningText;
+  els.versionFooter.textContent = `${s.appTitle}: ${s.betaLabel} ${APP_VERSION}`;
+  els.bugReportLabel.textContent = s.bugReportLabel;
+  els.bugReportHint.textContent = s.bugReportHint;
+  els.bugReportSubmitBtn.textContent = s.bugReportSubmit;
+  els.bugReportFallbackHint.textContent = s.bugReportFallbackHint;
+  els.bugReportOpenBtn.textContent = s.bugReportOpenEmail;
+  els.bugReportCopyBtn.textContent = s.bugReportCopy;
+  setBugReportStatus('', null);
+  els.bugReportBox.placeholder = s.bugReportIntro;
+  document.getElementById('langEnBtn').classList.toggle('active', currentLang === 'en');
+  document.getElementById('langJaBtn').classList.toggle('active', currentLang === 'ja');
+  document.getElementById('settingsLangEnBtn').classList.toggle('active', currentLang === 'en');
+  document.getElementById('settingsLangJaBtn').classList.toggle('active', currentLang === 'ja');
+  if (currentHomeName) {
+    els.locationLabel.textContent = `${s.monitoring}: ${currentHomeName}`;
+  }
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  applyLanguage();
+  if (window.pywebview) window.pywebview.api.set_language(lang);
+}
+
+function applyLanguageOnly(lang) {
+  currentLang = lang;
+  applyLanguage();
+}
+window.applyLanguageOnly = applyLanguageOnly;
+
+function applyTimeFormatButtons() {
+  document.getElementById('format24Btn').classList.toggle('active', currentTimeFormat === '24h');
+  document.getElementById('format12Btn').classList.toggle('active', currentTimeFormat === '12h');
+}
+
+function setTimeFormat(fmt) {
+  currentTimeFormat = fmt;
+  applyTimeFormatButtons();
+  if (window.pywebview) window.pywebview.api.set_time_format(fmt);
+}
+
+function applyTimeFormatOnly(fmt) {
+  currentTimeFormat = fmt;
+  applyTimeFormatButtons();
+}
+window.applyTimeFormatOnly = applyTimeFormatOnly;
+
+const TEXT_SCALE_VALUES = { normal: 1, large: 1.3, xlarge: 1.6 };
+let currentTextScale = 'normal';
+
+function applyTextScaleButtons() {
+  document.getElementById('textSizeNormalBtn').classList.toggle('active', currentTextScale === 'normal');
+  document.getElementById('textSizeLargeBtn').classList.toggle('active', currentTextScale === 'large');
+  document.getElementById('textSizeXLargeBtn').classList.toggle('active', currentTextScale === 'xlarge');
+}
+
+function applyTextScaleValue() {
+  document.documentElement.style.setProperty('--text-scale', TEXT_SCALE_VALUES[currentTextScale] || 1);
+}
+
+function setTextScale(scale) {
+  currentTextScale = scale;
+  applyTextScaleButtons();
+  applyTextScaleValue();
+  if (window.pywebview) window.pywebview.api.set_text_scale(scale);
+}
+
+function applyTextScaleOnly(scale) {
+  currentTextScale = scale;
+  applyTextScaleButtons();
+  applyTextScaleValue();
+}
+window.applyTextScaleOnly = applyTextScaleOnly;
+
+// Same list as alert.py's SELECTABLE_ALERT_STEPS: below Shindo 3, a
+// wake-the-room alert is more noise than signal, so those steps aren't
+// offered as a threshold choice (the display still shows them normally).
+const SELECTABLE_ALERT_STEPS = ["3", "4", "5-", "5+", "6-", "6+", "7"];
+let currentAlertMinStep = '4';
+
+function buildThresholdSelect() {
+  els.thresholdSelect.innerHTML = '';
+  SELECTABLE_ALERT_STEPS.forEach((step) => {
+    const option = document.createElement('option');
+    option.value = step;
+    option.textContent = step;
+    els.thresholdSelect.appendChild(option);
+  });
+  applyThresholdSelection();
+}
+
+function applyThresholdSelection() {
+  els.thresholdSelect.value = currentAlertMinStep;
+  const band = BANDS[currentAlertMinStep];
+  if (band) {
+    els.thresholdSwatchDot.style.background = band.bg;
+    els.thresholdSwatchDot.style.borderColor = band.bg;
+  }
+}
+
+function setAlertMinStep(step) {
+  currentAlertMinStep = step;
+  applyThresholdSelection();
+  if (window.pywebview) window.pywebview.api.set_alert_min_step(step);
+}
+
+function applyAlertMinStepOnly(step) {
+  currentAlertMinStep = step;
+  if (els.thresholdSelect.children.length) applyThresholdSelection();
+}
+window.applyAlertMinStepOnly = applyAlertMinStepOnly;
+
+let currentAlertWakeScreen = 'on';
+
+function applyWakeScreenButtons() {
+  els.wakeScreenOnBtn.classList.toggle('active', currentAlertWakeScreen === 'on');
+  els.wakeScreenOffBtn.classList.toggle('active', currentAlertWakeScreen === 'off');
+}
+
+function setAlertWakeScreen(value) {
+  currentAlertWakeScreen = value;
+  applyWakeScreenButtons();
+  if (window.pywebview) window.pywebview.api.set_alert_wake_screen(value);
+}
+
+function applyAlertWakeScreenOnly(value) {
+  currentAlertWakeScreen = value;
+  applyWakeScreenButtons();
+}
+window.applyAlertWakeScreenOnly = applyAlertWakeScreenOnly;
+
+let currentAlertVolume = 'normal';
+
+function applyVolumeButtons() {
+  els.volumeQuietBtn.classList.toggle('active', currentAlertVolume === 'quiet');
+  els.volumeNormalBtn.classList.toggle('active', currentAlertVolume === 'normal');
+  els.volumeLoudBtn.classList.toggle('active', currentAlertVolume === 'loud');
+}
+
+function setAlertVolume(value) {
+  currentAlertVolume = value;
+  applyVolumeButtons();
+  if (window.pywebview) {
+    window.pywebview.api.set_alert_volume(value);
+    // One-off playback at the chosen level, separate from a real alert:
+    // no screen wake, no foreground, just "here's how loud this is."
+    window.pywebview.api.preview_alert_sound(value);
+  }
+}
+
+function applyAlertVolumeOnly(value) {
+  currentAlertVolume = value;
+  applyVolumeButtons();
+}
+window.applyAlertVolumeOnly = applyAlertVolumeOnly;
+
+// Motion-effects setting is preserved for a future room/indoor-motion
+// visualization pass; it currently has nothing to animate, and its
+// settings-panel toggle is hidden until that pass ships (no on-screen
+// control for a setting with no visible effect yet). The state itself,
+// persistence, and Python restore path (applyMotionEffectsOnly, called
+// from app.py on load) are kept so nothing needs re-wiring later.
+let motionEffectsEnabled = true;
+
+function setMotionEffects(enabled) {
+  motionEffectsEnabled = enabled;
+  if (window.pywebview) window.pywebview.api.set_motion_effects(enabled ? 'on' : 'off');
+}
+
+function applyMotionEffectsOnly(value) {
+  motionEffectsEnabled = value === 'on';
+}
+window.applyMotionEffectsOnly = applyMotionEffectsOnly;
+
+function renderIdle() {
+  els.screen.style.background = '#000000';
+  els.screen.style.color = '#f5f5f0';
+  els.topRow.style.visibility = 'visible';
+  els.tsunamiBox.style.display = 'none';
+  els.eventSummaryLine.textContent = '';
+  els.jmaMaxLine.textContent = '';
+  els.maturityLine.textContent = '';
+  els.estimateLabel.textContent = '';
+  els.mid.style.display = 'none';
+  els.idleLine.style.display = 'block';
+  els.rule.style.background = '#f5f5f0';
+  els.idleLine.style.background = '#f5f5f0';
+  els.labelText.textContent = '';
+  els.metaText.textContent = '';
+}
+
+function renderActive(state) {
+  const step = state.jma_step_estimated || "0";
+  const band = BANDS[step] || BANDS["0"];
+  els.screen.style.background = band.bg;
+  els.screen.style.color = band.fg;
+  els.topRow.style.visibility = 'visible';
+  els.mid.style.display = 'flex';
+  els.idleLine.style.display = 'none';
+  els.rule.style.background = band.fg;
+
+  const magStr = state.magnitude?.toFixed(1) ?? '?';
+  els.eventSummaryLine.textContent = `M${magStr} \u2014 ${state.matched_city || (currentLang === 'ja' ? '\u4e0d\u660e' : 'Unknown source')}`;
+  els.jmaMaxLine.textContent = currentLang === 'ja'
+    ? `\u6c17\u8c61\u5e81\u767a\u8868\u306e\u6700\u5927\u9707\u5ea6: ${state.shindo_reported_by_jquake ?? '?'}`
+    : `JMA maximum intensity: ${state.shindo_reported_by_jquake ?? '?'}`;
+  const maturityWords = currentLang === 'ja' ? MATURITY_JA : MATURITY_EN;
+  const maturityText = maturityWords[state.maturity] || maturityWords.preliminary;
+  els.maturityLine.textContent = state.serial != null
+    ? (currentLang === 'ja' ? `\u5831\u544a ${state.serial} \u2014 ${maturityText}` : `Report ${state.serial} \u2014 ${maturityText}`)
+    : maturityText;
+
+  els.estimateLabel.textContent = currentLang === 'ja'
+    ? `${currentHomeName}\u3067\u306e\u63a8\u5b9a`
+    : `Estimated at ${currentHomeName}`;
+
+  if (state.tsunami_warning) {
+    els.tsunamiBox.style.display = 'inline-block';
+    els.tsunamiBox.textContent = currentLang === 'ja'
+      ? `\u6d25\u6ce2\u8b66\u5831: ${state.tsunami_warning}`
+      : `TSUNAMI WARNING: ${state.tsunami_warning}`;
+  } else {
+    els.tsunamiBox.style.display = 'none';
+  }
+
+  els.numeral.textContent = ROMAN[step] || '?';
+  els.code.textContent = step;
+
+  els.labelText.textContent = (currentLang === 'ja' ? LABELS_JA[step] : LABELS_EN[step]) || '';
+
+  els.metaText.textContent = state.matched_city
+    ? `~${Math.round(state.distance_km)} km \u2014 ${state.matched_city}`
+    : (state.distance_km != null ? `~${Math.round(state.distance_km)} km` : '');
+}
+
+function applyState(state) {
+  if (state.status === 'active') {
+    renderActive(state);
+  } else {
+    renderIdle();
+  }
+}
+window.applyState = applyState;
+
+function showSetupScreen() {
+  els.screen.style.display = 'none';
+  els.setup.style.display = 'flex';
+}
+window.showSetupScreen = showSetupScreen;
+
+function showMainScreen(homeName) {
+  currentHomeName = homeName;
+  els.setup.style.display = 'none';
+  els.screen.style.display = 'flex';
+  els.locationLabel.textContent = `${STRINGS[currentLang].monitoring}: ${homeName}`;
+  els.currentLocValue.textContent = homeName;
+  renderIdle();
+}
+window.showMainScreen = showMainScreen;
+
+function renderCandidates(containerEl, candidates, onPick) {
+  containerEl.innerHTML = '';
+  candidates.forEach((c) => {
+    const btn = document.createElement('button');
+    btn.textContent = c.name;
+    btn.onclick = () => onPick(c);
+    containerEl.appendChild(btn);
+  });
+}
+
+// Debounced live search: Nominatim's usage policy caps requests at
+// 1/second, so this waits for a pause in typing rather than firing on
+// every keystroke. A per-context request token discards stale
+// responses if a newer search started before an older one returned
+// (a fast typer could otherwise see an old result flash in late).
+const searchState = { setup: { timer: null, token: 0, selected: null }, settings: { timer: null, token: 0, selected: null } };
+
+function wireLiveSearch(context) {
+  const isSetup = context === 'setup';
+  const input = isSetup ? els.cityInput : els.settingsCityInput;
+  const errorEl = isSetup ? els.setupError : els.settingsError;
+  const candidatesEl = isSetup ? els.setupCandidates : els.settingsCandidates;
+  const saveBtn = isSetup ? els.setupSaveBtn : els.settingsSaveBtn;
+  const state = searchState[context];
+
+  input.addEventListener('input', () => {
+    clearTimeout(state.timer);
+    state.selected = null;
+    saveBtn.disabled = true;
+    const city = input.value.trim();
+    if (!isSetup) els.settingsSuccess.textContent = '';
+    if (city.length < 2) {
+      candidatesEl.innerHTML = '';
+      errorEl.textContent = '';
+      return;
+    }
+    state.timer = setTimeout(() => runSearch(context, city), 450);
+  });
+}
+
+async function runSearch(context, city) {
+  if (!bridgeReady) return; // guard against a search firing before the bridge is confirmed live
+  const isSetup = context === 'setup';
+  const errorEl = isSetup ? els.setupError : els.settingsError;
+  const candidatesEl = isSetup ? els.setupCandidates : els.settingsCandidates;
+  const state = searchState[context];
+  const myToken = ++state.token;
+
+  try {
+    const result = await window.pywebview.api.search_location(city);
+    if (myToken !== state.token) return; // a newer search has since started, discard this one
+    if (result.ok) {
+      errorEl.textContent = '';
+      renderCandidates(candidatesEl, result.candidates, (c) => selectCandidate(context, c));
+    } else {
+      candidatesEl.innerHTML = '';
+      errorEl.textContent = result.error;
+    }
+  } catch (e) {
+    if (myToken !== state.token) return;
+    // Log the real error instead of only showing a generic message:
+    // if this happens again, the browser console has the actual cause
+    // rather than nothing to go on.
+    console.error('search_location call failed:', e);
+    errorEl.textContent = STRINGS[currentLang].somethingWrong;
+  }
+}
+
+function selectCandidate(context, candidate) {
+  const isSetup = context === 'setup';
+  const input = isSetup ? els.cityInput : els.settingsCityInput;
+  const candidatesEl = isSetup ? els.setupCandidates : els.settingsCandidates;
+  const saveBtn = isSetup ? els.setupSaveBtn : els.settingsSaveBtn;
+  const state = searchState[context];
+
+  state.selected = candidate;
+  input.value = candidate.name;
+  candidatesEl.innerHTML = '';
+  saveBtn.disabled = false;
+}
+
+async function saveSelected(context) {
+  const isSetup = context === 'setup';
+  const state = searchState[context];
+  const errorEl = isSetup ? els.setupError : els.settingsError;
+  const saveBtn = isSetup ? els.setupSaveBtn : els.settingsSaveBtn;
+
+  if (!state.selected) return;
+  saveBtn.disabled = true;
+
+  try {
+    const result = await window.pywebview.api.confirm_location(state.selected.name, state.selected.lat, state.selected.lon);
+    if (result.ok) {
+      currentHomeName = result.name;
+      els.currentLocValue.textContent = result.name;
+      els.locationLabel.textContent = `${STRINGS[currentLang].monitoring}: ${result.name}`;
+      if (isSetup) {
+        showMainScreen(result.name);
+      } else {
+        els.settingsCityInput.value = '';
+        state.selected = null;
+        els.settingsSuccess.textContent = STRINGS[currentLang].saved;
+        setTimeout(() => { closeSettings(); els.settingsSuccess.textContent = ''; }, 1100);
+      }
+    }
+  } catch (e) {
+    console.error('confirm_location call failed:', e);
+    errorEl.textContent = STRINGS[currentLang].somethingWrong;
+    saveBtn.disabled = false;
+  }
+}
+window.saveSelected = saveSelected;
+
+function openSettings() {
+  els.settingsCityInput.value = '';
+  els.settingsError.textContent = '';
+  els.settingsSuccess.textContent = '';
+  els.settingsCandidates.innerHTML = '';
+  searchState.settings.selected = null;
+  els.settingsSaveBtn.disabled = true;
+  els.testWarning.style.display = 'none';
+  els.stepGrid.style.display = 'none';
+  setBugReportStatus('', null);
+  els.bugReportBox.value = '';
+  els.settingsPanel.style.display = 'flex';
+}
+
+function buildDiagnosticInfo() {
+  const lines = [
+    `App version: ${APP_VERSION}`,
+    `Language: ${currentLang}`,
+    `Monitored location: ${currentHomeName || '(not set)'}`,
+    `Time format: ${currentTimeFormat}`,
+    `Reported at: ${new Date().toISOString()}`,
+    `Platform: ${navigator.platform || 'unknown'}`,
+    `User agent: ${navigator.userAgent || 'unknown'}`,
+  ];
+  return lines.join('\n');
+}
+
+// Combines whatever the person actually typed with the diagnostic
+// footer, appended automatically so nobody has to type over or delete
+// it themselves; this is what actually gets sent, copied, or emailed.
+function buildFullReportText() {
+  const s = STRINGS[currentLang];
+  const description = els.bugReportBox.value.trim() || s.bugReportEmptyNote;
+  return `${description}\n\n--- ${s.bugReportDiagnosticHeader} ---\n${buildDiagnosticInfo()}`;
+}
+
+function setBugReportStatus(text, kind) {
+  // kind: 'success' | 'error' | 'pending' | null
+  els.bugReportStatus.textContent = text;
+  els.bugReportStatus.className = 'bug-report-status' + (kind ? ` ${kind}` : '');
+}
+
+function openBugReportEmail() {
+  const s = STRINGS[currentLang];
+  const body = buildFullReportText();
+  const url = `mailto:${BUG_REPORT_EMAIL}?subject=${encodeURIComponent(s.bugReportSubject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = url;
+}
+window.openBugReportEmail = openBugReportEmail;
+
+function copyBugReportText() {
+  const s = STRINGS[currentLang];
+  const text = buildFullReportText();
+  const showCopied = () => {
+    setBugReportStatus(s.bugReportCopied, 'success');
+    setTimeout(() => setBugReportStatus('', null), 2500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(showCopied).catch(() => {
+      els.bugReportBox.select();
+      document.execCommand('copy');
+      showCopied();
+    });
+  } else {
+    els.bugReportBox.select();
+    document.execCommand('copy');
+    showCopied();
+  }
+}
+window.copyBugReportText = copyBugReportText;
+
+async function submitBugReport() {
+  const s = STRINGS[currentLang];
+  if (!BUG_REPORT_ENDPOINT || !BUG_REPORT_ENDPOINT.startsWith('http')) {
+    setBugReportStatus(s.bugReportFailed, 'error');
+    return;
+  }
+  const btn = els.bugReportSubmitBtn;
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = s.bugReportSending;
+  setBugReportStatus(s.bugReportSending, 'pending');
+
+  const payload = {
+    appVersion: APP_VERSION,
+    language: currentLang,
+    location: currentHomeName || '',
+    timeFormat: currentTimeFormat,
+    platform: navigator.platform || '',
+    userAgent: navigator.userAgent || '',
+    reportedAt: new Date().toISOString(),
+    description: buildFullReportText(),
+  };
+
+  try {
+    // text/plain avoids a CORS preflight, which Apps Script Web Apps
+    // don't handle; the script still receives it as e.postData.contents.
+    const res = await fetch(BUG_REPORT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    setBugReportStatus(s.bugReportSent, 'success');
+  } catch (err) {
+    setBugReportStatus(s.bugReportFailed, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+window.submitBugReport = submitBugReport;
+window.openSettings = openSettings;
+
+function closeSettings() {
+  els.settingsPanel.style.display = 'none';
+}
+window.closeSettings = closeSettings;
+
+function buildStepGrid() {
+  els.stepGrid.innerHTML = '';
+  const steps = ["0", "1", "2", "3", "4", "5-", "5+", "6-", "6+", "7"];
+  steps.forEach((step) => {
+    const band = BANDS[step];
+    const swatch = document.createElement('div');
+    swatch.className = 'step-swatch';
+    swatch.style.background = band.bg;
+    swatch.style.color = band.fg;
+    swatch.textContent = step === '0' ? 'idle' : step;
+    swatch.title = currentLang === 'ja' ? `震度${step}をテスト表示` : `Test Shindo ${step}`;
+    swatch.onclick = () => runTestEventForStep(step);
+    els.stepGrid.appendChild(swatch);
+  });
+}
+
+function showTestWarning() {
+  els.testWarning.style.display = 'block';
+  buildStepGrid();
+  els.stepGrid.style.display = 'grid';
+}
+window.showTestWarning = showTestWarning;
+
+async function runTestEventForStep(step) {
+  if (!bridgeReady) return;
+  try {
+    await window.pywebview.api.trigger_test_event(step);
+    closeSettings();
+  } catch (e) {
+    console.error('trigger_test_event call failed:', e);
+  }
+}
+window.runTestEventForStep = runTestEventForStep;
+
+wireLiveSearch('setup');
+wireLiveSearch('settings');
+els.cityInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { clearTimeout(searchState.setup.timer); runSearch('setup', els.cityInput.value.trim()); }
+});
+els.settingsCityInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { clearTimeout(searchState.settings.timer); runSearch('settings', els.settingsCityInput.value.trim()); }
+});
+
+function updateClock() {
+  const now = new Date();
+  if (currentLang === 'ja') {
+    els.dateEl.textContent = now.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+  } else {
+    els.dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: '2-digit', year: 'numeric' });
+  }
+  if (currentTimeFormat === '12h') {
+    els.timeEl.textContent = now.toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  } else {
+    els.timeEl.textContent = now.toLocaleTimeString('en-GB', { hour12: false });
+  }
+}
+
+applyLanguage();
+applyTimeFormatButtons();
+applyTextScaleButtons();
+buildThresholdSelect();
+applyWakeScreenButtons();
+applyVolumeButtons();
+renderIdle();
+updateClock();
+setInterval(updateClock, 1000);
+
+// pywebview's JS<->Python bridge (window.pywebview.api) is injected
+// asynchronously, it is not guaranteed to exist the instant the page
+// loads. Calling it before it's ready is a documented source of
+// exactly the kind of silent failure seen tonight ("Something went
+// wrong" with no real cause on the Python side, confirmed by testing
+// the same call directly against app.py, which worked correctly).
+// Disabling inputs until this fires removes that race condition
+// instead of hoping it doesn't happen.
+let bridgeReady = false;
+els.cityInput.disabled = true;
+els.settingsCityInput.disabled = true;
+
+function onBridgeReady() {
+  bridgeReady = true;
+  els.cityInput.disabled = false;
+  els.settingsCityInput.disabled = false;
+}
+
+if (window.pywebview && window.pywebview.api) {
+  onBridgeReady(); // already ready by the time this script ran
+} else {
+  window.addEventListener('pywebviewready', onBridgeReady);
+}
+</script>
+</body>
+</html>
