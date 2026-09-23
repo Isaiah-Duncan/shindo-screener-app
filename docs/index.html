@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ja" data-lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shindo Screener — One Number.</title>
+<meta name="description" content="Real JMA Shindo earthquake intensity for any location in Japan. Free, bilingual, and always quiet until it matters. Windows only.">
+<link rel="icon" type="image/png" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+<meta property="og:title" content="Shindo Screener — One Number.">
+<meta property="og:description" content="Real JMA Shindo earthquake intensity for any location in Japan. Free, bilingual, and always quiet until it matters. Windows only.">
+<meta property="og:image" content="https://isaiah-duncan.github.io/shindo-screener-app/assets/img/hero-tokyo.png">
+<meta property="og:url" content="https://isaiah-duncan.github.io/shindo-screener-app/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Shindo Screener — One Number.">
+<meta name="twitter:description" content="Real JMA Shindo earthquake intensity for any location in Japan. Free, bilingual, and always quiet until it matters.">
+<meta name="twitter:image" content="https://isaiah-duncan.github.io/shindo-screener-app/assets/img/hero-tokyo.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,600&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    background: #0b0a08;
+    color: #f5f5f0;
+  }
+  a { text-decoration: none; }
+  img { max-width: 100%; }
+
+  .cta {
+    transition: transform 180ms ease, background-color 180ms ease, color 180ms ease;
+    cursor: pointer;
+  }
+  .cta:hover { transform: translateY(-2px); }
+  .cta-outline:hover { background: #f5f5f0; color: #0b0a08 !important; }
+  .frame-shadow { box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6); }
+  .footer-link { transition: color 150ms ease; }
+  .footer-link:hover { color: #f5f5f0 !important; }
+  .lang-btn {
+    transition: background-color 150ms ease, color 150ms ease;
+    cursor: pointer;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    color: #a09e94;
+    font-family: inherit;
+  }
+  .lang-btn.active { background: #f5f5f0; color: #0b0a08; }
+
+  .wrap { width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; background: #0b0a08; color: #f5f5f0; }
+  .nav { width: 100%; box-sizing: border-box; padding: 22px 64px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #201f1a; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand img { width: 24px; height: 24px; display: block; }
+  .nav-brand span { font-size: 18px; font-weight: 800; letter-spacing: 0.02em; }
+  .nav-right { display: flex; align-items: center; gap: 20px; }
+  .lang-toggle { display: flex; border: 1.5px solid #33312a; border-radius: 6px; overflow: hidden; }
+  .nav-cta { display: inline-block; padding: 10px 20px; border: 1.5px solid #f5f5f0; font-size: 14px; font-weight: 700; color: #f5f5f0; }
+
+  .section { width: 100%; box-sizing: border-box; padding: 88px 64px; display: flex; gap: 80px; align-items: center; max-width: 1360px; margin: 0 auto; border-top: 1px solid #201f1a; }
+  .hero { padding: 96px 64px 100px; gap: 72px; border-top: none; }
+  .col { flex: 1 1 0; min-width: 0; }
+  .kicker { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: #a09e94; }
+  .hero h1 { margin: 14px 0 0; font-size: 64px; font-weight: 900; line-height: 1.15; letter-spacing: -0.015em; }
+  .hero p { margin: 28px 0 0; font-size: 21px; font-weight: 500; line-height: 1.6; color: #c9c7ba; max-width: 480px; }
+  .hero-cta { display: inline-block; margin-top: 40px; padding: 15px 30px; border: 2px solid #f5f5f0; font-size: 16px; font-weight: 800; color: #f5f5f0; }
+  .smartscreen-note { margin-top: 14px; font-size: 13px; font-weight: 500; color: #706e64; max-width: 420px; }
+  .frame { flex: 0 0 620px; }
+  .frame-window { border: 1px solid #33312a; border-radius: 10px; overflow: hidden; }
+  .frame-bar { height: 30px; background: #141311; display: flex; align-items: center; gap: 6px; padding: 0 12px; }
+  .frame-dot { width: 9px; height: 9px; border-radius: 50%; background: #33312a; }
+  .frame-window img { display: block; width: 100%; height: auto; }
+  .mockup-caption { margin-top: 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #706e64; text-align: center; }
+
+  .step-frame { flex: 0 0 420px; }
+  .step-frame .frame-bar { height: 28px; }
+  .step-frame .frame-dot { width: 8px; height: 8px; background: #2c2a24; }
+  .step h2 { margin: 12px 0 0; font-size: 38px; font-weight: 800; letter-spacing: -0.01em; }
+  .step p { margin: 18px 0 0; font-size: 18px; font-weight: 500; line-height: 1.65; color: #c9c7ba; max-width: 420px; }
+  .step-reverse { flex-direction: row-reverse; }
+
+  .closing { padding: 96px 64px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px; }
+  .closing-text { font-size: 34px; font-weight: 800; letter-spacing: -0.01em; max-width: 560px; }
+
+  .footer { width: 100%; box-sizing: border-box; background: #000; color: #f5f5f0; padding: 22px 64px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border-top: 1px solid #201f1a; }
+  .footer-line { font-size: 14px; color: #706e64; }
+  .footer-links { display: flex; gap: 24px; font-size: 14px; }
+  .footer-links a { color: #a09e94; }
+
+  @media (max-width: 900px) {
+    .nav { padding: 18px 24px; }
+    .section, .hero { flex-direction: column !important; padding: 56px 24px; gap: 40px; }
+    .frame, .step-frame { flex: 1 1 auto; width: 100%; }
+    .hero h1 { font-size: 40px; }
+    .hero p { max-width: 100%; }
+    .step p { max-width: 100%; }
+    .closing { padding: 64px 24px; }
+    .closing-text { font-size: 26px; }
+    .footer { padding: 18px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- nav -->
+  <div class="nav">
+    <div class="nav-brand">
+      <img src="assets/img/logo.png" alt="">
+      <span>SHINDO SCREENER</span>
+    </div>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button type="button" class="lang-btn" data-lang-btn="ja">日本語</button>
+        <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+      </div>
+      <a href="https://github.com/Isaiah-Duncan/shindo-screener-app/releases/download/v0.1.0/ShindoScreener.exe" class="cta cta-outline nav-cta" data-t="download">Windows版をダウンロード</a>
+    </div>
+  </div>
+
+  <!-- hero -->
+  <div class="section hero">
+    <div class="col">
+      <div class="kicker" data-t="heroKicker">気象庁の実際の震度データ</div>
+      <h1 data-t="heroTitle">たった一つの数字。</h1>
+      <p data-t="heroBody">多くの地震速報はマグニチュードを先に伝えます。Shindo Screenerは震度を先に伝えます、実際に感じる揺れを表す数値です。</p>
+      <a href="https://github.com/Isaiah-Duncan/shindo-screener-app/releases/download/v0.1.0/ShindoScreener.exe" class="cta cta-outline hero-cta" data-t="downloadArrow">Windows版をダウンロード →</a>
+      <div class="smartscreen-note" data-t="smartscreenNote">初回起動時にWindowsのSmartScreenが警告を表示する場合があります。「詳細情報」→「実行」で起動できます。</div>
+    </div>
+    <div class="frame">
+      <div class="frame-window frame-shadow">
+        <div class="frame-bar"><div class="frame-dot"></div><div class="frame-dot"></div><div class="frame-dot"></div></div>
+        <img src="assets/img/hero-tokyo.png" alt="Shindo Screener showing an active Shindo 4 reading in Tokyo">
+      </div>
+      <div class="mockup-caption" data-t="mockupCaption">実際のアプリです、モックアップではありません</div>
+    </div>
+  </div>
+
+  <!-- step 1 -->
+  <div class="section step">
+    <div class="col">
+      <div class="kicker" data-t="step01Label">ステップ 01</div>
+      <h2 data-t="step01Title">どの地点でも</h2>
+      <p data-t="step01Body">地点を入力してください。Shindo Screenerが最寄りの気象庁観測点を見つけ、そこから監視します。</p>
+    </div>
+    <div class="step-frame">
+      <div class="frame-window frame-shadow">
+        <div class="frame-bar"><div class="frame-dot"></div><div class="frame-dot"></div><div class="frame-dot"></div></div>
+        <img src="assets/img/step1-location.png" alt="Location settings in Shindo Screener">
+      </div>
+    </div>
+  </div>
+
+  <!-- step 2 -->
+  <div class="section step step-reverse">
+    <div class="col">
+      <div class="kicker" data-t="step02Label">ステップ 02</div>
+      <h2 data-t="step02Title">シンプルさを追求</h2>
+      <p data-t="step02Body">スクロールするフィードも、開くアプリもありません。気象庁の地震情報が対象地点に届いたときだけ、画面が変わります。</p>
+    </div>
+    <div class="step-frame" style="flex-basis: 600px;">
+      <div class="frame-window frame-shadow">
+        <div class="frame-bar"><div class="frame-dot"></div><div class="frame-dot"></div><div class="frame-dot"></div></div>
+        <img src="assets/img/step2-idle.png" alt="Shindo Screener sitting idle while monitoring a location, shown in Japanese">
+      </div>
+    </div>
+  </div>
+
+  <!-- step 3 -->
+  <div class="section step">
+    <div class="col">
+      <div class="kicker" data-t="step03Label">ステップ 03</div>
+      <h2 data-t="step03Title">しきい値を設定</h2>
+      <p data-t="step03Body">画面を起動しチャイムを鳴らす震度を選んでください。それ未満は静かなままです。</p>
+    </div>
+    <div class="step-frame" style="flex-basis: 500px;">
+      <div class="frame-window frame-shadow">
+        <div class="frame-bar"><div class="frame-dot"></div><div class="frame-dot"></div><div class="frame-dot"></div></div>
+        <img src="assets/img/step3-threshold.png" alt="Alert threshold settings in Shindo Screener">
+      </div>
+    </div>
+  </div>
+
+  <!-- step 4 -->
+  <div class="section step step-reverse">
+    <div class="col">
+      <div class="kicker" data-t="step04Label">ステップ 04</div>
+      <h2 data-t="step04Title">どちらの言語でも読める</h2>
+      <p data-t="step04Body">いつでも英語と日本語を切り替えられます。震度そのものは気象庁の表記をそのまま使用し、翻訳しません。</p>
+    </div>
+    <div class="step-frame" style="flex-basis: 600px;">
+      <div class="frame-window frame-shadow">
+        <div class="frame-bar"><div class="frame-dot"></div><div class="frame-dot"></div><div class="frame-dot"></div></div>
+        <img src="assets/img/step4-english.png" alt="Shindo Screener showing an active reading translated into English">
+      </div>
+    </div>
+  </div>
+
+  <!-- closing -->
+  <div class="section closing">
+    <div class="closing-text" data-t="closing">地震活動があるまで、静かなまま。</div>
+    <a href="https://github.com/Isaiah-Duncan/shindo-screener-app/releases/download/v0.1.0/ShindoScreener.exe" class="cta cta-outline hero-cta" data-t="downloadArrow">Windows版をダウンロード →</a>
+  </div>
+
+  <!-- footer -->
+  <div class="footer">
+    <div class="footer-line" data-t="footerLine">Shindo Screener · 日本製 · Windows専用 · ベータ版、設定 → サポートからバグ報告可能</div>
+    <div class="footer-links">
+      <a href="https://github.com/Isaiah-Duncan/shindo-screener-app" class="footer-link">GitHub</a>
+      <a href="https://github.com/Isaiah-Duncan/shindo-screener-app/releases/latest" class="footer-link" data-t="footerReleases">リリース</a>
+      <a href="https://wolfx.jp/" class="footer-link" data-t="footerData">データ: Wolfx 気象庁フィード</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var TRANSLATIONS = {
+    ja: {
+      download: "Windows版をダウンロード",
+      downloadArrow: "Windows版をダウンロード →",
+      heroKicker: "気象庁の実際の震度データ",
+      heroTitle: "たった一つの数字。",
+      heroBody: "多くの地震速報はマグニチュードを先に伝えます。Shindo Screenerは震度を先に伝えます、実際に感じる揺れを表す数値です。",
+      mockupCaption: "実際のアプリです、モックアップではありません",
+      smartscreenNote: "初回起動時にWindowsのSmartScreenが警告を表示する場合があります。「詳細情報」→「実行」で起動できます。",
+      step01Label: "ステップ 01",
+      step01Title: "どの地点でも",
+      step01Body: "地点を入力してください。Shindo Screenerが最寄りの気象庁観測点を見つけ、そこから監視します。",
+      step02Label: "ステップ 02",
+      step02Title: "シンプルさを追求",
+      step02Body: "スクロールするフィードも、開くアプリもありません。気象庁の地震情報が対象地点に届いたときだけ、画面が変わります。",
+      step03Label: "ステップ 03",
+      step03Title: "しきい値を設定",
+      step03Body: "画面を起動しチャイムを鳴らす震度を選んでください。それ未満は静かなままです。",
+      step04Label: "ステップ 04",
+      step04Title: "どちらの言語でも読める",
+      step04Body: "いつでも英語と日本語を切り替えられます。震度そのものは気象庁の表記をそのまま使用し、翻訳しません。",
+      closing: "地震活動があるまで、静かなまま。",
+      footerLine: "Shindo Screener · 日本製 · Windows専用 · ベータ版、設定 → サポートからバグ報告可能",
+      footerReleases: "リリース",
+      footerData: "データ: Wolfx 気象庁フィード"
+    },
+    en: {
+      download: "Download for Windows",
+      downloadArrow: "Download for Windows →",
+      heroKicker: "REAL JMA SHINDO DATA",
+      heroTitle: "One Number.",
+      heroBody: "Most earthquake reports lead with magnitude. Shindo Screener leads with Shindo instead, the reading that actually describes what you'd feel.",
+      mockupCaption: "ACTUAL APP, NOT A MOCKUP",
+      smartscreenNote: "Windows may show a SmartScreen warning on first launch, since the app isn't code-signed. Click \"More info\" → \"Run anyway\" to continue.",
+      step01Label: "STEP 01",
+      step01Title: "Any Location",
+      step01Body: "Enter your location. Shindo Screener finds the nearest JMA observation point and tracks it from there.",
+      step02Label: "STEP 02",
+      step02Title: "Built for Simplicity",
+      step02Body: "There's no feed to scroll and no app to open. When a JMA earthquake reading comes in for affected locations, that's when it changes.",
+      step03Label: "STEP 03",
+      step03Title: "Set Your Threshold",
+      step03Body: "Choose the Shindo level that should wake your screen and sound a chime. Anything below that stays silent.",
+      step04Label: "STEP 04",
+      step04Title: "Read in Either Language",
+      step04Body: "Switch between English and Japanese at any time. The Shindo levels themselves use JMA's own notation, not a translation of it.",
+      closing: "Quiet until there's seismic activity.",
+      footerLine: "Shindo Screener · Built in Japan · Windows only · Beta, has a built-in bug report under Settings → Support",
+      footerReleases: "Releases",
+      footerData: "Data: Wolfx JMA feed"
+    }
+  };
+
+  var nodes = document.querySelectorAll('[data-t]');
+  var btns = document.querySelectorAll('[data-lang-btn]');
+
+  function applyLang(lang) {
+    var copy = TRANSLATIONS[lang];
+    nodes.forEach(function (el) {
+      var key = el.getAttribute('data-t');
+      if (copy[key] != null) el.textContent = copy[key];
+    });
+    btns.forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-lang-btn') === lang);
+    });
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('data-lang', lang);
+    try { localStorage.setItem('shindo-lang', lang); } catch (e) {}
+  }
+
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      applyLang(b.getAttribute('data-lang-btn'));
+    });
+  });
+
+  var initial = 'ja';
+  try {
+    var saved = localStorage.getItem('shindo-lang');
+    if (saved === 'ja' || saved === 'en') initial = saved;
+  } catch (e) {}
+  applyLang(initial);
+})();
+</script>
+
+</body>
+</html>
