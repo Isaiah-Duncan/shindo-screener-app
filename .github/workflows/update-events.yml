@@ -1,0 +1,40 @@
+name: Update earthquake log
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # every 15 minutes; GitHub may delay runs a few minutes
+  workflow_dispatch:           # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-events
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Merge latest JMA earthquake list
+        run: python scripts/update_events.py
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- docs/data/events.json; then
+            echo "No new events."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898783+github-actions[bot]@users.noreply.github.com"
+          git add docs/data/events.json
+          git commit -m "Update earthquake log"
+          git pull --rebase
+          git push
