@@ -33,14 +33,16 @@
     letter-spacing: 0.05em;
   }
   /* Typography tiers, per the agreed system: tier1 = the giant, dominant
-     element, tier2 = a smaller secondary reading, tier3 = event metadata /
-     monitored location / severity phrase, tier4 = distance / secondary
-     text / settings labels.
-     Tier1/tier2 dominance was swapped 9/2026: the real JMA Shindo value
-     (.code) is now the giant tier1 element, since it's the number that's
-     actually true. The Roman numeral (.numeral) is cosmetic, kept only as
-     a nod to the reference game's styling, so it now renders as the small
-     tier2 accent underneath rather than the biggest thing on screen. */
+     element, tier3 = event metadata / monitored location / severity
+     phrase, tier4 = distance / secondary text / settings labels.
+     The Roman numeral (.numeral, tier2) was removed 9/2026: it was a
+     cosmetic nod to the reference game's styling and didn't correspond
+     to any real JMA notation, which read as confusing rather than
+     informative to anyone who actually knows the Shindo scale. The
+     giant JMA value (.code, tier1) is now followed directly by the
+     plain-language severity phrase (.label, tier3, moved up from the
+     bottom-left block into the readout itself), since that phrase is
+     what actually tells someone what the number means. */
   :root {
     --tier3-size: calc(1.7vw * var(--text-scale));
     --tier4-size: calc(1vw * var(--text-scale));
@@ -79,15 +81,16 @@
   }
   .code { font-size: 14vw; font-weight: 700; line-height: 1; }
   .rule { width: 20vw; height: 4px; background: currentColor; }
-  .numeral { font-size: calc(4vw * var(--text-scale)); font-weight: 700; line-height: 1; opacity: 0.6; }
   .idle-line { width: 55%; height: 3px; background: currentColor; margin-top: 4vh; }
   /* .label (severity phrase) and .location-label (monitored location)
      are Tier 3 by the typography system's own definition, same as the
-     top-left event metadata and top-right datetime, so they now share
+     top-left event metadata and top-right datetime, so they share
      --tier3-size instead of each carrying a separate one-off value
      that happened to be bigger. .meta (distance line) was already the
      same size as --tier4-size by coincidence; switched to reference
-     the variable directly so it can't drift from it later. */
+     the variable directly so it can't drift from it later.
+     .label now lives inside .readout, directly under .rule, instead of
+     the bottom-left block, since it took over the numeral's old spot. */
   .label { font-size: var(--tier3-size); font-weight: 700; }
   .meta { font-size: var(--tier4-size); opacity: 0.75; margin-top: 1vh; }
   .tsunami-box {
@@ -111,10 +114,10 @@
     color: currentColor;
   }
 
-  /* No longer absolutely positioned: the gear button now lives in normal
+  /* No longer absolutely positioned: the gear button lives in normal
      document flow alongside the bottom-left text block (see .bottom-row),
-     so it can never overlap that text regardless of how tall it grows
-     (longer phrases, Large/Extra-Large text scale, etc). */
+     which now only holds .meta (the distance line), since .label moved
+     up into .readout. */
   .bottom-row {
     display: flex;
     align-items: flex-end;
@@ -431,7 +434,7 @@
       <div class="estimate-label" id="estimateLabel"></div>
       <div class="code" id="code"></div>
       <div class="rule" id="rule"></div>
-      <div class="numeral" id="numeral"></div>
+      <div class="label" id="labelText"></div>
     </div>
   </div>
   <div class="idle-line" id="idleLine"></div>
@@ -443,7 +446,6 @@
       </svg>
     </button>
     <div>
-      <div class="label" id="labelText"></div>
       <div class="meta" id="metaText"></div>
     </div>
   </div>
@@ -608,7 +610,7 @@ const BANDS = {
   "7":  { bg: '#c21818', fg: '#f5f0e8' },
 };
 const LABELS_EN = {
-  "0": "Not felt", "1": "Very light indoor shaking", "2": "Very light indoor shaking",
+  "0": "Not felt", "1": "Barely felt indoors", "2": "Slight indoor shaking",
   "3": "Light indoor shaking", "4": "Moderate indoor shaking",
   "5-": "Strong indoor shaking", "5+": "Very strong indoor shaking",
   "6-": "Severe indoor shaking", "6+": "Violent indoor shaking", "7": "Extreme indoor shaking",
@@ -619,7 +621,7 @@ const LABELS_EN = {
 // earlier in this build). Worth re-checking natural phrasing with a
 // native speaker rather than treating this as verified terminology.
 const LABELS_JA = {
-  "0": "揺れなし", "1": "屋内でわずかな揺れ", "2": "屋内でわずかな揺れ",
+  "0": "揺れなし", "1": "屋内でわずかに揺れを感じる", "2": "屋内で揺れを感じる",
   "3": "屋内で弱い揺れ", "4": "屋内でやや強い揺れ",
   "5-": "屋内で強い揺れ", "5+": "屋内で非常に強い揺れ",
   "6-": "屋内で激しい揺れ", "6+": "屋内で猛烈な揺れ", "7": "屋内で極めて激しい揺れ",
@@ -627,10 +629,6 @@ const LABELS_JA = {
 
 const MATURITY_EN = { preliminary: "Preliminary estimate", updated: "Estimate updated", final: "Final JMA report" };
 const MATURITY_JA = { preliminary: "速報段階の推定", updated: "推定を更新", final: "気象庁の確定報" };
-const ROMAN = {
-  "0": "I", "1": "II", "2": "III", "3": "IV", "4": "V",
-  "5-": "VI", "5+": "VII", "6-": "VIII", "6+": "IX", "7": "X",
-};
 
 const STRINGS = {
   en: {
@@ -640,8 +638,15 @@ const STRINGS = {
     search: "Search",
     lookingUp: "Looking that up...",
     somethingWrong: "Something went wrong, try again.",
+    saveLabel: "Save",
     monitoring: "Monitoring",
     settingsTitle: "Settings",
+    groupLocation: "Location",
+    groupDisplay: "Display",
+    groupAccessibility: "Accessibility",
+    groupAlerts: "Alerts",
+    groupTesting: "Testing",
+    groupSupport: "Support",
     currentLocation: "Current location",
     changeLocation: "Change location",
     language: "Language",
@@ -658,6 +663,7 @@ const STRINGS = {
     offLabel: "Off",
     testEvent: "Test event",
     testEventLink: "Show a sample reading on the display",
+    idleLabel: "idle",
     testWarningText: "This puts a fake earthquake reading on your actual screen. If anyone else can see this display, make sure they know it's a test before you trigger it, a real-looking alert shown by mistake is not a good surprise.",
     confirmTest: "Trigger test reading",
     saved: "Saved.",
@@ -684,8 +690,15 @@ const STRINGS = {
     search: "検索",
     lookingUp: "検索中...",
     somethingWrong: "エラーが発生しました。もう一度お試しください。",
+    saveLabel: "保存",
     monitoring: "監視地点",
     settingsTitle: "設定",
+    groupLocation: "地点",
+    groupDisplay: "表示",
+    groupAccessibility: "アクセシビリティ",
+    groupAlerts: "アラート",
+    groupTesting: "テスト",
+    groupSupport: "サポート",
     currentLocation: "現在の地点",
     changeLocation: "地点を変更",
     language: "言語",
@@ -702,6 +715,7 @@ const STRINGS = {
     offLabel: "オフ",
     testEvent: "テスト表示",
     testEventLink: "サンプル表示を画面に出す",
+    idleLabel: "待機",
     testWarningText: "この機能は実際の画面に偽の地震情報を表示します。他の人がこの画面を見ている場合は、テストであることを事前に伝えてから実行してください。本物と間違われる表示は良い驚きではありません。",
     confirmTest: "テスト表示を実行",
     saved: "保存しました。",
@@ -733,6 +747,11 @@ const BUG_REPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbyaELlLmHuC
 let currentLang = 'en';
 let currentTimeFormat = '24h';
 let currentHomeName = '';
+// The last state passed to renderActive(), so a language switch mid-reading
+// can re-render the same event in the new language instead of leaving it
+// stuck in whichever language was active when the event first came in.
+// null while idle (renderIdle() clears it).
+let lastActiveState = null;
 
 const els = {
   screen: document.getElementById('screen'),
@@ -744,7 +763,6 @@ const els = {
   dateEl: document.getElementById('dateEl'),
   timeEl: document.getElementById('timeEl'),
   mid: document.getElementById('mid'),
-  numeral: document.getElementById('numeral'),
   rule: document.getElementById('rule'),
   code: document.getElementById('code'),
   labelText: document.getElementById('labelText'),
@@ -761,6 +779,12 @@ const els = {
   setupSubtitle: document.getElementById('setupSubtitle'),
   settingsPanel: document.getElementById('settingsPanel'),
   settingsTitle: document.getElementById('settingsTitle'),
+  groupLocation: document.getElementById('groupLocation'),
+  groupDisplay: document.getElementById('groupDisplay'),
+  groupAccessibility: document.getElementById('groupAccessibility'),
+  groupAlerts: document.getElementById('groupAlerts'),
+  groupTesting: document.getElementById('groupTesting'),
+  groupSupport: document.getElementById('groupSupport'),
   currentLocLabel: document.getElementById('currentLocLabel'),
   currentLocValue: document.getElementById('currentLocValue'),
   changeLocLabel: document.getElementById('changeLocLabel'),
@@ -804,9 +828,17 @@ function applyLanguage() {
   els.setupSubtitle.textContent = s.setupSubtitle;
   els.cityInput.placeholder = s.inputPlaceholder;
   els.settingsTitle.textContent = s.settingsTitle;
+  els.groupLocation.textContent = s.groupLocation;
+  els.groupDisplay.textContent = s.groupDisplay;
+  els.groupAccessibility.textContent = s.groupAccessibility;
+  els.groupAlerts.textContent = s.groupAlerts;
+  els.groupTesting.textContent = s.groupTesting;
+  els.groupSupport.textContent = s.groupSupport;
   els.currentLocLabel.textContent = s.currentLocation;
   els.changeLocLabel.textContent = s.changeLocation;
   els.settingsCityInput.placeholder = s.inputPlaceholder;
+  els.setupSaveBtn.textContent = s.saveLabel;
+  els.settingsSaveBtn.textContent = s.saveLabel;
   els.languageLabel.textContent = s.language;
   els.timeFormatLabel.textContent = s.timeFormat;
   els.textSizeLabel.textContent = s.textSize;
@@ -838,6 +870,17 @@ function applyLanguage() {
   if (currentHomeName) {
     els.locationLabel.textContent = `${s.monitoring}: ${currentHomeName}`;
   }
+  // A reading already on screen was rendered in whichever language was
+  // active at the time; re-render it now so switching languages mid-event
+  // actually changes what's showing, not just the settings panel around it.
+  if (lastActiveState) {
+    renderActive(lastActiveState);
+  }
+  // Same idea for the Testing step grid: its "idle" swatch and per-swatch
+  // tooltips are built once by buildStepGrid() and don't otherwise notice
+  // a language change. Rebuilding is cheap (10 small elements) and safe
+  // even before the grid has ever been shown.
+  buildStepGrid();
 }
 
 function setLanguage(lang) {
@@ -997,6 +1040,7 @@ function applyMotionEffectsOnly(value) {
 window.applyMotionEffectsOnly = applyMotionEffectsOnly;
 
 function renderIdle() {
+  lastActiveState = null;
   els.screen.style.background = '#000000';
   els.screen.style.color = '#f5f5f0';
   els.topRow.style.visibility = 'visible';
@@ -1014,6 +1058,7 @@ function renderIdle() {
 }
 
 function renderActive(state) {
+  lastActiveState = state;
   const step = state.jma_step_estimated || "0";
   const band = BANDS[step] || BANDS["0"];
   els.screen.style.background = band.bg;
@@ -1047,7 +1092,6 @@ function renderActive(state) {
     els.tsunamiBox.style.display = 'none';
   }
 
-  els.numeral.textContent = ROMAN[step] || '?';
   els.code.textContent = step;
 
   els.labelText.textContent = (currentLang === 'ja' ? LABELS_JA[step] : LABELS_EN[step]) || '';
@@ -1131,7 +1175,7 @@ async function runSearch(context, city) {
   const myToken = ++state.token;
 
   try {
-    const result = await window.pywebview.api.search_location(city);
+    const result = await window.pywebview.api.search_location(city, currentLang);
     if (myToken !== state.token) return; // a newer search has since started, discard this one
     if (result.ok) {
       errorEl.textContent = '';
@@ -1323,7 +1367,7 @@ function buildStepGrid() {
     swatch.className = 'step-swatch';
     swatch.style.background = band.bg;
     swatch.style.color = band.fg;
-    swatch.textContent = step === '0' ? 'idle' : step;
+    swatch.textContent = step === '0' ? STRINGS[currentLang].idleLabel : step;
     swatch.title = currentLang === 'ja' ? `震度${step}をテスト表示` : `Test Shindo ${step}`;
     swatch.onclick = () => runTestEventForStep(step);
     els.stepGrid.appendChild(swatch);
@@ -1340,7 +1384,7 @@ window.showTestWarning = showTestWarning;
 async function runTestEventForStep(step) {
   if (!bridgeReady) return;
   try {
-    await window.pywebview.api.trigger_test_event(step);
+    await window.pywebview.api.trigger_test_event(step, currentLang);
     closeSettings();
   } catch (e) {
     console.error('trigger_test_event call failed:', e);

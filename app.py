@@ -133,7 +133,7 @@ def save_settings(data):
         json.dump(data, f)
 
 
-def search_locations(city_name):
+def search_locations(city_name, lang="en"):
     """
     Free, no-API-key geocoding via OpenStreetMap's Nominatim, returning
     multiple candidates rather than blindly picking the first result.
@@ -155,12 +155,25 @@ def search_locations(city_name):
     countrycodes=jp restricts results to Japan, matching this app's
     actual scope and removing irrelevant same-named places elsewhere.
 
+    `lang` is the app's current UI language ("en" or "ja"), passed
+    straight to Nominatim's accept-language so a search made while the
+    app is in Japanese comes back as 宮古市, 岩手県 rather than a
+    romanized "Miyako, Iwate Prefecture" (this used to be hardcoded to
+    "en" regardless of the app's language, so every saved location was
+    English-only even for someone using the Japanese UI end to end).
+    This is a one-time choice made at search time: the name is saved as
+    plain text, so a location searched in one language keeps that
+    language's name even if the UI is switched afterward. Anything not
+    "ja" falls back to "en", so an unexpected value never sends a blank
+    or malformed accept-language.
+
     Usage policy requires a real User-Agent identifying the app and
     caps requests at 1/second; fine here, this runs only when someone
     is actively setting up or changing their location, not repeatedly.
     """
+    accept_language = "ja" if lang == "ja" else "en"
     url = "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode({
-        "q": city_name, "format": "json", "limit": 5, "accept-language": "en",
+        "q": city_name, "format": "json", "limit": 5, "accept-language": accept_language,
         "featureType": "settlement", "addressdetails": 1, "countrycodes": "jp",
     })
     req = urllib.request.Request(url, headers={"User-Agent": "ShindoScreener/1.0"})
@@ -174,8 +187,14 @@ def search_locations(city_name):
         # suburb of a larger city shows both), simpler and more robust
         # than manually picking address fields apart.
         label = item["display_name"]
-        if label.endswith(", Japan"):
-            label = label[: -len(", Japan")]
+        # Nominatim appends the country name in whichever language was
+        # requested ("Japan" for en, "日本" for ja); strip either so the
+        # trailing country name doesn't repeat what's already implied by
+        # this being a Japan-only search (countrycodes=jp above).
+        for suffix in (", Japan", ", 日本"):
+            if label.endswith(suffix):
+                label = label[: -len(suffix)]
+                break
         candidates.append({"name": label, "lat": float(item["lat"]), "lon": float(item["lon"])})
     return candidates
 
@@ -188,12 +207,12 @@ class Api:
         self._get_listener = get_listener  # callable returning the current Listener or None
         self._get_window = get_window
 
-    def search_location(self, city_name):
+    def search_location(self, city_name, lang="en"):
         city_name = (city_name or "").strip()
         if not city_name:
             return {"ok": False, "error": "Type a city or town name first.", "candidates": []}
         try:
-            candidates = search_locations(city_name)
+            candidates = search_locations(city_name, lang)
         except Exception as e:
             return {"ok": False, "error": f"Lookup failed: {e}", "candidates": []}
         if not candidates:
@@ -283,29 +302,33 @@ class Api:
     VALID_TEST_STEPS = ["0", "1", "2", "3", "4", "5-", "5+", "6-", "6+", "7"]
 
     # Per-step (magnitude, depth_km, distance_km) used by trigger_test_event
-    # below. Each triple was solved against severity.py's own real
-    # attenuation formula (estimated_intensity + snap_to_jma_step) so it
-    # actually produces that exact step, rather than every test button
-    # showing the same fixed M6.5/72km pairing regardless of which step
-    # was picked. Magnitude escalates and depth shallows across the range,
-    # matching how real Japan Trench-region events plausibly scale; if
-    # severity.py's formula is ever recalibrated, these should be
-    # re-solved to match (see severity.py's own FLAG comment on that
-    # formula's uncalibrated status).
+    # below. Each row was solved against severity.estimated_intensity
+    # (Si & Midorikawa 1999 chain) to land near the middle of its Shindo
+    # band, not on a boundary, so rounding can't flip it. All use a 10 km
+    # focal depth. Rows 0-6- use the app's default Vs30 (300 m/s,
+    # average ground). 6+ and 7 need soft ground (vs30 200 / 150): on
+    # average ground this model needs ~M9.3 for Shindo 7, which matches
+    # real Shindo 7 events (Kumamoto 2016, Noto 2024) coming from
+    # near-fault shaking on soft soil. The vs30 key is documentation
+    # only; trigger_test_event pins the step directly. If severity.py's
+    # formula changes, re-solve these.
+    #   step: continuous intensity it produces
+    #   0: 0.17  1: 1.05  2: 2.00  3: 3.04  4: 4.01
+    #   5-: 4.76  5+: 5.18  6-: 5.80  6+: 6.37  7: 6.61
     TEST_EVENT_PARAMS = {
-        "0":  {"magnitude": 4.8, "depth_km": 30.0, "distance_km": 29.4},
-        "1":  {"magnitude": 5.2, "depth_km": 30.0, "distance_km": 27.4},
-        "2":  {"magnitude": 5.6, "depth_km": 30.0, "distance_km": 16.1},
-        "3":  {"magnitude": 6.0, "depth_km": 25.0, "distance_km": 13.2},
-        "4":  {"magnitude": 6.5, "depth_km": 25.0, "distance_km": 21.0},
-        "5-": {"magnitude": 6.8, "depth_km": 20.0, "distance_km": 20.1},
-        "5+": {"magnitude": 7.1, "depth_km": 20.0, "distance_km": 29.7},
-        "6-": {"magnitude": 7.4, "depth_km": 15.0, "distance_km": 42.0},
-        "6+": {"magnitude": 7.7, "depth_km": 15.0, "distance_km": 52.7},
-        "7":  {"magnitude": 8.0, "depth_km": 10.0, "distance_km": 47.6},
+        "0":  {"magnitude": 2.0, "depth_km": 10.0, "distance_km": 30.0},
+        "1":  {"magnitude": 2.8, "depth_km": 10.0, "distance_km": 27.0},
+        "2":  {"magnitude": 3.4, "depth_km": 10.0, "distance_km": 16.0},
+        "3":  {"magnitude": 4.3, "depth_km": 10.0, "distance_km": 13.0},
+        "4":  {"magnitude": 5.5, "depth_km": 10.0, "distance_km": 21.0},
+        "5-": {"magnitude": 6.1, "depth_km": 10.0, "distance_km": 20.0},
+        "5+": {"magnitude": 6.7, "depth_km": 10.0, "distance_km": 30.0},
+        "6-": {"magnitude": 6.8, "depth_km": 10.0, "distance_km": 20.0},
+        "6+": {"magnitude": 7.6, "depth_km": 10.0, "distance_km": 10.0, "vs30": 200.0},
+        "7":  {"magnitude": 8.0, "depth_km": 10.0, "distance_km": 5.0,  "vs30": 150.0},
     }
 
-    def trigger_test_event(self, step="5-"):
+    def trigger_test_event(self, step="5-", lang="en"):
         """
         Pushes a fake reading pinned to an exact Shindo step, for
         checking the display's rendering at every real step directly.
@@ -316,6 +339,13 @@ class Api:
         showing a professionalism warning before ever calling this;
         this method itself doesn't gate on anything, so it stays simple
         and testable.
+
+        `lang` picks the placeholder epicenter name's language ("Test
+        epicenter" / "テスト震源地"), matching the app's current UI
+        language the same way search_location's `lang` does, so a test
+        event triggered in 日本語 doesn't drop back to English for this
+        one field. The rest of the reading (magnitude, distance) is
+        numeric and needs no translation.
         """
         if step not in self.VALID_TEST_STEPS:
             return {"ok": False, "error": f"Not a real Shindo step: {step}"}
@@ -323,13 +353,14 @@ class Api:
         if listener is None:
             return {"ok": False, "error": "Set a location first."}
         params = self.TEST_EVENT_PARAMS[step]
+        epicenter_name = "テスト震源地" if lang == "ja" else "Test epicenter"
         listener.push({
             "status": "active",
             "updated_at": datetime.now(timezone.utc).isoformat(),
             "magnitude": params["magnitude"],
             "depth_km": params["depth_km"],
             "shindo_reported_by_jquake": "TEST",
-            "matched_city": "Test epicenter",
+            "matched_city": epicenter_name,
             "distance_km": params["distance_km"],
             "jma_step_estimated": step,
             "tsunami_warning": None,

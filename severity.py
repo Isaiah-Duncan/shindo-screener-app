@@ -6,34 +6,40 @@ This module is intentionally the ONLY place that turns
 The VLM never touches this logic: it only ever hands this module
 plain extracted text (city name, magnitude, JMA-reported Shindo).
 
-Formula source (subducting-plate model, appropriate for offshore
-Tohoku/Japan Trench events, the study zone this was originally built for):
+Formula (replaced 9/25/2026; the old 4-event subducting-plate fit
+consistently mis-scaled magnitude, e.g. an M5.2 came out as Shindo 1):
 
-    I = -8.33 + 2.19*M - 0.00550*Delta_h - 1.14*log10(Delta_h)
-    Delta_h = sqrt(Delta^2 + h^2)
+    1. Fault distance X (km), approximated from the hypocenter:
+         L   = 10^(0.5*M - 1.85)            rupture length, km
+         X   = max(sqrt(Delta^2 + h^2) - L/2, 3)
+       (hypocentral distance minus half the rupture length, the same
+       approximation JMA's EEW method uses; the 3 km floor keeps
+       near-source values finite)
 
-    M      = JMA magnitude
-    Delta  = epicentral distance, km
-    h      = focal depth, km
-    I      = estimated JMA seismic intensity (continuous, roughly 0-7)
+    2. PGV on engineering bedrock, Vs = 600 m/s (Si & Midorikawa 1999):
+         log PGV600 = 0.58*M + 0.0038*h + d - 1.29
+                      - log(X + 0.0028*10^(0.5*M)) - 0.002*X
+         d = 0.00 crustal, -0.02 interplate, +0.12 intraslab
 
-Source: intensity attenuation relations derived from earthquakes near
-the Japan Trench, subducting-plate model (cited via Science.gov
-"jma seismic intensity" topic index, referencing the underlying
-attenuation study). This was calibrated on a small number of events
-(reportedly four, near the Japan Trench), so treat the output as a
-rough estimate, not a survey-grade figure. Worth sanity-checking
-against JQuake's own reported Shindo for a few real events before
-trusting it, and worth eventually re-calibrating against a real
-seismic-study log of real felt/reported events for this specific
-study zone, since that dataset already exists and is more locally
-relevant than a four-event fit.
+    3. Site amplification from Vs30 (Midorikawa et al. 1994):
+         log Amp = 1.83 - 0.66*log(Vs30)       (Amp = 1 at Vs30 = 600)
 
-FLAG: this formula has NOT been independently re-derived or verified
-here beyond the single search result it came from. Re-verify against
-the original paper (Japan Trench subducting-plate intensity
-attenuation model) before leaning on this for anything beyond a
-personal ambient display.
+    4. JMA instrumental intensity (Midorikawa et al. 1999):
+         I = 2.68 + 1.72*log(PGV600 * Amp)
+
+    M = JMA magnitude (treated as Mw), Delta = epicentral distance (km),
+    h = focal depth (km). Defaults: Vs30 = 300 m/s ("average ground",
+    since the app doesn't know each user's soil) and d = 0 (crustal).
+
+Known limitation: on average ground (Vs30 300) this model tops out
+around Shindo 6+ for realistic magnitudes; real Shindo 7 events come
+from near-fault shaking on soft ground (Vs30 ~150-200). A per-location
+Vs30 lookup (e.g. J-SHIS) would fix that later.
+
+FLAG: coefficients were reconstructed and cross-checked against
+secondary sources, not the original paper. Re-verify against
+Si & Midorikawa (1999) before treating output as more than an
+estimate. Real events commonly differ from this by +/-0.5 intensity.
 """
 
 import json
@@ -66,19 +72,33 @@ def haversine_km(lat1, lon1, lat2, lon2):
     return r * c
 
 
-def estimated_intensity(magnitude, depth_km, epicentral_distance_km):
+DEFAULT_VS30 = 300.0          # m/s, "average ground"
+DEFAULT_FAULT_TYPE_TERM = 0.0  # crustal; -0.02 interplate, +0.12 intraslab
+
+
+def fault_distance_km(magnitude, depth_km, epicentral_distance_km):
+    """Approximate closest distance to the fault plane, in km."""
+    hypocentral = math.sqrt(epicentral_distance_km ** 2 + depth_km ** 2)
+    half_rupture = 0.5 * 10 ** (0.5 * magnitude - 1.85)
+    return max(hypocentral - half_rupture, 3.0)
+
+
+def estimated_intensity(magnitude, depth_km, epicentral_distance_km,
+                        vs30=DEFAULT_VS30, fault_type_term=DEFAULT_FAULT_TYPE_TERM):
     """
-    Subducting-plate JMA intensity attenuation estimate.
-    Returns a continuous intensity value (not yet snapped to a
-    real JMA step like 5- / 5+ / 6- / 6+).
+    Si & Midorikawa (1999) PGV + Vs30 amplification + Midorikawa (1999)
+    intensity conversion. Returns a continuous JMA intensity value
+    (not yet snapped to a real step like 5- / 5+ / 6- / 6+).
     """
-    delta_h = math.sqrt(epicentral_distance_km ** 2 + depth_km ** 2)
-    delta_h = max(delta_h, 1e-6)  # guard against log(0)
-    intensity = (-8.33
-                 + 2.19 * magnitude
-                 - 0.00550 * delta_h
-                 - 1.14 * math.log10(delta_h))
-    return intensity
+    x = fault_distance_km(magnitude, depth_km, epicentral_distance_km)
+    log_pgv600 = (0.58 * magnitude
+                  + 0.0038 * depth_km
+                  + fault_type_term
+                  - 1.29
+                  - math.log10(x + 0.0028 * 10 ** (0.5 * magnitude))
+                  - 0.002 * x)
+    log_amp = 1.83 - 0.66 * math.log10(vs30)
+    return 2.68 + 1.72 * (log_pgv600 + log_amp)
 
 
 def snap_to_jma_step(continuous_intensity):
