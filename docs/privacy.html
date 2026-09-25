@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ja" data-lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プライバシーポリシー / Privacy Policy | Shindo Screener</title>
+<link rel="icon" type="image/png" href="assets/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800;900&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Archivo', 'Noto Sans JP', sans-serif; background: #0b0a08; color: #f5f5f0; }
+  a { color: inherit; }
+  html[data-lang="ja"] .l-en, html[data-lang="en"] .l-ja { display: none; }
+  .nav { padding: 22px 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid #201f1a; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-brand img { width: 24px; height: 24px; }
+  .nav-brand span { font-size: 18px; font-weight: 800; letter-spacing: 0.02em; }
+  .lang-toggle { display: flex; border: 1.5px solid #33312a; border-radius: 6px; overflow: hidden; }
+  .lang-btn { cursor: pointer; padding: 8px 16px; font: inherit; font-size: 13px; font-weight: 700; border: none; background: transparent; color: #a09e94; }
+  .lang-btn.active { background: #f5f5f0; color: #0b0a08; }
+  main { max-width: 760px; margin: 0 auto; padding: 72px 24px 96px; }
+  h1 { margin: 0; font-size: 40px; font-weight: 900; letter-spacing: -0.01em; }
+  .updated { margin-top: 12px; font-size: 14px; color: #a09e94; }
+  h2 { margin: 44px 0 0; font-size: 21px; font-weight: 800; }
+  p, li { font-size: 16px; line-height: 1.9; color: #c9c7ba; word-break: auto-phrase; }
+  p { margin: 12px 0 0; }
+  ul { margin: 12px 0 0; padding-left: 1.3em; }
+  li + li { margin-top: 8px; }
+  code { font-size: 0.9em; background: #1a1915; padding: 1px 6px; border-radius: 4px; word-break: break-all; }
+  .callout { margin-top: 28px; padding: 18px 20px; border-left: 3px solid #c21818; background: #16140f; }
+  .callout p { margin: 0; color: #f5f5f0; }
+  footer { border-top: 1px solid #201f1a; padding: 24px 64px; display: flex; flex-wrap: wrap; gap: 20px; font-size: 14px; color: #706e64; }
+  footer a { color: #a09e94; }
+  @media (max-width: 700px) { .nav, footer { padding-left: 20px; padding-right: 20px; } h1 { font-size: 30px; } }
+</style>
+</head>
+<body>
+<div class="nav">
+  <a class="nav-brand" href="./"><img src="assets/img/logo.png" alt=""><span>SHINDO SCREENER</span></a>
+  <div class="lang-toggle">
+    <button type="button" class="lang-btn" data-lang-btn="ja">日本語</button>
+    <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+  </div>
+</div>
+<main>
+  <article class="l-ja" lang="ja">
+    <h1>プライバシーポリシー</h1>
+    <div class="updated">最終更新日：2026年9月25日</div>
+    <p>Shindo Screener（以下「本アプリ」）は、個人の開発者が提供する無料のWindowsアプリです。アカウント登録はなく、広告も表示しません。このページでは、本アプリとこのウェブサイトが扱う情報について説明します。</p>
+
+    <h2>お使いのPCに保存される情報</h2>
+    <p>監視地点（地名と緯度・経度）、言語、時刻表示、文字サイズ、アラートの設定は、お使いのPC内の設定ファイル（<code>%APPDATA%\ShindoScreener\settings.json</code>）にのみ保存されます。これらが開発者に送信されることはありません。</p>
+
+    <h2>外部サービスとの通信</h2>
+    <ul>
+      <li><strong>地震情報の受信：</strong>気象庁の緊急地震速報を受信するため、Wolfxの配信サーバー（ws-api.wolfx.jp）に接続します。この通信で個人情報は送信しませんが、通信の仕組み上、接続元のIPアドレスは接続先から見えます。</li>
+      <li><strong>地点の検索：</strong>地点を検索すると、入力した地名がOpenStreetMapのNominatimサービスに送信され、緯度・経度に変換されます。送信された情報の取り扱いは、OpenStreetMap財団のプライバシーポリシーに従います。</li>
+    </ul>
+
+    <h2>不具合報告</h2>
+    <p>アプリ内の「不具合を報告」から送信した場合に限り、次の情報が開発者に届きます：報告の本文、アプリのバージョン、言語設定、監視地点の名前、時刻表示の設定、OSとブラウザエンジンの情報（platform／User-Agent）、送信日時。これらはGoogle Apps Scriptを通じてGoogleスプレッドシートに保存され、不具合の調査と修正のためだけに使います。メールで報告した場合は、メールアドレスとメールの内容を受け取ります。</p>
+    <p>送信した報告の削除を希望する場合は、下記の連絡先までお知らせください。</p>
+
+    <h2>このウェブサイト</h2>
+    <p>このサイトはGitHub Pagesで公開しており、アクセス解析やCookieは使っていません。選んだ表示言語は、お使いのブラウザ（localStorage）にのみ保存されます。フォントをGoogle Fontsから読み込むため、GoogleにIPアドレスなどが送信されます。また、GitHubがサーバーの記録としてアクセス情報を保存する場合があります。</p>
+
+    <h2>第三者への提供</h2>
+    <p>法令に基づく場合を除き、開発者が受け取った情報を第三者に販売・提供することはありません。</p>
+
+    <h2>このポリシーの変更</h2>
+    <p>機能の追加などで扱う情報が変わる場合は、このページを更新し、最終更新日を変更します。</p>
+
+    <h2>お問い合わせ</h2>
+    <p>X（<a href="https://x.com/ShindoScreener">@ShindoScreener</a>）、または<a href="https://github.com/Isaiah-Duncan/shindo-screener-app/issues">GitHubのIssue</a>までご連絡ください。</p>
+  </article>
+  <article class="l-en" lang="en">
+    <h1>Privacy Policy</h1>
+    <div class="updated">Last updated: September 25, 2026</div>
+    <p>Shindo Screener ("the app") is a free Windows app made by an independent developer. There is no account and no advertising. This page explains what information the app and this website handle.</p>
+
+    <h2>Information stored on your PC</h2>
+    <p>Your monitored location (place name, latitude, and longitude), language, time format, text size, and alert settings are saved only in a settings file on your PC (<code>%APPDATA%\ShindoScreener\settings.json</code>). They are never sent to the developer.</p>
+
+    <h2>Connections to outside services</h2>
+    <ul>
+      <li><strong>Earthquake data:</strong> to receive JMA's Earthquake Early Warnings, the app connects to Wolfx's feed server (ws-api.wolfx.jp). No personal information is sent, but as with any internet connection, the server can see your IP address.</li>
+      <li><strong>Location search:</strong> when you search for a location, the place name you type is sent to OpenStreetMap's Nominatim service to find its coordinates. That information is handled under the OpenStreetMap Foundation's privacy policy.</li>
+    </ul>
+
+    <h2>Bug reports</h2>
+    <p>Only if you send a report from "Report a bug" in the app, the developer receives: your report text, the app version, your language setting, the name of your monitored location, your time format setting, OS and browser-engine details (platform and User-Agent), and the time you sent it. This is saved to a Google Sheet through Google Apps Script and used only to investigate and fix problems. If you report by email instead, the developer receives your email address and message.</p>
+    <p>To have a report you sent deleted, contact the developer using the details below.</p>
+
+    <h2>This website</h2>
+    <p>This site is hosted on GitHub Pages and uses no analytics and no cookies. The display language you choose is saved only in your browser (localStorage). Fonts load from Google Fonts, which sends your IP address and similar details to Google. GitHub may also keep server logs of visits.</p>
+
+    <h2>Sharing with third parties</h2>
+    <p>Except where required by law, the developer does not sell or share information it receives with third parties.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If new features change what information is handled, this page will be updated along with the date above.</p>
+
+    <h2>Contact</h2>
+    <p>Reach the developer on X (<a href="https://x.com/ShindoScreener">@ShindoScreener</a>) or through <a href="https://github.com/Isaiah-Duncan/shindo-screener-app/issues">GitHub Issues</a>.</p>
+  </article>
+</main>
+<footer>
+  <a href="./"><span class="l-ja">ホーム</span><span class="l-en">Home</span></a>
+  <a href="privacy.html"><span class="l-ja">プライバシーポリシー</span><span class="l-en">Privacy policy</span></a>
+  <a href="disclaimer.html"><span class="l-ja">免責事項</span><span class="l-en">Disclaimer</span></a>
+  <a href="https://x.com/ShindoScreener">X @ShindoScreener</a>
+</footer>
+<script>
+(function () {
+  var btns = document.querySelectorAll('[data-lang-btn]');
+  function apply(lang) {
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('data-lang', lang);
+    btns.forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-lang-btn') === lang); });
+    try { localStorage.setItem('shindo-lang', lang); } catch (e) {}
+  }
+  btns.forEach(function (b) { b.addEventListener('click', function () { apply(b.getAttribute('data-lang-btn')); }); });
+  var initial = 'ja';
+  try { var s = localStorage.getItem('shindo-lang'); if (s === 'ja' || s === 'en') initial = s; } catch (e) {}
+  apply(initial);
+})();
+</script>
+</body>
+</html>
