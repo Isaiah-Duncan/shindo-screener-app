@@ -26,6 +26,8 @@ OUT_PATH = os.path.join(os.path.dirname(__file__), "..", "docs", "data", "events
 # JMA writes 5-/5+/6-/6+ as 5弱/5強/6弱/6強 in some feeds; store the
 # same short form the app itself uses.
 SHINDO_MAP = {"5弱": "5-", "5強": "5+", "6弱": "6-", "6強": "6+"}
+FIELDS = ("id", "time", "location_ja", "lat", "lon", "depth_km",
+          "magnitude", "max_shindo", "report_type", "info_ja")
 VALID_SHINDO = {"1", "2", "3", "4", "5-", "5+", "6-", "6+", "7"}
 
 
@@ -78,10 +80,13 @@ def normalize(raw):
 
 def merge(existing_events, fetched_events):
     """Merge by id; a newer report's known values replace older ones."""
-    by_id = {e["id"]: e for e in existing_events}
+    by_id = {e["id"]: {**{k: None for k in FIELDS}, **e} for e in existing_events}
     for new in fetched_events:
         old = by_id.get(new["id"], {})
-        by_id[new["id"]] = {**old, **{k: v for k, v in new.items() if v is not None}}
+        merged = {k: None for k in FIELDS}  # every record carries every field
+        merged.update(old)
+        merged.update({k: v for k, v in new.items() if v is not None})
+        by_id[new["id"]] = merged
     return sorted(by_id.values(), key=lambda e: (e["time"], e["id"]), reverse=True)
 
 

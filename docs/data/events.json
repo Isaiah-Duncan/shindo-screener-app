@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-09-25T22:48:11Z",
- "count": 52,
+ "updated_at": "2026-09-26T03:10:10Z",
+ "count": 55,
  "events": [
+  {
+   "id": "20260926112102",
+   "time": "2026-09-26T11:21:00+09:00",
+   "location_ja": "熊本県熊本地方",
+   "lat": 32.8,
+   "lon": 130.8,
+   "depth_km": 10.0,
+   "magnitude": 3.6,
+   "max_shindo": "3",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20260926104305",
+   "time": "2026-09-26T10:43:00+09:00",
+   "location_ja": "熊本県熊本地方",
+   "lat": 32.8,
+   "lon": 130.8,
+   "depth_km": 10.0,
+   "magnitude": 2.9,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20260926103120",
+   "time": "2026-09-26T10:31:00+09:00",
+   "location_ja": "熊本県熊本地方",
+   "lat": 32.8,
+   "lon": 130.8,
+   "depth_km": 10.0,
+   "magnitude": 4.5,
+   "max_shindo": "4",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20260926063141",
    "time": "2026-09-26T06:23:00+09:00",
@@ -11,6 +47,7 @@
    "lon": 168.5,
    "depth_km": 0.0,
    "magnitude": 7.0,
+   "max_shindo": null,
    "report_type": "遠地地震に関する情報",
    "info_ja": "震源の近傍で津波発生の可能性があります。\nこの地震による日本への津波の影響はありません。"
   },
@@ -47,7 +84,8 @@
    "depth_km": 10.0,
    "magnitude": 2.5,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260925085355",
@@ -58,7 +96,8 @@
    "depth_km": 10.0,
    "magnitude": 2.8,
    "max_shindo": "2",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260925084652",
@@ -69,7 +108,8 @@
    "depth_km": 10.0,
    "magnitude": 2.9,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260924224618",
@@ -80,7 +120,8 @@
    "depth_km": 10.0,
    "magnitude": 2.7,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260924223829",
@@ -91,7 +132,8 @@
    "depth_km": 10.0,
    "magnitude": 3.0,
    "max_shindo": "2",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260924213048",
@@ -102,7 +144,8 @@
    "depth_km": 50.0,
    "magnitude": 4.1,
    "max_shindo": "2",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260924172735",
@@ -113,7 +156,8 @@
    "depth_km": 50.0,
    "magnitude": 3.6,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260924123920",
@@ -124,7 +168,8 @@
    "depth_km": 10.0,
    "magnitude": 3.0,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260924095118",
@@ -135,7 +180,8 @@
    "depth_km": 40.0,
    "magnitude": 3.7,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260924063530",
@@ -146,7 +192,8 @@
    "depth_km": 50.0,
    "magnitude": 3.8,
    "max_shindo": "2",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260924013305",
@@ -157,7 +204,8 @@
    "depth_km": 10.0,
    "magnitude": 2.2,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260924013045",
@@ -168,7 +216,8 @@
    "depth_km": 50.0,
    "magnitude": 3.3,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260923092747",
@@ -179,7 +228,8 @@
    "depth_km": 10.0,
    "magnitude": 3.3,
    "max_shindo": "2",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260923065118",
@@ -190,7 +240,8 @@
    "depth_km": 10.0,
    "magnitude": 2.2,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260923023348",
@@ -201,7 +252,8 @@
    "depth_km": 20.0,
    "magnitude": 2.6,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260922215120",
@@ -212,7 +264,8 @@
    "depth_km": 10.0,
    "magnitude": 2.5,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260922194629",
@@ -223,7 +276,8 @@
    "depth_km": 20.0,
    "magnitude": 4.9,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260922184907",
@@ -234,7 +288,8 @@
    "depth_km": 10.0,
    "magnitude": 3.4,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260922153424",
@@ -245,7 +300,8 @@
    "depth_km": 50.0,
    "magnitude": 3.9,
    "max_shindo": "3",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260922082754",
@@ -256,7 +312,8 @@
    "depth_km": 10.0,
    "magnitude": 3.0,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260922073003",
@@ -267,7 +324,8 @@
    "depth_km": 30.0,
    "magnitude": 4.5,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260922013910",
@@ -278,7 +336,8 @@
    "depth_km": 0.0,
    "magnitude": 3.5,
    "max_shindo": "3",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260921233246",
@@ -289,7 +348,8 @@
    "depth_km": 40.0,
    "magnitude": 3.5,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260921223838",
@@ -300,7 +360,8 @@
    "depth_km": 30.0,
    "magnitude": 4.8,
    "max_shindo": "3",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260921211445",
@@ -311,7 +372,8 @@
    "depth_km": 60.0,
    "magnitude": 3.6,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260921203807",
@@ -322,7 +384,8 @@
    "depth_km": 0.0,
    "magnitude": 2.0,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260921194203",
@@ -333,7 +396,8 @@
    "depth_km": 10.0,
    "magnitude": 2.2,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260921171742",
@@ -344,7 +408,8 @@
    "depth_km": 10.0,
    "magnitude": 2.3,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260921084946",
@@ -355,7 +420,8 @@
    "depth_km": 10.0,
    "magnitude": 3.3,
    "max_shindo": "2",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260921082551",
@@ -366,7 +432,8 @@
    "depth_km": 50.0,
    "magnitude": 4.7,
    "max_shindo": "2",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260921080739",
@@ -377,7 +444,8 @@
    "depth_km": 10.0,
    "magnitude": 2.1,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260921015756",
@@ -388,7 +456,8 @@
    "depth_km": 0.0,
    "magnitude": 2.5,
    "max_shindo": "2",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260920163732",
@@ -399,7 +468,8 @@
    "depth_km": 10.0,
    "magnitude": 2.6,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260920162833",
@@ -410,7 +480,8 @@
    "depth_km": 60.0,
    "magnitude": 5.0,
    "max_shindo": "3",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260920155547",
@@ -421,7 +492,8 @@
    "depth_km": 10.0,
    "magnitude": 1.5,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260919212328",
@@ -432,7 +504,8 @@
    "depth_km": 60.0,
    "magnitude": 3.9,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260919210716",
@@ -443,7 +516,8 @@
    "depth_km": 10.0,
    "magnitude": 4.4,
    "max_shindo": "3",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260919140420",
@@ -454,7 +528,8 @@
    "depth_km": 10.0,
    "magnitude": 2.7,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260919140100",
@@ -465,7 +540,8 @@
    "depth_km": 30.0,
    "magnitude": 3.9,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260919092934",
@@ -476,7 +552,8 @@
    "depth_km": 0.0,
    "magnitude": 4.0,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260919074854",
@@ -487,7 +564,8 @@
    "depth_km": 10.0,
    "magnitude": 2.5,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260919065801",
@@ -498,7 +576,8 @@
    "depth_km": 10.0,
    "magnitude": 2.5,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260919061519",
@@ -509,7 +588,8 @@
    "depth_km": 40.0,
    "magnitude": 3.9,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260919044550",
@@ -520,7 +600,8 @@
    "depth_km": 30.0,
    "magnitude": 4.2,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260919015914",
@@ -531,7 +612,8 @@
    "depth_km": 10.0,
    "magnitude": 2.8,
    "max_shindo": "2",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260918203440",
@@ -542,7 +624,8 @@
    "depth_km": 10.0,
    "magnitude": 2.3,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260918100733",
@@ -553,7 +636,8 @@
    "depth_km": 20.0,
    "magnitude": 4.3,
    "max_shindo": "2",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260918083104",
@@ -564,7 +648,8 @@
    "depth_km": 0.0,
    "magnitude": 2.3,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   },
   {
    "id": "20260918030608",
@@ -575,7 +660,8 @@
    "depth_km": 50.0,
    "magnitude": 3.4,
    "max_shindo": "1",
-   "report_type": "震源・震度情報"
+   "report_type": "震源・震度情報",
+   "info_ja": null
   }
  ]
 }
