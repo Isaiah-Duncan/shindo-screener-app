@@ -109,7 +109,7 @@
   .hero2 .smartscreen-note { margin-top: 8px; }
   /* ---- hero demo ---- */
   .hero2-visual { position: relative; width: 100%; aspect-ratio: 640 / 740; container-type: inline-size; }
-  .hero2-map { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+  .hero2-map { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .map-label { font-size: 15px; font-weight: 700; fill: #f5f5f0; paint-order: stroke; stroke: #0b0a08; stroke-width: 5px; stroke-linejoin: round; }
   .wave-label { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; paint-order: stroke; stroke: #0b0a08; stroke-width: 4px; stroke-linejoin: round; }
   #pin { transition: fill 700ms ease; transform-box: fill-box; transform-origin: center; }
@@ -149,12 +149,12 @@
   .ds-idle-line { position: absolute; left: 5cqw; top: 54%; width: 50%; height: 0.16cqw; background: currentColor; transition: opacity 400ms ease; }
   .ds-bottom { display: flex; align-items: flex-end; gap: 0.9cqw; }
   .ds-gear { width: 3cqw; height: 3cqw; opacity: 0.5; }
-  .ds-dist { max-width: 52cqw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 2.7cqw; opacity: 0.75; }
+  .ds-dist { font-size: 2.7cqw; opacity: 0.75; }
   .ds-loc { position: absolute; bottom: 2.1cqw; right: 5cqw; font-size: 3.1cqw; font-weight: 700; letter-spacing: 0.05em; }
   @media (max-width: 700px) {
-    .hero2-visual { aspect-ratio: 100 / 180; }
+    .hero2-visual { aspect-ratio: 100 / 132; }
     .hero2-map { height: auto; bottom: auto; aspect-ratio: 640 / 740; }
-    .hero2-window { left: 0; width: 100%; top: 118cqw; }
+    .hero2-window { left: 0; width: 100%; top: 68.8cqw; }
     .hero2-caption { left: 0; width: 100%; font-size: 2.6cqw; }
   }
   .ds-active-only { opacity: 0; transition: opacity 450ms ease 150ms; }
@@ -354,7 +354,7 @@
             <div class="ds-loc" id="dsLoc"></div>
           </div>
         </div>
-        <div class="hero2-caption"><span id="demoCaption" data-t="mockupCaption">アプリの表示を再現したデモ</span></div>
+        <div class="hero2-caption" data-t="mockupCaption">アプリの表示を再現したデモ</div>
       </div>
     </div>
 
@@ -575,105 +575,18 @@
 
   // Map geometry and the app's real band colors for each demo scenario.
   var SCEN = [
-    { di: 0, px: 336, py: 357, ex: 383, ey: 364, code: '4',  bg: '#a8e6e8', fg: '#0e0e0c', maxr: 470, lx: 14, ly: -12, la: 'start' },  // Tokyo, off Chiba
-    { di: 1, px: 370, py: 264, ex: 409, ey: 266, code: '5+', bg: '#e8d842', fg: '#0e0e0c', maxr: 520, lx: 14, ly: -12, la: 'start' },  // Sendai, off Miyagi
-    { di: 2, px: 214, py: 393, ex: 208, ey: 418, code: '2',  bg: '#e8e6dc', fg: '#0e0e0c', maxr: 230, lx: -14, ly: 22, la: 'end' }   // Osaka, northern Wakayama
+    { px: 336, py: 357, ex: 383, ey: 364, code: '4',  bg: '#a8e6e8', fg: '#0e0e0c', maxr: 470, lx: 14, ly: -12, la: 'start' },  // Tokyo, off Chiba
+    { px: 370, py: 264, ex: 409, ey: 266, code: '5+', bg: '#e8d842', fg: '#0e0e0c', maxr: 520, lx: 14, ly: -12, la: 'start' },  // Sendai, off Miyagi
+    { px: 214, py: 393, ex: 208, ey: 418, code: '2',  bg: '#e8e6dc', fg: '#0e0e0c', maxr: 230, lx: -14, ly: 22, la: 'end' }   // Osaka, northern Wakayama
   ];
-  var narrow = window.matchMedia ? window.matchMedia('(max-width: 700px)') : { matches: false };
-  function winTop() { return narrow.matches ? 740 : 440; }     // phones: window sits below the map
-  function winLeft() { return narrow.matches ? 0 : 190; }
-
-  /* ---- Real quake replays (option C) ----
-     Recent JMA quakes with max Shindo 3 or higher replace the scripted
-     scenes. Each replay monitors the nearest prefectural capital and shows
-     the app's own model estimate there, labelled as a replay. */
-  var REPLAY_MIN = { '3': 1, '4': 1, '5-': 1, '5+': 1, '6-': 1, '6+': 1, '7': 1 };
-  var REPLAY_MAX_AGE_H = 72, REPLAY_MAX = 4;
-  var CITIES = [ // [ja, en, lat, lon]
-    ['札幌市','Sapporo',43.06,141.35],['旭川市','Asahikawa',43.77,142.36],['釧路市','Kushiro',42.98,144.38],['函館市','Hakodate',41.77,140.73],
-    ['青森市','Aomori',40.82,140.74],['八戸市','Hachinohe',40.51,141.49],['盛岡市','Morioka',39.70,141.15],['秋田市','Akita',39.72,140.10],
-    ['仙台市','Sendai',38.27,140.87],['山形市','Yamagata',38.24,140.36],['福島市','Fukushima',37.75,140.47],['水戸市','Mito',36.37,140.47],
-    ['宇都宮市','Utsunomiya',36.56,139.88],['前橋市','Maebashi',36.39,139.06],['さいたま市','Saitama',35.86,139.65],['千葉市','Chiba',35.61,140.12],
-    ['東京都','Tokyo',35.69,139.69],['横浜市','Yokohama',35.44,139.64],['新潟市','Niigata',37.90,139.02],['富山市','Toyama',36.70,137.21],
-    ['金沢市','Kanazawa',36.56,136.66],['福井市','Fukui',36.07,136.22],['甲府市','Kofu',35.66,138.57],['長野市','Nagano',36.65,138.18],
-    ['岐阜市','Gifu',35.42,136.76],['静岡市','Shizuoka',34.98,138.38],['名古屋市','Nagoya',35.18,136.91],['津市','Tsu',34.73,136.51],
-    ['大津市','Otsu',35.00,135.87],['京都市','Kyoto',35.01,135.77],['大阪市','Osaka',34.69,135.50],['神戸市','Kobe',34.69,135.20],
-    ['奈良市','Nara',34.69,135.80],['和歌山市','Wakayama',34.23,135.17],['鳥取市','Tottori',35.50,134.24],['松江市','Matsue',35.47,133.05],
-    ['岡山市','Okayama',34.66,133.93],['広島市','Hiroshima',34.39,132.46],['山口市','Yamaguchi',34.19,131.47],['徳島市','Tokushima',34.07,134.56],
-    ['高松市','Takamatsu',34.34,134.04],['松山市','Matsuyama',33.84,132.77],['高知市','Kochi',33.56,133.53],['福岡市','Fukuoka',33.59,130.40],
-    ['佐賀市','Saga',33.25,130.30],['長崎市','Nagasaki',32.75,129.87],['熊本市','Kumamoto',32.80,130.71],['大分市','Oita',33.24,131.61],
-    ['宮崎市','Miyazaki',31.91,131.42],['鹿児島市','Kagoshima',31.60,130.56]
-  ];
-  var LABELS = {
-    en: { '0': 'Not felt', '1': 'Barely felt indoors', '2': 'Slight indoor shaking', '3': 'Light indoor shaking', '4': 'Moderate indoor shaking',
-          '5-': 'Strong indoor shaking', '5+': 'Very strong indoor shaking', '6-': 'Severe indoor shaking', '6+': 'Violent indoor shaking', '7': 'Extreme indoor shaking' },
-    ja: { '0': '揺れなし', '1': '屋内でわずかに揺れを感じる', '2': '屋内で揺れを感じる', '3': '屋内で弱い揺れ', '4': '屋内でやや強い揺れ',
-          '5-': '屋内で強い揺れ', '5+': '屋内で非常に強い揺れ', '6-': '屋内で激しい揺れ', '6+': '屋内で猛烈な揺れ', '7': '屋内で極めて激しい揺れ' }
-  };
-  function mapXY(lat, lon) { return [400 + 29.37 * (lon - 141.936), 3 + 36.0 * (45.523 - lat)]; }   // calibrated on Soya, Nosappu, Sata
-  function kmBetween(a, b, c, d) {
-    var R = 6371.0088, r = Math.PI / 180, dp = (c - a) * r, dl = (d - b) * r;
-    var h = Math.sin(dp / 2) * Math.sin(dp / 2) + Math.cos(a * r) * Math.cos(c * r) * Math.sin(dl / 2) * Math.sin(dl / 2);
-    return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-  }
-  function modelIntensity(M, D, X) {   // same chain as severity.py (Si & Midorikawa 1999, Vs30 300)
-    var x = Math.max(Math.sqrt(X * X + D * D) - 0.5 * Math.pow(10, 0.5 * M - 1.85), 3);
-    var lp = 0.58 * M + 0.0038 * D - 1.29 - Math.log10(x + 0.0028 * Math.pow(10, 0.5 * M)) - 0.002 * x;
-    return 2.68 + 1.72 * (lp + 1.83 - 0.66 * Math.log10(300));
-  }
-  function snap(i) {
-    var cut = [[0.5,'0'],[1.5,'1'],[2.5,'2'],[3.5,'3'],[4.5,'4'],[5,'5-'],[5.5,'5+'],[6,'6-'],[6.5,'6+']];
-    for (var k = 0; k < cut.length; k++) if (i < cut[k][0]) return cut[k][1];
-    return '7';
-  }
-  function buildReplay(e, Q) {
-    var ep = mapXY(e.lat, e.lon);
-    if (ep[0] < 10 || ep[0] > 630 || ep[1] < 10 || ep[1] > 730) return null;
-    var best = null;
-    CITIES.forEach(function (c) { var d = kmBetween(e.lat, e.lon, c[2], c[3]); if (!best || d < best.d) best = { c: c, d: d }; });
-    var step = snap(modelIntensity(e.magnitude, e.depth_km || 0, best.d));
-    var band = Q.bands[step], pp = mapXY(best.c[2], best.c[3]), M = e.magnitude.toFixed(1);
-    var jst = new Date(new Date(e.time).getTime() + 9 * 3600e3), p2 = function (n) { return (n < 10 ? '0' : '') + n; };
-    var when = (jst.getUTCMonth() + 1) + '/' + jst.getUTCDate() + ' ' + p2(jst.getUTCHours()) + ':' + p2(jst.getUTCMinutes());
-    var right = ep[0] > 470;
-    var km = '~' + Math.round(best.d) + ' km';
-    var ja = e.location_ja || '', en = (Q.names && Q.names[ja]) || ja;
-    return {
-      real: true, px: pp[0], py: pp[1], ex: ep[0], ey: ep[1], code: step, bg: band[0], fg: band[1],
-      maxr: Math.max(160, Math.min(560, 160 + (e.magnitude - 3) * 110)),
-      lx: right ? -14 : 14, ly: -12, la: right ? 'end' : 'start',
-      t: {
-        en: { loc: best.c[1], event: 'Epicenter: ' + en + ', M' + M, l1: 'M' + M + ' — ' + en,
-              l2: 'JMA maximum intensity: ' + e.max_shindo, l3: 'Replay of a real quake — ' + when + ' JST',
-              est: 'Estimated at ' + best.c[1], label: LABELS.en[step], dist: km + ' from the epicenter', dsLoc: 'Monitoring: ' + best.c[1],
-              caption: "REPLAY OF A REAL QUAKE, WITH THE APP'S ESTIMATE" },
-        ja: { loc: best.c[0], event: '震源：' + ja + '　M' + M, l1: 'M' + M + ' — ' + ja,
-              l2: '気象庁発表の最大震度: ' + e.max_shindo.replace('-', '弱').replace('+', '強'), l3: '実際の地震の再現 — ' + when,
-              est: best.c[0] + 'での推定', label: LABELS.ja[step], dist: '震源から約' + Math.round(best.d) + ' km', dsLoc: '監視地点: ' + best.c[0],
-              caption: '実際の地震を再現（アプリによる推定）' }
-      }
-    };
-  }
-  var pending = null;   // replay list waiting for the next loop boundary
-  function refreshReplays() {
-    var Q = window.ShindoQuakes; if (!Q) return;
-    var now = Date.now(), out = [];
-    Q.events.forEach(function (e) {
-      if (out.length >= REPLAY_MAX || !REPLAY_MIN[e.max_shindo] || e.lat == null || e.lon == null || e.magnitude == null) return;
-      if (now - new Date(e.time).getTime() > REPLAY_MAX_AGE_H * 3600e3) return;
-      var r = buildReplay(e, Q); if (r) out.push(r);
-    });
-    pending = out.length ? out : SCEN.slice();
-  }
-  window.addEventListener('shindo-quakes', refreshReplays);
-  var scenes = SCEN.slice();
+  var WIN_TOP = 440, WIN_LEFT = 190;
   var VP = 90, VS = 52;                      // P travels ~1.73x faster than S
   var QUAKE = 2.4, END = 11.6, CLEAR = 12.4, LOC_ERASE = 13.7, LOOP = 14.5;
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var idx = 0, sc = SCEN[0], tP, tS, EEW;
 
   function setScenario(i) {
-    idx = i; sc = scenes[i];
+    idx = i; sc = SCEN[i];
     var d = Math.hypot(sc.ex - sc.px, sc.ey - sc.py);
     tP = QUAKE + d / VP; tS = QUAKE + d / VS; EEW = (tP + tS) / 2;   // report lands between P and S arrival
     [pW, sW].forEach(function (c) { c.setAttribute('cx', sc.ex); c.setAttribute('cy', sc.ey); });
@@ -682,17 +595,14 @@
     var lbl = epi.querySelector('text');
     lbl.setAttribute('x', sc.lx); lbl.setAttribute('y', sc.ly); lbl.setAttribute('text-anchor', sc.la);
     pin.setAttribute('cx', sc.px); pin.setAttribute('cy', sc.py);
-    pinLine.setAttribute('d', 'M' + sc.px + ' ' + sc.py + ' L' + (narrow.matches ? sc.px : Math.max(sc.px, winLeft())) + ' ' + winTop());
+    pinLine.setAttribute('d', 'M' + sc.px + ' ' + sc.py + ' L' + Math.max(sc.px, WIN_LEFT) + ' ' + WIN_TOP);
     screen.style.setProperty('--ds-bg', sc.bg); screen.style.setProperty('--ds-fg', sc.fg);
     $('dsCode').textContent = sc.code;
     fillScreen();
   }
-  function text() { return sc.real ? sc.t[lang === 'en' ? 'en' : 'ja'] : copy.demo[sc.di]; }
   function fillScreen() {
     if (!copy) return;
-    var d = text();
-    var cap = document.getElementById('demoCaption');
-    if (cap) cap.textContent = sc.real ? d.caption : copy.mockupCaption;
+    var d = copy.demo[idx];
     $('dsL1').textContent = d.l1; $('dsL2').textContent = d.l2; $('dsL3').textContent = d.l3;
     $('dsEst').textContent = d.est; $('dsLabel').textContent = d.label;
     $('dsDist').textContent = d.dist; $('dsLoc').textContent = d.dsLoc;
@@ -728,7 +638,7 @@
 
   function render(t) {
     if (!copy) return;
-    var d = text();
+    var d = copy.demo[idx];
 
     // location types in at the start of each loop and erases at the end
     var loc = t < LOC_ERASE ? typed(d.loc, 0.3, t, 9) : erased(d.loc, LOC_ERASE, t, 14);
@@ -757,13 +667,7 @@
     if (!running) return;
     if (start === null) start = now;
     var t = (now - start) / 1000;
-    if (t >= LOOP) {
-      start = now; t = 0;
-      if (pending) { scenes = pending; pending = null; setScenario(0); }   // swap lists only between loops
-      else setScenario((idx + 1) % scenes.length);
-    } else if (pending && !sc.real && t < 2) {   // first real data right after page load: start the replay now
-      scenes = pending; pending = null; setScenario(0); start = now; t = 0;
-    }
+    if (t >= LOOP) { start = now; t = 0; setScenario((idx + 1) % SCEN.length); }
     render(t);
     requestAnimationFrame(frame);
   }
@@ -779,9 +683,8 @@
     start = null;
   }
   function staticState() {
-    if (pending) { scenes = pending; pending = null; }
     setScenario(0);
-    var d = text();
+    var d = copy.demo[0];
     typeLoc.textContent = d.loc; typeEvent.textContent = d.event;
     screen.dataset.state = 'active'; pin.style.fill = sc.bg; epi.setAttribute('opacity', 1);
     waves.setAttribute('opacity', 1); waveStyle(pW, pL, 150); waveStyle(sW, sL, 86);
@@ -935,7 +838,6 @@
       var depth = String(r.depth || '');
       out.push({
         id: r.EventID, time: t + '+09:00', location_ja: (r.location || '').trim() || null,
-        lat: num(r.latitude), lon: num(r.longitude),
         depth_km: depth.indexOf('ごく浅い') >= 0 ? 0 : num(depth), magnitude: num(r.magnitude),
         max_shindo: BANDS[s] ? s : null, report_type: r.Title || null
       });
@@ -981,8 +883,6 @@
 
   function render() {
     var en = lang() === 'en';
-    window.ShindoQuakes = { events: events, place: place, timeParts: timeParts, bands: BANDS, names: names };
-    window.dispatchEvent(new Event('shindo-quakes'));
     if (!events.length) {
       list.innerHTML = '<li class="quake-empty">' + (source === 'error'
         ? (en ? 'Earthquake data is unavailable right now.' : '現在、地震情報を取得できません。')
