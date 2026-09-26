@@ -1,8 +1,32 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-09-26T11:19:16Z",
- "count": 58,
+ "updated_at": "2026-09-26T15:02:17Z",
+ "count": 60,
  "events": [
+  {
+   "id": "20260926235451",
+   "time": "2026-09-26T23:54:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.3,
+   "lon": 130.5,
+   "depth_km": 0.0,
+   "magnitude": 2.2,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20260926210756",
+   "time": "2026-09-26T21:07:00+09:00",
+   "location_ja": "伊勢湾",
+   "lat": 34.8,
+   "lon": 136.8,
+   "depth_km": 40.0,
+   "magnitude": 3.2,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20260926194226",
    "time": "2026-09-26T19:42:00+09:00",
