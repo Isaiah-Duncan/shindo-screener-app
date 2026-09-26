@@ -378,18 +378,6 @@
 
   <!-- how it works -->
 
-  <!-- recent earthquakes (live) -->
-  <section class="block" id="recent">
-    <div class="block-head">
-      <div class="kicker"><span class="l-ja">最近の地震</span><span class="l-en">RECENT EARTHQUAKES</span></div>
-      <h2><span class="l-ja">気象庁が発表した最新の地震。</span><span class="l-en">The latest earthquakes JMA has reported.</span></h2>
-      <p class="block-sub"><span class="l-ja">色の付いた数字は、その地震で観測された最大震度です。あなたの地点での震度ではありません。</span><span class="l-en">The colored number is the strongest Shindo recorded anywhere for that quake, not the reading at your location.</span></p>
-    </div>
-    <ol class="quake-list" id="quakeList" aria-live="polite">
-      <li class="quake-empty"><span class="l-ja">読み込み中…</span><span class="l-en">Loading…</span></li>
-    </ol>
-    <p class="quake-note" id="quakeNote"></p>
-  </section>
 
   <section class="block" id="how">
     <div class="block-head">
@@ -478,6 +466,19 @@
         </div>
     </div>
     <p class="scale-note"><span class="l-ja">色はアプリの表示と同じです。説明は<a href="https://www.jma.go.jp/jma/kishou/know/shindo/kaisetsu.html">気象庁震度階級関連解説表</a>の「人の体感・行動」を要約したものです。</span><span class="l-en">Colors match the app. Descriptions summarize "human sensation and behavior" from <a href="https://www.jma.go.jp/jma/kishou/know/shindo/kaisetsu.html">JMA's Shindo scale explanation table</a> (Japanese).</span></p>
+  </section>
+
+  <!-- recent earthquakes (live) -->
+  <section class="block" id="recent">
+    <div class="block-head">
+      <div class="kicker"><span class="l-ja">最近の地震</span><span class="l-en">RECENT EARTHQUAKES</span></div>
+      <h2><span class="l-ja">気象庁が発表した最新の地震。</span><span class="l-en">The latest earthquakes JMA has reported.</span></h2>
+      <p class="block-sub"><span class="l-ja">色の付いた数字は、その地震で観測された最大震度です。あなたの地点での震度ではありません。</span><span class="l-en">The colored number is the strongest Shindo recorded anywhere for that quake, not the reading at your location.</span></p>
+    </div>
+    <ol class="quake-list" id="quakeList" aria-live="polite">
+      <li class="quake-empty"><span class="l-ja">読み込み中…</span><span class="l-en">Loading…</span></li>
+    </ol>
+    <p class="quake-note" id="quakeNote"></p>
   </section>
 
   <!-- faq -->
