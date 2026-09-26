@@ -25,7 +25,7 @@ packaging a broken app just produces a broken .exe, harder to debug.
 ## 3. Build the standalone executable
 
 ```
-pyinstaller --onefile --windowed --name "ShindoScreener" --icon "icon.ico" --add-data "screener_app.html;." --add-data "cities_jp.json;." --add-data "icon.ico;." --add-data "alert_quiet.wav;." --add-data "alert_normal.wav;." --add-data "alert_loud.wav;." app.py
+pyinstaller --onefile --windowed --name "ShindoScreener" --icon "icon.ico" --add-data "screener_app.html;." --add-data "cities_jp.json;." --add-data "stations_jp.json;." --add-data "icon.ico;." --add-data "alert_quiet.wav;." --add-data "alert_normal.wav;." --add-data "alert_loud.wav;." app.py
 ```
 
 This produces `dist/ShindoScreener.exe`, a single file. That's the

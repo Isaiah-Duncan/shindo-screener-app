@@ -627,8 +627,10 @@ const LABELS_JA = {
   "6-": "屋内で激しい揺れ", "6+": "屋内で猛烈な揺れ", "7": "屋内で極めて激しい揺れ",
 };
 
-const MATURITY_EN = { preliminary: "Preliminary estimate", updated: "Estimate updated", final: "Final JMA report" };
-const MATURITY_JA = { preliminary: "速報段階の推定", updated: "推定を更新", final: "気象庁の確定報" };
+const MATURITY_EN = { preliminary: "Early warning, first report", updated: "Early warning, updated", final: "Early warning, final report",
+  measured_quick: "JMA quick intensity report", measured_detail: "JMA measured intensities", test: "Test only, not a real earthquake" };
+const MATURITY_JA = { preliminary: "緊急地震速報（第1報）", updated: "緊急地震速報（続報）", final: "緊急地震速報（最終報）",
+  measured_quick: "気象庁 震度速報", measured_detail: "気象庁 震源・震度情報", test: "テスト表示（実際の地震ではありません）" };
 
 const STRINGS = {
   en: {
@@ -1057,9 +1059,15 @@ function renderIdle() {
   els.metaText.textContent = '';
 }
 
+function jaStep(step) { return String(step).replace('-', '弱').replace('+', '強'); }
+
+// Every number here is JMA's own value, relayed as-is (see jma_sources.py).
+// The app never shows an intensity it computed itself.
 function renderActive(state) {
   lastActiveState = state;
-  const step = state.jma_step_estimated || "0";
+  const ja = currentLang === 'ja';
+  const src = state.display_source;
+  const step = state.display_step;
   const band = BANDS[step] || BANDS["0"];
   els.screen.style.background = band.bg;
   els.screen.style.color = band.fg;
@@ -1068,37 +1076,72 @@ function renderActive(state) {
   els.idleLine.style.display = 'none';
   els.rule.style.background = band.fg;
 
-  const magStr = state.magnitude?.toFixed(1) ?? '?';
-  els.eventSummaryLine.textContent = `M${magStr} \u2014 ${state.matched_city || (currentLang === 'ja' ? '\u4e0d\u660e' : 'Unknown source')}`;
-  els.jmaMaxLine.textContent = currentLang === 'ja'
-    ? `\u6c17\u8c61\u5e81\u767a\u8868\u306e\u6700\u5927\u9707\u5ea6: ${state.shindo_reported_by_jquake ?? '?'}`
-    : `JMA maximum intensity: ${state.shindo_reported_by_jquake ?? '?'}`;
-  const maturityWords = currentLang === 'ja' ? MATURITY_JA : MATURITY_EN;
-  const maturityText = maturityWords[state.maturity] || maturityWords.preliminary;
-  els.maturityLine.textContent = state.serial != null
-    ? (currentLang === 'ja' ? `\u5831\u544a ${state.serial} \u2014 ${maturityText}` : `Report ${state.serial} \u2014 ${maturityText}`)
+  const magStr = state.magnitude != null ? state.magnitude.toFixed(1) : '?';
+  els.eventSummaryLine.textContent = `M${magStr} — ${state.hypocenter || (ja ? '震源調査中' : 'Epicenter not yet known')}`;
+
+  const max = state.jma_max;
+  if (state.jma_max_kind === 'measured') {
+    els.jmaMaxLine.textContent = ja ? `気象庁発表の最大震度（観測）: ${max ? jaStep(max) : '?'}` : `JMA maximum intensity (measured): ${max ?? '?'}`;
+  } else if (state.jma_max_kind === 'forecast') {
+    els.jmaMaxLine.textContent = ja ? `気象庁の予想最大震度: ${max ? jaStep(max) : '?'}` : `JMA maximum intensity (forecast): ${max ?? '?'}`;
+  } else {
+    els.jmaMaxLine.textContent = ja ? '最大震度: テスト' : 'Maximum intensity: TEST';
+  }
+
+  const maturityWords = ja ? MATURITY_JA : MATURITY_EN;
+  const maturityText = maturityWords[state.maturity] || '';
+  els.maturityLine.textContent = (state.phase === 'eew' && state.serial != null)
+    ? (ja ? `第${state.serial}報 — ${maturityText}` : `Report ${state.serial} — ${maturityText}`)
     : maturityText;
 
-  els.estimateLabel.textContent = currentLang === 'ja'
-    ? `${currentHomeName}\u3067\u306e\u63a8\u5b9a`
-    : `Estimated at ${currentHomeName}`;
+  // Line above the big number: whose reading this is
+  const station = state.station || '';
+  const km = state.station_km != null ? state.station_km : null;
+  const kmTxt = km != null ? (ja ? `（約${km} km）` : ` (${km} km away)`) : '';
+  const area = state.area || state.home_area || '';
+  const heads = {
+    station:         ja ? `最寄りの観測点 ${station}${kmTxt}` : `Measured at your nearest JMA station, ${station}${kmTxt}`,
+    station_below_1: ja ? `最寄りの観測点 ${station}${kmTxt}` : `Your nearest JMA station, ${station}${kmTxt}`,
+    area:            ja ? `${area}で観測（速報）` : `Measured in your area, ${area} (quick report)`,
+    area_warning:    ja ? `${area}に緊急地震速報（警報）` : `JMA early warning for your area, ${area}`,
+    none:            ja ? '緊急地震速報' : 'JMA early warning',
+    test:            ja ? `テスト表示 — ${station}` : `Test reading — ${station}`,
+  };
+  els.estimateLabel.textContent = heads[src] || '';
 
   if (state.tsunami_warning) {
     els.tsunamiBox.style.display = 'inline-block';
-    els.tsunamiBox.textContent = currentLang === 'ja'
-      ? `\u6d25\u6ce2\u8b66\u5831: ${state.tsunami_warning}`
-      : `TSUNAMI WARNING: ${state.tsunami_warning}`;
+    els.tsunamiBox.textContent = ja ? `津波情報: ${state.tsunami_warning}` : `TSUNAMI: ${state.tsunami_warning}`;
   } else {
     els.tsunamiBox.style.display = 'none';
   }
 
-  els.code.textContent = step;
+  els.code.textContent = step || '';   // no JMA value for this spot yet: leave the slot empty
 
-  els.labelText.textContent = (currentLang === 'ja' ? LABELS_JA[step] : LABELS_EN[step]) || '';
+  // Line under the big number: what it means
+  let label = (ja ? LABELS_JA[step] : LABELS_EN[step]) || '';
+  if (src === 'station_below_1') {
+    label = ja ? '震度1未満（揺れはほとんどありませんでした）' : 'Below Shindo 1 here (little or no shaking)';
+  } else if (src === 'area_warning' && state.area_forecast) {
+    const f = state.area_forecast;
+    const range = f.to ? (ja ? `${jaStep(f.from)}〜${jaStep(f.to)}` : `${f.from} to ${f.to}`)
+                       : (ja ? `${jaStep(f.from)}以上` : `${f.from} or stronger`);
+    label = (ja ? `気象庁の予想震度 ${range}` : `JMA forecast: Shindo ${range}`) +
+            (f.arrived ? (ja ? '・主要動到達' : ' · strong shaking arriving') : '');
+  } else if (src === 'none') {
+    label = ja ? 'お住まいの地域は警報の対象外です。観測値が届き次第、表示します。'
+               : 'Your area is not under warning. Measured values will appear here when JMA reports them.';
+  }
+  els.labelText.textContent = label;
 
-  els.metaText.textContent = state.matched_city
-    ? `~${Math.round(state.distance_km)} km \u2014 ${state.matched_city}`
-    : (state.distance_km != null ? `~${Math.round(state.distance_km)} km` : '');
+  // Bottom line: distance to the epicenter (plain geometry) and nearby context
+  const parts = [];
+  if (state.epicenter_km != null) parts.push(ja ? `震源から約${state.epicenter_km} km` : `~${state.epicenter_km} km from the epicenter`);
+  if (state.nearby_max) {
+    const n = state.nearby_max;
+    parts.push(ja ? `周辺: ${n.station}で震度${jaStep(n.step)}` : `Nearby: Shindo ${n.step} at ${n.station}`);
+  }
+  els.metaText.textContent = parts.join(' · ');
 }
 
 function applyState(state) {

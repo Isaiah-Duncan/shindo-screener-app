@@ -75,24 +75,15 @@ def meets_alert_threshold(jma_step, min_step=DEFAULT_ALERT_MIN_STEP):
     return STEP_RANK.get(jma_step, -1) >= STEP_RANK[min_step]
 
 
-def is_new_report(serial):
-    """
-    Wolfx's Serial field increments per update to the SAME event, so
-    only serial 1 (or missing, as with this app's own test events)
-    marks a brand-new report. Gating on this means the alert fires once
-    per new quake rather than re-firing on every routine
-    preliminary -> updated -> final refresh of one already shown.
-    """
-    return serial in (None, 1)
-
-
 def should_alert(state, min_step=DEFAULT_ALERT_MIN_STEP):
     """Single entry point Listener.push() calls with the pushed state
-    dict; keeps all the alert-worthiness logic in one place."""
+    dict. alert_step is always a JMA value (JMA's warning forecast for
+    the user's area, or JMA's measured intensity near the user), never
+    one the app computed. Listener.push() makes sure each quake chimes
+    at most once."""
     return (
         state.get("status") == "active"
-        and meets_alert_threshold(state.get("jma_step_estimated"), min_step)
-        and is_new_report(state.get("serial"))
+        and meets_alert_threshold(state.get("alert_step"), min_step)
     )
 
 

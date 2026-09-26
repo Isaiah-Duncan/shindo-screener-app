@@ -36,13 +36,15 @@ import websockets
 import websockets.sync.client as ws_client
 
 import alert
-import severity
+import jma_sources
 
 WOLFX_JMA_EEW_URL = "wss://ws-api.wolfx.jp/jma_eew"
-CITIES_JSON_RELATIVE_PATH = "cities_jp.json"
+P2P_WS_URL = "wss://api.p2pquake.net/v2/ws"
+STATIONS_JSON_RELATIVE_PATH = "stations_jp.json"
 IDLE_STATE = {"status": "idle", "updated_at": None}
-IDLE_TIMEOUT_MINUTES = 1
-SANITY_MAX_DISTANCE_KM = 3000
+EEW_IDLE_MINUTES = 5          # an early warning stays up this long if no measured report follows
+MEASURED_IDLE_MINUTES = 10    # a measured reading stays up this long, then the screen goes quiet
+EEW_NOTICE_RADIUS_KM = 300    # show early warnings for quakes this close even when JMA hasn't warned your area
 CHECK_INTERVAL_SECONDS = 15
 ACTIVE_POLL_INTERVAL_SECONDS = 3
 IDLE_POLL_INTERVAL_SECONDS = 8
@@ -56,18 +58,6 @@ def resource_path(relative_path):
     """
     base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
-
-
-# severity.py resolves its own CITIES_PATH from its module __file__,
-# which is a real path when running via `python app.py` but is NOT
-# reliably a real on-disk path once PyInstaller freezes this into a
-# single .exe (pure-Python modules get bundled into an in-memory
-# archive, not extracted as individual .py files). Overriding it here,
-# through the same resource_path() helper already proven correct for
-# screener_app.html and icon.ico, removes that ambiguity entirely
-# rather than relying on frozen-module __file__ behavior lining up by
-# coincidence.
-severity.CITIES_PATH = resource_path(CITIES_JSON_RELATIVE_PATH)
 
 
 def settings_dir():
@@ -301,20 +291,10 @@ class Api:
 
     VALID_TEST_STEPS = ["0", "1", "2", "3", "4", "5-", "5+", "6-", "6+", "7"]
 
-    # Per-step (magnitude, depth_km, distance_km) used by trigger_test_event
-    # below. Each row was solved against severity.estimated_intensity
-    # (Si & Midorikawa 1999 chain) to land near the middle of its Shindo
-    # band, not on a boundary, so rounding can't flip it. All use a 10 km
-    # focal depth. Rows 0-6- use the app's default Vs30 (300 m/s,
-    # average ground). 6+ and 7 need soft ground (vs30 200 / 150): on
-    # average ground this model needs ~M9.3 for Shindo 7, which matches
-    # real Shindo 7 events (Kumamoto 2016, Noto 2024) coming from
-    # near-fault shaking on soft soil. The vs30 key is documentation
-    # only; trigger_test_event pins the step directly. If severity.py's
-    # formula changes, re-solve these.
-    #   step: continuous intensity it produces
-    #   0: 0.17  1: 1.05  2: 2.00  3: 3.04  4: 4.01
-    #   5-: 4.76  5+: 5.18  6-: 5.80  6+: 6.37  7: 6.61
+    # Per-step (magnitude, depth_km, distance_km) shown by the test
+    # buttons. These are only there so the test screen looks like a real
+    # quake of that strength; the Shindo itself is pinned to the button.
+    # Values are plausible for that level measured near the epicenter.
     TEST_EVENT_PARAMS = {
         "0":  {"magnitude": 2.0, "depth_km": 10.0, "distance_km": 30.0},
         "1":  {"magnitude": 2.8, "depth_km": 10.0, "distance_km": 27.0},
@@ -324,28 +304,18 @@ class Api:
         "5-": {"magnitude": 6.1, "depth_km": 10.0, "distance_km": 20.0},
         "5+": {"magnitude": 6.7, "depth_km": 10.0, "distance_km": 30.0},
         "6-": {"magnitude": 6.8, "depth_km": 10.0, "distance_km": 20.0},
-        "6+": {"magnitude": 7.6, "depth_km": 10.0, "distance_km": 10.0, "vs30": 200.0},
-        "7":  {"magnitude": 8.0, "depth_km": 10.0, "distance_km": 5.0,  "vs30": 150.0},
+        "6+": {"magnitude": 7.6, "depth_km": 10.0, "distance_km": 10.0},
+        "7":  {"magnitude": 8.0, "depth_km": 10.0, "distance_km": 5.0},
     }
 
     def trigger_test_event(self, step="5-", lang="en"):
         """
-        Pushes a fake reading pinned to an exact Shindo step, for
-        checking the display's rendering at every real step directly.
-        The magnitude/depth/distance shown alongside each step come from
-        TEST_EVENT_PARAMS above, a real value that produces that exact
-        step through the app's own formula, not an override that could
-        mismatch what's on screen. The frontend is responsible for
-        showing a professionalism warning before ever calling this;
-        this method itself doesn't gate on anything, so it stays simple
-        and testable.
-
-        `lang` picks the placeholder epicenter name's language ("Test
-        epicenter" / "テスト震源地"), matching the app's current UI
-        language the same way search_location's `lang` does, so a test
-        event triggered in 日本語 doesn't drop back to English for this
-        one field. The rest of the reading (magnitude, distance) is
-        numeric and needs no translation.
+        Pushes a fake measured reading pinned to an exact Shindo step, so
+        every step's screen can be checked directly. It uses the user's
+        real nearest JMA station, so the test looks exactly like a real
+        reading would. The frontend shows a professionalism warning
+        before calling this. Each test gets its own event key, so the
+        alert chime fires every time (useful for checking volume).
         """
         if step not in self.VALID_TEST_STEPS:
             return {"ok": False, "error": f"Not a real Shindo step: {step}"}
@@ -353,59 +323,87 @@ class Api:
         if listener is None:
             return {"ok": False, "error": "Set a location first."}
         params = self.TEST_EVENT_PARAMS[step]
-        epicenter_name = "テスト震源地" if lang == "ja" else "Test epicenter"
+        nearest = (listener.home_info.get("stations") or [{}])[0]
+        now = datetime.now(timezone.utc).isoformat()
         listener.push({
             "status": "active",
-            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": now,
+            "event_key": "test-" + now,
+            "phase": "measured",
             "magnitude": params["magnitude"],
             "depth_km": params["depth_km"],
-            "shindo_reported_by_jquake": "TEST",
-            "matched_city": epicenter_name,
-            "distance_km": params["distance_km"],
-            "jma_step_estimated": step,
+            "hypocenter": "テスト震源地" if lang == "ja" else "Test epicenter",
+            "epicenter_km": params["distance_km"],
+            "jma_max": step,
+            "jma_max_kind": "test",
             "tsunami_warning": None,
-            "serial": 1,
-            "maturity": "preliminary",
+            "serial": None,
+            "maturity": "test",
             "accuracy": None,
+            "home_area": listener.home_info.get("area"),
+            "display_step": step,
+            "display_source": "test",
+            "alert_step": step,
+            "station": nearest.get("name"),
+            "station_km": round(nearest["distance_km"], 1) if nearest.get("distance_km") is not None else None,
         })
         return {"ok": True}
 
 
 class Listener:
     """
-    The WebSocket listener, adapted from jma_ws_client.py to push
-    directly into the webview window instead of writing state.json
-    for something else to poll.
+    Two background connections, both relaying JMA's own values:
+      - Wolfx JMA EEW (WebSocket): early warnings while shaking is coming.
+      - P2P地震情報 (WebSocket): JMA's measured intensities afterward.
+    See jma_sources.py for why the app never computes its own forecast.
     """
 
     def __init__(self, window, home, alert_min_step=alert.DEFAULT_ALERT_MIN_STEP,
                  alert_wake_screen=True, alert_volume=alert.DEFAULT_ALERT_VOLUME):
         self.window = window
-        self.home = home  # {"name":..., "lat":..., "lon":...}
+        self.stations = jma_sources.load_stations(resource_path(STATIONS_JSON_RELATIVE_PATH))
+        self._home = None
+        self.home_info = {"area": None, "stations": []}
+        self.home = home  # property: also finds the nearest JMA station and area
         self.current_state = dict(IDLE_STATE)
+        self.event = None        # the quake currently on screen
+        self.alerted = set()     # event keys that already chimed
+        self.lock = threading.Lock()
         # Mutated directly by the Api set_alert_* methods when the user
         # changes a setting, so a change takes effect on the very next
-        # push without needing to restart the listener thread.
+        # push without needing to restart the listener threads.
         self.alert_min_step = alert_min_step
         self.alert_wake_screen = alert_wake_screen
         self.alert_volume = alert_volume
 
+    @property
+    def home(self):
+        return self._home
+
+    @home.setter
+    def home(self, value):
+        self._home = value
+        self.home_info = jma_sources.locate_home(value, self.stations)
+
+    # ------------------------------------------------------------ output
+
     def push(self, state):
         self.current_state = state
         try:
-            self.window.evaluate_js(f"window.applyState({json.dumps(state)})")
+            self.window.evaluate_js(f"window.applyState({json.dumps(state, ensure_ascii=False)})")
         except Exception:
             pass  # window may be closing, not fatal
-        if alert.should_alert(state, min_step=self.alert_min_step):
+        key = state.get("event_key")
+        if key and key not in self.alerted and alert.should_alert(state, min_step=self.alert_min_step):
+            self.alerted.add(key)
             alert.trigger(
                 self.window, resource_path,
                 wake_screen=self.alert_wake_screen, volume=self.alert_volume,
             )
 
-    def cities_data(self):
-        data = severity.load_cities()
-        data["home"] = self.home
-        return data
+    def go_idle(self):
+        self.event = None
+        self.push(dict(IDLE_STATE, updated_at=self.now_iso()))
 
     def now_iso(self):
         return datetime.now(timezone.utc).isoformat()
@@ -416,125 +414,126 @@ class Listener:
         then = datetime.fromisoformat(iso_timestamp)
         return (datetime.now(timezone.utc) - then).total_seconds() / 60.0
 
-    def extract_epicenter_coords(self, payload):
-        lat, lon = payload.get("Latitude"), payload.get("Longitude")
-        if lat is not None and lon is not None:
-            try:
-                return float(lat), float(lon)
-            except (TypeError, ValueError):
-                pass
-        return None, None
-
-    def extract_hypocenter_name(self, payload):
-        h = payload.get("Hypocenter")
-        return h if isinstance(h, str) else None
-
-    def extract_magnitude(self, payload):
-        for key in ("Magnitude", "Magunitude", "magnitude"):
-            val = payload.get(key)
-            if val is not None:
-                try:
-                    return float(val)
-                except (TypeError, ValueError):
-                    continue
-        return None
-
-    def extract_tsunami_warning(self, payload):
-        for key in ("Tsunami", "isTsunami", "TsunamiWarning", "TsunamiComment"):
-            val = payload.get(key)
-            if val:
-                return str(val)
-        return None
-
     def check_idle_timeout(self):
-        if self.current_state.get("status") not in (None, "idle"):
-            if self.minutes_since(self.current_state.get("updated_at")) > IDLE_TIMEOUT_MINUTES:
-                self.push(dict(IDLE_STATE, updated_at=self.now_iso()))
+        with self.lock:
+            st = self.current_state
+            if st.get("status") != "active":
+                return
+            limit = EEW_IDLE_MINUTES if st.get("phase") == "eew" else MEASURED_IDLE_MINUTES
+            if self.minutes_since(st.get("updated_at")) > limit:
+                self.go_idle()
 
-    def classify_maturity(self, serial, is_final):
-        """
-        Report-maturity wording driven by real feed fields (Serial,
-        isFinal), not an invented confidence scale. This is the
-        distinction between "the app made up a confidence level" and
-        "the app is just describing what JMA's own report metadata
-        already says."
-        """
-        if is_final:
-            return "final"
-        if serial is not None and serial > 1:
-            return "updated"
-        return "preliminary"
+    def epicenter_km(self, lat, lon):
+        if lat is None or lon is None:
+            return None
+        return round(jma_sources.haversine_km(self.home["lat"], self.home["lon"], lat, lon))
 
-    def extract_accuracy(self, payload):
-        """
-        JMA's own accuracy/method field (e.g. "IPF法（5点以上）", IPF
-        method, 5+ station points), confirmed present in real payloads
-        tested during this build. Passed through as-is rather than
-        translated into an invented Low/Medium/High scale; only the
-        one specific value we've actually verified gets a plain-English
-        rendering, everything else is left for the frontend to show
-        untranslated (correct as-is in Japanese mode, omitted rather
-        than guessed at in English mode) rather than mistranslating an
-        unfamiliar value with false confidence.
-        """
-        accuracy = payload.get("Accuracy")
-        if isinstance(accuracy, dict):
-            return accuracy.get("Epicenter")
-        return None
+    # ------------------------------------------------------------ state building
 
-    def process_payload(self, payload):
-        if payload.get("isCancel"):
-            self.push(dict(IDLE_STATE, updated_at=self.now_iso()))
-            return
-
-        magnitude = self.extract_magnitude(payload)
-        depth = payload.get("Depth")
-        hypocenter_name = self.extract_hypocenter_name(payload)
-        lat, lon = self.extract_epicenter_coords(payload)
-
-        if magnitude is None:
-            return  # nothing usable, ignore rather than show a broken state
-
-        depth_km = float(depth) if depth is not None else 30.0
-        cities = self.cities_data()
-
-        if lat is not None and lon is not None:
-            result = severity.evaluate_event_from_epicenter(magnitude, depth_km, lat, lon, cities)
-            if hypocenter_name:
-                result["matched_city"] = hypocenter_name
-        elif hypocenter_name:
-            result = severity.evaluate_event(magnitude, depth_km, [hypocenter_name], cities)
-        else:
-            result = {"matched_city": None, "distance_km": None, "jma_step": None}
-
-        if result.get("distance_km") is not None and result["distance_km"] > SANITY_MAX_DISTANCE_KM:
-            self.push(dict(IDLE_STATE, updated_at=self.now_iso()))
-            return
-
-        if result.get("jma_step") == "0":
-            self.push(dict(IDLE_STATE, updated_at=self.now_iso()))
-            return
-
-        state = {
+    def build_state(self):
+        """Turn self.event (merged EEW + measured info) into the display state."""
+        ev = self.event
+        s = {
             "status": "active",
             "updated_at": self.now_iso(),
-            "magnitude": magnitude,
-            "depth_km": depth_km,
-            "shindo_reported_by_jquake": payload.get("MaxIntensity"),
-            "matched_city": result.get("matched_city"),
-            "distance_km": result.get("distance_km"),
-            "jma_step_estimated": result.get("jma_step"),
-            "tsunami_warning": self.extract_tsunami_warning(payload),
-            "serial": payload.get("Serial"),
-            "maturity": self.classify_maturity(payload.get("Serial"), payload.get("isFinal")),
-            "accuracy": self.extract_accuracy(payload),
+            "event_key": ev["key"],
+            "phase": ev.get("phase"),
+            "magnitude": ev.get("magnitude"),
+            "depth_km": ev.get("depth_km"),
+            "hypocenter": ev.get("hypocenter"),
+            "epicenter_km": self.epicenter_km(ev.get("lat"), ev.get("lon")),
+            "jma_max": ev.get("jma_max"),
+            "jma_max_kind": ev.get("jma_max_kind"),
+            "tsunami_warning": ev.get("tsunami"),
+            "serial": ev.get("serial"),
+            "maturity": ev.get("maturity"),
+            "accuracy": ev.get("accuracy"),
+            "home_area": self.home_info.get("area"),
+            "display_step": None,
+            "display_source": "none",
+            "alert_step": None,
         }
-        self.push(state)
+        r = ev.get("reading")
+        if r:
+            s.update(display_step=r["step"], display_source=r["source"], alert_step=r["step"],
+                     station=r.get("station"), station_km=r.get("station_km"), area=r.get("area"))
+            nm = ev.get("nearby_max")
+            if nm and jma_sources.rank(nm["step"]) > jma_sources.rank(r["step"]):
+                s["nearby_max"] = nm
+        elif ev.get("area_forecast"):
+            af = ev["area_forecast"]
+            s.update(display_step=af["from"], display_source="area_warning", area_forecast=af,
+                     alert_step=af.get("to") or af["from"])
+        return s
 
-    def run(self):
+    # ------------------------------------------------------------ EEW (Wolfx)
+
+    def handle_eew(self, payload):
+        info = jma_sources.parse_eew(payload, self.home_info.get("area"))
+        if not info:
+            return
+        with self.lock:
+            if info["kind"] == "eew_cancel":
+                if self.event and self.event.get("eew_id") == info["event_id"]:
+                    self.go_idle()
+                return
+            dist = self.epicenter_km(info["lat"], info["lon"])
+            relevant = info["area_forecast"] is not None or (dist is not None and dist <= EEW_NOTICE_RADIUS_KM)
+            same = self.event and (self.event.get("eew_id") == info["event_id"]
+                                   or jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"]))
+            if not same:
+                if not relevant:
+                    return
+                self.event = {"key": info["event_id"], "origin_time": info["origin_time"]}
+            if self.event.get("phase") == "measured":
+                return  # measured values already on screen; a late warning update must not replace them
+            self.event.update(
+                eew_id=info["event_id"], phase="eew", serial=info["serial"],
+                maturity="final" if info["is_final"] else ("updated" if (info["serial"] or 1) > 1 else "preliminary"),
+                hypocenter=info["hypocenter"], magnitude=info["magnitude"], depth_km=info["depth_km"],
+                lat=info["lat"], lon=info["lon"], accuracy=info["accuracy"],
+                jma_max=info["jma_max_forecast"], jma_max_kind="forecast",
+                area_forecast=info["area_forecast"] or self.event.get("area_forecast"),
+            )
+            self.push(self.build_state())
+
+    # ------------------------------------------------------------ measured (P2P地震情報)
+
+    def handle_measured(self, msg):
+        info = jma_sources.parse_p2p_quake(msg, self.home_info)
+        if not info:
+            return
+        with self.lock:
+            same = self.event and jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"])
+            if not same:
+                if not info["felt_near_user"]:
+                    return  # not felt at the user's nearest station: stay quiet
+                key = info["origin_time"].isoformat() if info["origin_time"] else self.now_iso()
+                self.event = {"key": key, "origin_time": info["origin_time"]}
+            ev = self.event
+            # a station reading (detailed report) outranks an area reading (quick report)
+            if info["reading"] and not (ev.get("reading", {}).get("source") in ("station", "station_below_1")
+                                        and info["reading"]["source"] == "area"):
+                ev["reading"] = info["reading"]
+                ev["nearby_max"] = info["nearby_max"]
+            if ev.get("reading") is None:
+                return  # e.g. a destination-only report with nothing for this location yet
+            ev.update(phase="measured", serial=None,
+                      maturity="measured_detail" if info["report_type"] == "DetailScale" else "measured_quick",
+                      jma_max=info["jma_max_measured"] or ev.get("jma_max"), jma_max_kind="measured")
+            for k in ("hypocenter", "magnitude", "depth_km", "lat", "lon"):
+                if info.get(k) is not None:
+                    ev[k] = info[k]
+            if info.get("tsunami"):
+                ev["tsunami"] = info["tsunami"]
+            self.push(self.build_state())
+
+    # ------------------------------------------------------------ connections
+
+    def _ws_loop(self, url, handler, accept):
         while True:
             try:
-                with ws_client.connect(WOLFX_JMA_EEW_URL, open_timeout=10) as ws:
+                with ws_client.connect(url, open_timeout=10) as ws:
                     while True:
                         self.check_idle_timeout()
                         try:
@@ -545,14 +544,20 @@ class Listener:
                             payload = json.loads(message)
                         except json.JSONDecodeError:
                             continue
-                        if payload.get("type") == "heartbeat":
-                            continue
-                        self.process_payload(payload)
+                        if isinstance(payload, dict) and accept(payload):
+                            handler(payload)
             except (websockets.exceptions.ConnectionClosed, OSError):
                 time.sleep(5)
             except Exception:
                 traceback.print_exc()
                 time.sleep(5)
+
+    def run(self):
+        threading.Thread(
+            target=self._ws_loop, daemon=True,
+            args=(P2P_WS_URL, self.handle_measured, lambda p: p.get("code") == 551),
+        ).start()
+        self._ws_loop(WOLFX_JMA_EEW_URL, self.handle_eew, lambda p: p.get("type") != "heartbeat")
 
 
 def main():
