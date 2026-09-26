@@ -57,7 +57,7 @@
   .lang-btn.active { background: #f5f5f0; color: #0b0a08; }
 
   .wrap { width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; background: #0b0a08; color: #f5f5f0; }
-  .nav { width: 100%; box-sizing: border-box; padding: 22px 64px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #201f1a; }
+  .nav { position: relative; z-index: 3; background: #0b0a08; width: 100%; box-sizing: border-box; padding: 22px 64px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #201f1a; }
   .nav-brand { display: flex; align-items: center; gap: 10px; }
   .nav-brand img { width: 24px; height: 24px; display: block; }
   .nav-brand span { font-size: 18px; font-weight: 800; letter-spacing: 0.02em; }
@@ -96,7 +96,9 @@
   .footer-links a { color: #a09e94; }
 
   /* ---- hero v2 ---- */
-  .hero2 { width: 100%; max-width: 1360px; margin: 0 auto; padding: 72px 64px 0; }
+  .hero2 { width: 100%; max-width: 1360px; margin: 0 auto; padding: 72px 64px 0; overflow-x: visible; overflow-y: clip; }
+  html, body { overflow-x: clip; }
+  .hero2-copy { position: relative; z-index: 2; }   /* text and button sit above the waves */
   .hero2 h1, .hero2-sub, .hero2-problem, .benefit-body, .step p, .smartscreen-note { word-break: auto-phrase; }
   .hero2 h1 { text-wrap: balance; }
   .hero2-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 48px; align-items: center; }
@@ -108,7 +110,7 @@
   .hero2-micro { margin-top: 12px; font-size: 14px; font-weight: 600; color: #c9c7ba; letter-spacing: 0.02em; }
   .hero2 .smartscreen-note { margin-top: 8px; }
   /* ---- hero demo ---- */
-  .hero2-visual { position: relative; width: 100%; aspect-ratio: 640 / 740; container-type: inline-size; }
+  .hero2-visual { position: relative; z-index: 1; width: 100%; aspect-ratio: 640 / 740; container-type: inline-size; }
   .hero2-map { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .map-label { font-size: 15px; font-weight: 700; fill: #f5f5f0; paint-order: stroke; stroke: #0b0a08; stroke-width: 5px; stroke-linejoin: round; }
   .wave-label { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; paint-order: stroke; stroke: #0b0a08; stroke-width: 4px; stroke-linejoin: round; }
@@ -575,8 +577,8 @@
 
   // Map geometry and the app's real band colors for each demo scenario.
   var SCEN = [
-    { px: 336, py: 357, ex: 383, ey: 364, code: '4',  bg: '#a8e6e8', fg: '#0e0e0c', maxr: 470, lx: 14, ly: -12, la: 'start' },  // Tokyo, off Chiba
-    { px: 370, py: 264, ex: 409, ey: 266, code: '5+', bg: '#e8d842', fg: '#0e0e0c', maxr: 520, lx: 14, ly: -12, la: 'start' },  // Sendai, off Miyagi
+    { px: 336, py: 357, ex: 383, ey: 364, code: '4',  bg: '#a8e6e8', fg: '#0e0e0c', maxr: 900, lx: 14, ly: -12, la: 'start' },  // Tokyo, off Chiba
+    { px: 370, py: 264, ex: 409, ey: 266, code: '5+', bg: '#e8d842', fg: '#0e0e0c', maxr: 1000, lx: 14, ly: -12, la: 'start' },  // Sendai, off Miyagi
     { px: 214, py: 393, ex: 208, ey: 418, code: '2',  bg: '#e8e6dc', fg: '#0e0e0c', maxr: 230, lx: -14, ly: 22, la: 'end' }   // Osaka, northern Wakayama
   ];
   var WIN_TOP = 440, WIN_LEFT = 190;
