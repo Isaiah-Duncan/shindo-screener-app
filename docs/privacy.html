@@ -48,7 +48,7 @@
 <main>
   <article class="l-ja" lang="ja">
     <h1>プライバシーポリシー</h1>
-    <div class="updated">最終更新日：2026年9月25日</div>
+    <div class="updated">最終更新日：2026年9月26日</div>
     <p>Shindo Screener（以下「本アプリ」）は、個人の開発者が提供する無料のWindowsアプリです。アカウント登録はなく、広告も表示しません。このページでは、本アプリとこのウェブサイトが扱う情報について説明します。</p>
 
     <h2>お使いのPCに保存される情報</h2>
@@ -56,7 +56,7 @@
 
     <h2>外部サービスとの通信</h2>
     <ul>
-      <li><strong>地震情報の受信：</strong>気象庁の緊急地震速報を受信するため、Wolfxの配信サーバー（ws-api.wolfx.jp）に接続します。この通信で個人情報は送信しませんが、通信の仕組み上、接続元のIPアドレスは接続先から見えます。</li>
+      <li><strong>地震情報の受信：</strong>気象庁の緊急地震速報を受信するため、Wolfxの配信サーバー（ws-api.wolfx.jp）に接続します。また、気象庁が観測した震度を受信するため、P2P地震情報のサーバー（api.p2pquake.net）に接続します。これらの通信で個人情報や監視地点は送信しませんが、通信の仕組み上、接続元のIPアドレスは接続先から見えます。</li>
       <li><strong>地点の検索：</strong>地点を検索すると、入力した地名がOpenStreetMapのNominatimサービスに送信され、緯度・経度に変換されます。送信された情報の取り扱いは、OpenStreetMap財団のプライバシーポリシーに従います。</li>
     </ul>
 
@@ -65,7 +65,7 @@
     <p>送信した報告の削除を希望する場合は、下記の連絡先までお知らせください。</p>
 
     <h2>このウェブサイト</h2>
-    <p>このサイトはGitHub Pagesで公開しており、アクセス解析やCookieは使っていません。選んだ表示言語は、お使いのブラウザ（localStorage）にのみ保存されます。フォントをGoogle Fontsから読み込むため、GoogleにIPアドレスなどが送信されます。また、GitHubがサーバーの記録としてアクセス情報を保存する場合があります。</p>
+    <p>このサイトはGitHub Pagesで公開しており、アクセス解析やCookieは使っていません。選んだ表示言語は、お使いのブラウザ（localStorage）にのみ保存されます。フォントをGoogle Fontsから読み込むため、GoogleにIPアドレスなどが送信されます。「最近の地震」の一覧を表示するため、お使いのブラウザがWolfxのサーバー（api.wolfx.jp）から地震情報を読み込みます。また、GitHubがサーバーの記録としてアクセス情報を保存する場合があります。</p>
 
     <h2>第三者への提供</h2>
     <p>法令に基づく場合を除き、開発者が受け取った情報を第三者に販売・提供することはありません。</p>
@@ -78,7 +78,7 @@
   </article>
   <article class="l-en" lang="en">
     <h1>Privacy Policy</h1>
-    <div class="updated">Last updated: September 25, 2026</div>
+    <div class="updated">Last updated: September 26, 2026</div>
     <p>Shindo Screener ("the app") is a free Windows app made by an independent developer. There is no account and no advertising. This page explains what information the app and this website handle.</p>
 
     <h2>Information stored on your PC</h2>
@@ -86,7 +86,7 @@
 
     <h2>Connections to outside services</h2>
     <ul>
-      <li><strong>Earthquake data:</strong> to receive JMA's Earthquake Early Warnings, the app connects to Wolfx's feed server (ws-api.wolfx.jp). No personal information is sent, but as with any internet connection, the server can see your IP address.</li>
+      <li><strong>Earthquake data:</strong> to receive JMA's Earthquake Early Warnings, the app connects to Wolfx's feed server (ws-api.wolfx.jp). To receive the intensities JMA measured, it also connects to P2P地震情報's server (api.p2pquake.net). No personal information and no monitored location is sent, but as with any internet connection, these servers can see your IP address.</li>
       <li><strong>Location search:</strong> when you search for a location, the place name you type is sent to OpenStreetMap's Nominatim service to find its coordinates. That information is handled under the OpenStreetMap Foundation's privacy policy.</li>
     </ul>
 
@@ -95,7 +95,7 @@
     <p>To have a report you sent deleted, contact the developer using the details below.</p>
 
     <h2>This website</h2>
-    <p>This site is hosted on GitHub Pages and uses no analytics and no cookies. The display language you choose is saved only in your browser (localStorage). Fonts load from Google Fonts, which sends your IP address and similar details to Google. GitHub may also keep server logs of visits.</p>
+    <p>This site is hosted on GitHub Pages and uses no analytics and no cookies. The display language you choose is saved only in your browser (localStorage). Fonts load from Google Fonts, which sends your IP address and similar details to Google. To show the Recent earthquakes list, your browser loads earthquake data from Wolfx's server (api.wolfx.jp). GitHub may also keep server logs of visits.</p>
 
     <h2>Sharing with third parties</h2>
     <p>Except where required by law, the developer does not sell or share information it receives with third parties.</p>

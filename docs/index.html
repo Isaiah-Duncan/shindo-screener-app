@@ -299,7 +299,7 @@
         <div class="hero2-problem" data-t="heroProblem">M6.5と言われても、あなたの場所はどれくらい揺れた？</div>
         <h1 data-t="heroTitle">あなたの場所の震度を、
 ひと目で。</h1>
-        <p class="hero2-sub" data-t="heroBody">気象庁の震度をリアルタイムで表示する常駐型Windowsアプリ。地震がないときは静かなまま。</p>
+        <p class="hero2-sub" data-t="heroBody">気象庁が最寄りの観測点で観測した震度と、緊急地震速報を表示する常駐型Windowsアプリ。地震がないときは静かなまま。</p>
         <a href="https://github.com/Isaiah-Duncan/shindo-screener-app/releases/latest/download/ShindoScreener.exe" class="cta hero2-cta">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>
           <span data-t="ctaFree">無料でダウンロード</span>
@@ -506,7 +506,7 @@
         </details>
         <details>
           <summary><span class="l-ja">データはどこから来ていますか？</span><span class="l-en">Where does the data come from?</span></summary>
-          <div class="faq-a"><span class="l-ja">気象庁が発表する緊急地震速報を、Wolfxのリアルタイム配信を通じて受信しています。</span><span class="l-en">JMA's Earthquake Early Warnings, received in real time through a feed run by Wolfx.</span></div>
+          <div class="faq-a"><span class="l-ja">表示する情報はすべて気象庁が発表したものです。緊急地震速報はWolfxの配信から、観測された震度はP2P地震情報から受信しています。アプリが独自に揺れを予測することはありません。</span><span class="l-en">Everything shown is JMA's own information: early warnings arrive through a feed run by Wolfx, and measured intensities through P2P地震情報. The app never predicts shaking itself.</span></div>
         </details>
         <details>
           <summary><span class="l-ja">英語でも使えますか？</span><span class="l-en">Can I use it in English?</span></summary>
@@ -556,7 +556,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <div><span class="l-ja">© 2026 Shindo Screener · v0.1.1 ベータ版 · データ: 気象庁（Wolfx経由） · 地図: <a href="https://pypi.org/project/japanmap/">japanmap</a></span><span class="l-en">© 2026 Shindo Screener · v0.1.1 beta · Data: JMA via Wolfx · Map: <a href="https://pypi.org/project/japanmap/">japanmap</a></span></div>
+      <div><span class="l-ja">© 2026 Shindo Screener · v0.1.1 ベータ版 · データ: 気象庁（Wolfx・P2P地震情報経由） · 地図: <a href="https://pypi.org/project/japanmap/">japanmap</a></span><span class="l-en">© 2026 Shindo Screener · v0.1.1 beta · Data: JMA via Wolfx and P2P地震情報 · Map: <a href="https://pypi.org/project/japanmap/">japanmap</a></span></div>
       <div class="lang-toggle lang-toggle-sm">
         <button type="button" class="lang-btn" data-lang-btn="ja">日本語</button>
         <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
@@ -591,7 +591,7 @@
   function setScenario(i) {
     idx = i; sc = SCEN[i];
     var d = Math.hypot(sc.ex - sc.px, sc.ey - sc.py);
-    tP = QUAKE + d / VP; tS = QUAKE + d / VS; EEW = (tP + tS) / 2;   // report lands between P and S arrival
+    tP = QUAKE + d / VP; tS = QUAKE + d / VS; EEW = tS + 0.8;   // JMA's measured intensity arrives after the shaking, not before
     [pW, sW].forEach(function (c) { c.setAttribute('cx', sc.ex); c.setAttribute('cy', sc.ey); });
     [pL, sL].forEach(function (l) { l.setAttribute('x', sc.ex); });
     epi.setAttribute('transform', 'translate(' + sc.ex + ' ' + sc.ey + ')');
@@ -716,16 +716,16 @@
   var TRANSLATIONS = {
     ja: {
       demo: [
-        { loc: "東京都", event: "震源：千葉県東方沖　M6.8", l1: "M6.8 \u2014 千葉県東方沖", l2: "気象庁発表の最大震度: 5弱", l3: "報告 1 \u2014 速報段階の推定", est: "東京都での推定", label: "屋内でやや強い揺れ", dist: "~147 km \u2014 千葉県東方沖", dsLoc: "監視地点: 東京都" },
-        { loc: "仙台市", event: "震源：宮城県沖　M7.8", l1: "M7.8 \u2014 宮城県沖", l2: "気象庁発表の最大震度: 6強", l3: "報告 1 \u2014 速報段階の推定", est: "仙台市での推定", label: "屋内で非常に強い揺れ", dist: "~116 km \u2014 宮城県沖", dsLoc: "監視地点: 仙台市" },
-        { loc: "大阪市", event: "震源：和歌山県北部　M4.6", l1: "M4.6 \u2014 和歌山県北部", l2: "気象庁発表の最大震度: 3", l3: "報告 1 \u2014 速報段階の推定", est: "大阪市での推定", label: "屋内で揺れを感じる", dist: "~79 km \u2014 和歌山県北部", dsLoc: "監視地点: 大阪市" }
+        { loc: "東京都", event: "震源：千葉県東方沖　M6.8", l1: "M6.8 \u2014 千葉県東方沖", l2: "気象庁発表の最大震度（観測）: 5弱", l3: "気象庁 震源・震度情報", est: "最寄りの観測点で観測", label: "屋内でやや強い揺れ", dist: "~147 km \u2014 千葉県東方沖", dsLoc: "監視地点: 東京都" },
+        { loc: "仙台市", event: "震源：宮城県沖　M7.8", l1: "M7.8 \u2014 宮城県沖", l2: "気象庁発表の最大震度（観測）: 6強", l3: "気象庁 震源・震度情報", est: "最寄りの観測点で観測", label: "屋内で非常に強い揺れ", dist: "~116 km \u2014 宮城県沖", dsLoc: "監視地点: 仙台市" },
+        { loc: "大阪市", event: "震源：和歌山県北部　M4.6", l1: "M4.6 \u2014 和歌山県北部", l2: "気象庁発表の最大震度（観測）: 3", l3: "気象庁 震源・震度情報", est: "最寄りの観測点で観測", label: "屋内で揺れを感じる", dist: "~79 km \u2014 和歌山県北部", dsLoc: "監視地点: 大阪市" }
       ],
       waveP: "P波",
       waveS: "S波",
       typeLabel: "監視地点",
       heroProblem: "M6.5と言われても、あなたの場所はどれくらい揺れた？",
       heroTitle: "あなたの場所の震度を、\nひと目で。",
-      heroBody: "気象庁の震度をリアルタイムで表示する常駐型Windowsアプリ。地震がないときは静かなまま。",
+      heroBody: "気象庁が最寄りの観測点で観測した震度と、緊急地震速報を表示する常駐型Windowsアプリ。地震がないときは静かなまま。",
       ctaFree: "無料でダウンロード",
       ctaMicro: "Windows · 無料 · 登録不要",
       labelEpicenter: "震央",
@@ -742,16 +742,16 @@
     },
     en: {
       demo: [
-        { loc: "Tokyo", event: "Epicenter: off Chiba, M6.8", l1: "M6.8 \u2014 Off the east coast of Chiba", l2: "JMA maximum intensity: 5-", l3: "Report 1 \u2014 Preliminary estimate", est: "Estimated at Tokyo", label: "Moderate indoor shaking", dist: "~147 km \u2014 Off the east coast of Chiba", dsLoc: "Monitoring: Tokyo" },
-        { loc: "Sendai", event: "Epicenter: off Miyagi, M7.8", l1: "M7.8 \u2014 Off the coast of Miyagi", l2: "JMA maximum intensity: 6+", l3: "Report 1 \u2014 Preliminary estimate", est: "Estimated at Sendai", label: "Very strong indoor shaking", dist: "~116 km \u2014 Off the coast of Miyagi", dsLoc: "Monitoring: Sendai" },
-        { loc: "Osaka", event: "Epicenter: northern Wakayama, M4.6", l1: "M4.6 \u2014 Northern Wakayama", l2: "JMA maximum intensity: 3", l3: "Report 1 \u2014 Preliminary estimate", est: "Estimated at Osaka", label: "Slight indoor shaking", dist: "~79 km \u2014 Northern Wakayama", dsLoc: "Monitoring: Osaka" }
+        { loc: "Tokyo", event: "Epicenter: off Chiba, M6.8", l1: "M6.8 \u2014 Off the east coast of Chiba", l2: "JMA maximum intensity (measured): 5-", l3: "JMA measured intensities", est: "Measured at your nearest JMA station", label: "Moderate indoor shaking", dist: "~147 km \u2014 Off the east coast of Chiba", dsLoc: "Monitoring: Tokyo" },
+        { loc: "Sendai", event: "Epicenter: off Miyagi, M7.8", l1: "M7.8 \u2014 Off the coast of Miyagi", l2: "JMA maximum intensity (measured): 6+", l3: "JMA measured intensities", est: "Measured at your nearest JMA station", label: "Very strong indoor shaking", dist: "~116 km \u2014 Off the coast of Miyagi", dsLoc: "Monitoring: Sendai" },
+        { loc: "Osaka", event: "Epicenter: northern Wakayama, M4.6", l1: "M4.6 \u2014 Northern Wakayama", l2: "JMA maximum intensity (measured): 3", l3: "JMA measured intensities", est: "Measured at your nearest JMA station", label: "Slight indoor shaking", dist: "~79 km \u2014 Northern Wakayama", dsLoc: "Monitoring: Osaka" }
       ],
       waveP: "P wave",
       waveS: "S wave",
       typeLabel: "MONITORING",
       heroProblem: "Magnitude 6.5. But how hard did it shake where you are?",
       heroTitle: "Your location's Shindo, at a glance.",
-      heroBody: "A Windows app that shows JMA's real Shindo reading for where you live. Quiet until there's seismic activity.",
+      heroBody: "A Windows app that shows the Shindo JMA measured at the station nearest you, with JMA's early warnings. Quiet until there's seismic activity.",
       ctaFree: "Download free",
       ctaMicro: "Windows · Free · No account needed",
       labelEpicenter: "Epicenter",
