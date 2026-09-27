@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-09-27T02:36:33Z",
- "count": 62,
+ "updated_at": "2026-09-27T08:33:14Z",
+ "count": 63,
  "events": [
+  {
+   "id": "20260927162517",
+   "time": "2026-09-27T16:25:00+09:00",
+   "location_ja": "浦河沖",
+   "lat": 42.1,
+   "lon": 142.6,
+   "depth_km": 60.0,
+   "magnitude": 3.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20260927094524",
    "time": "2026-09-27T09:45:00+09:00",
