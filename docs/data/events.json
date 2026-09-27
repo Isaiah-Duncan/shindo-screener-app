@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-09-27T14:17:19Z",
- "count": 64,
+ "updated_at": "2026-09-27T18:33:09Z",
+ "count": 65,
  "events": [
+  {
+   "id": "20260928015903",
+   "time": "2026-09-28T01:58:00+09:00",
+   "location_ja": "千葉県北東部",
+   "lat": 35.5,
+   "lon": 140.4,
+   "depth_km": 40.0,
+   "magnitude": 2.7,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20260927173732",
    "time": "2026-09-27T17:37:00+09:00",
