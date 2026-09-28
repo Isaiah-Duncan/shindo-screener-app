@@ -45,6 +45,7 @@ IDLE_STATE = {"status": "idle", "updated_at": None}
 EEW_IDLE_MINUTES = 5          # an early warning stays up this long if no measured report follows
 MEASURED_IDLE_MINUTES = 10    # a measured reading stays up this long, then the screen goes quiet
 EEW_NOTICE_RADIUS_KM = 300    # show early warnings for quakes this close even when JMA hasn't warned your area
+HOME_CHANGE_REPLAY_MINUTES = 10  # re-show a recent quake against a newly chosen location, see recheck_last_events
 CHECK_INTERVAL_SECONDS = 15
 ACTIVE_POLL_INTERVAL_SECONDS = 3
 IDLE_POLL_INTERVAL_SECONDS = 8
@@ -364,6 +365,14 @@ class Listener:
         self.stations = jma_sources.load_stations(resource_path(STATIONS_JSON_RELATIVE_PATH))
         self._home = None
         self.home_info = {"area": None, "stations": []}
+        # The most recent raw message of each kind this session has seen,
+        # with when it arrived, so a location change can re-apply it
+        # against the new home instead of waiting for the next live
+        # message; see recheck_last_events.
+        self._last_eew_payload = None
+        self._last_eew_received_at = None
+        self._last_measured_msg = None
+        self._last_measured_received_at = None
         self.home = home  # property: also finds the nearest JMA station and area
         self.current_state = dict(IDLE_STATE)
         self.event = None        # the quake currently on screen
@@ -384,6 +393,30 @@ class Listener:
     def home(self, value):
         self._home = value
         self.home_info = jma_sources.locate_home(value, self.stations)
+        self.recheck_last_events()
+
+    def recheck_last_events(self):
+        """
+        Re-applies the last EEW and measured messages this session
+        received, now that home/home_info point at a new location.
+        Without this, switching location mid-quake depends on catching
+        the *next* live message by luck: JMA's early warnings for a
+        small quake are often a single burst that never repeats, so a
+        location change made a few seconds late would otherwise show
+        nothing even though the app received a relevant message
+        moments earlier. Only replays messages still fresh enough to
+        matter (HOME_CHANGE_REPLAY_MINUTES); each call re-parses the
+        raw message against the current home, so it applies exactly
+        the same relevance and "felt near you" rules as a live message
+        would, using the newly selected nearest station and area.
+        """
+        now = datetime.now(timezone.utc)
+        if (self._last_eew_payload is not None and self._last_eew_received_at is not None
+                and (now - self._last_eew_received_at).total_seconds() <= HOME_CHANGE_REPLAY_MINUTES * 60):
+            self.handle_eew(self._last_eew_payload)
+        if (self._last_measured_msg is not None and self._last_measured_received_at is not None
+                and (now - self._last_measured_received_at).total_seconds() <= HOME_CHANGE_REPLAY_MINUTES * 60):
+            self.handle_measured(self._last_measured_msg)
 
     # ------------------------------------------------------------ output
 
@@ -472,6 +505,13 @@ class Listener:
         info = jma_sources.parse_eew(payload, self.home_info.get("area"))
         if not info:
             return
+        if info["kind"] == "eew":
+            # Cached before the relevance check below, on purpose: a
+            # location change later needs to re-run this exact payload
+            # against a *different* home, so it must be kept even when
+            # it wasn't relevant to today's home.
+            self._last_eew_payload = payload
+            self._last_eew_received_at = datetime.now(timezone.utc)
         with self.lock:
             if info["kind"] == "eew_cancel":
                 if self.event and self.event.get("eew_id") == info["event_id"]:
@@ -503,6 +543,12 @@ class Listener:
         info = jma_sources.parse_p2p_quake(msg, self.home_info)
         if not info:
             return
+        # Cached before the "felt near you" check below, for the same
+        # reason as handle_eew: a location change needs the raw message
+        # to re-parse against the new nearest station, even when today's
+        # nearest station felt nothing.
+        self._last_measured_msg = msg
+        self._last_measured_received_at = datetime.now(timezone.utc)
         with self.lock:
             same = self.event and jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"])
             if not same:
