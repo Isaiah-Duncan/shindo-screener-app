@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-09-28T23:13:18Z",
- "count": 71,
+ "updated_at": "2026-09-29T02:34:35Z",
+ "count": 72,
  "events": [
+  {
+   "id": "20260929104956",
+   "time": "2026-09-29T10:49:00+09:00",
+   "location_ja": "和歌山県南部",
+   "lat": 33.8,
+   "lon": 135.8,
+   "depth_km": 30.0,
+   "magnitude": 2.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20260929044513",
    "time": "2026-09-29T04:45:00+09:00",
