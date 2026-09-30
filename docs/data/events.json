@@ -1,8 +1,56 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-09-29T15:46:14Z",
- "count": 74,
+ "updated_at": "2026-09-30T16:05:28Z",
+ "count": 78,
  "events": [
+  {
+   "id": "20261001005844",
+   "time": "2026-10-01T00:58:00+09:00",
+   "location_ja": "福島県会津",
+   "lat": 37.4,
+   "lon": 139.4,
+   "depth_km": 0.0,
+   "magnitude": 2.9,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20260930212814",
+   "time": "2026-09-30T21:28:00+09:00",
+   "location_ja": "トカラ列島近海",
+   "lat": 29.7,
+   "lon": 129.8,
+   "depth_km": 10.0,
+   "magnitude": 2.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20260930184627",
+   "time": "2026-09-30T18:46:00+09:00",
+   "location_ja": "トカラ列島近海",
+   "lat": 29.7,
+   "lon": 129.8,
+   "depth_km": 0.0,
+   "magnitude": 2.7,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20260930140037",
+   "time": "2026-09-30T14:00:00+09:00",
+   "location_ja": "与那国島近海",
+   "lat": 23.8,
+   "lon": 122.9,
+   "depth_km": 10.0,
+   "magnitude": 6.0,
+   "max_shindo": "3",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20260929224843",
    "time": "2026-09-29T22:48:00+09:00",
