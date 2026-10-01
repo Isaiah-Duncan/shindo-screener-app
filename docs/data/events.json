@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-01T13:18:19Z",
- "count": 85,
+ "updated_at": "2026-10-01T18:57:12Z",
+ "count": 88,
  "events": [
+  {
+   "id": "20261002021724",
+   "time": "2026-10-02T02:17:00+09:00",
+   "location_ja": "三陸沖",
+   "lat": 39.9,
+   "lon": 143.2,
+   "depth_km": 10.0,
+   "magnitude": 5.0,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261002012159",
+   "time": "2026-10-02T01:20:00+09:00",
+   "location_ja": "茨城県北部",
+   "lat": 36.6,
+   "lon": 140.6,
+   "depth_km": 0.0,
+   "magnitude": 2.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261002011703",
+   "time": "2026-10-02T01:17:00+09:00",
+   "location_ja": "茨城県北部",
+   "lat": 36.6,
+   "lon": 140.6,
+   "depth_km": 10.0,
+   "magnitude": 2.7,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261001215139",
    "time": "2026-10-01T21:51:00+09:00",
