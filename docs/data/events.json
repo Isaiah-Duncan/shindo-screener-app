@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-01T00:16:11Z",
- "count": 79,
+ "updated_at": "2026-10-01T06:14:30Z",
+ "count": 80,
  "events": [
+  {
+   "id": "20261001103235",
+   "time": "2026-10-01T10:32:00+09:00",
+   "location_ja": "埼玉県南部",
+   "lat": 36.0,
+   "lon": 139.5,
+   "depth_km": 50.0,
+   "magnitude": 3.2,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261001061703",
    "time": "2026-10-01T06:16:00+09:00",
