@@ -44,11 +44,14 @@ STATIONS_JSON_RELATIVE_PATH = "stations_jp.json"
 IDLE_STATE = {"status": "idle", "updated_at": None}
 EEW_IDLE_MINUTES = 5          # an early warning stays up this long if no measured report follows
 MEASURED_IDLE_MINUTES = 10    # a measured reading stays up this long, then the screen goes quiet
-QUIET_IDLE_MINUTES = 1        # Shindo 1-2 readings (see QUIET_STEPS) clear after this instead,
+QUIET_IDLE_MINUTES = 1        # Shindo 0-2 readings (see QUIET_STEPS) clear after this instead,
                                # since they're the dark/dim display tier, not worth holding for 10
                                # minutes (e.g. overnight: see no reason to keep a room lit for a
-                               # "barely felt" reading long after the shaking itself is over)
-QUIET_STEPS = {"1", "2"}
+                               # "barely felt" reading long after the shaking itself is over).
+                               # Shindo 0 ("below Shindo 1 here") belongs here too, not in the
+                               # 10-minute bucket below: it's the least significant reading the
+                               # app shows, so it shouldn't sit on screen the longest.
+QUIET_STEPS = {"0", "1", "2"}
 # Personalization for the quiet tier (Settings > Alerts > "Sensitivity").
 # Replaces the old binary "Don't light up for" opt-out with a single
 # dial: how long the brief bright flash is held before the 30s(-ish)
