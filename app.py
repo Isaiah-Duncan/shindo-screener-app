@@ -597,7 +597,24 @@ class Listener:
         # display behavior, not JMA data, so the actual profiles live in
         # screener_app.html.
         s["sensitivity"] = self.sensitivity
+        # Plain "when was this area last felt" fact, for the frontend's
+        # neutral last-felt line (steps 1-3 only, see screener_app.html
+        # describeLastFelt). Deliberately just the timestamp: any framing
+        # of what it might mean for this reading belongs in the UI copy,
+        # not in data the backend hands over. Excludes the current event
+        # itself, since record_felt_event may have already logged it by
+        # the time this runs (handle_measured logs before pushing).
+        s["last_felt_at"] = self.last_felt_before(ev.get("key"))
         return s
+
+    def last_felt_before(self, exclude_key):
+        """Most recent felt_log entry's timestamp, excluding exclude_key
+        (today's own event, if it's already been logged). None if this
+        would be the first felt earthquake on record."""
+        entries = [e for e in load_felt_log() if e.get("event_key") != exclude_key]
+        if not entries:
+            return None
+        return max(entries, key=lambda e: e.get("felt_at") or "").get("felt_at")
 
     # ------------------------------------------------------------ EEW (Wolfx)
 

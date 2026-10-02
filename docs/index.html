@@ -20,7 +20,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,600&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,600&family=Noto+Sans+JP:wght@400;500;600;700;800;900&family=Barlow:wght@700;800&display=swap" rel="stylesheet">
 
 <style>
   :root { color-scheme: dark; }
@@ -133,7 +133,7 @@
 
   /* recreation of the app display, scaled with container units */
   .demo-screen { position: relative; container-type: inline-size; aspect-ratio: 1919 / 1004; background: #000; color: #f5f5f0;
-    font-family: 'Bahnschrift', 'Archivo', 'Noto Sans JP', sans-serif; transition: background 700ms ease, color 700ms ease;
+    font-family: 'Barlow', 'Archivo', 'Noto Sans JP', sans-serif; transition: background 700ms ease, color 700ms ease;
     padding: 2.1cqw 5cqw; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
   .demo-screen[data-state="active"] { background: var(--ds-bg, #a8e6e8); color: var(--ds-fg, #0e0e0c); }
   .ds-top { display: flex; justify-content: space-between; align-items: flex-start; letter-spacing: 0.05em; }
@@ -186,13 +186,13 @@
   .scale-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 44px; }
   .scale-tile { border-radius: 10px; padding: 18px 18px 20px; min-height: 176px; display: flex; flex-direction: column; }
   .scale-zero { border: 1px solid #33312a; }
-  .scale-code { font-family: 'Bahnschrift', 'Archivo', sans-serif; font-size: 50px; font-weight: 700; line-height: 1; }
+  .scale-code { font-family: 'Barlow', 'Archivo', sans-serif; font-size: 50px; font-weight: 700; line-height: 1; }
   .scale-name { margin-top: 8px; font-size: 13px; font-weight: 700; opacity: 0.75; }
   .scale-desc { margin-top: auto; padding-top: 16px; font-size: 14px; font-weight: 600; line-height: 1.6; word-break: auto-phrase; }
   .scale-note { margin: 18px 0 0; font-size: 13px; line-height: 1.7; color: #706e64; }
   .quake-list { list-style: none; margin: 40px 0 0; padding: 0; max-width: 980px; border-top: 1px solid #201f1a; }
   .quake-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 20px; padding: 16px 0; border-bottom: 1px solid #201f1a; }
-  .quake-chip { width: 64px; height: 56px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Bahnschrift', 'Archivo', sans-serif; font-size: 30px; font-weight: 700; line-height: 1; }
+  .quake-chip { width: 64px; height: 56px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Barlow', 'Archivo', sans-serif; font-size: 30px; font-weight: 700; line-height: 1; }
   .quake-chip.is-zero, .quake-chip.is-none { border: 1px solid #33312a; }
   .quake-chip.is-none { font-size: 22px; color: #706e64; }
   .quake-place { font-size: 19px; font-weight: 700; line-height: 1.35; word-break: auto-phrase; }
@@ -309,7 +309,7 @@
         <div class="hero2-problem" data-t="heroProblem">M6.5と言われても、あなたの場所はどれくらい揺れた？</div>
         <h1 data-t="heroTitle">あなたの場所の震度を、
 ひと目で。</h1>
-        <p class="hero2-sub" data-t="heroBody">気象庁が最寄りの観測点で観測した震度と、緊急地震速報を表示する常駐型Windowsアプリ。地震がないときは静かなまま。</p>
+        <p class="hero2-sub" data-t="heroBody">気象庁が観測した、あなたの場所の震度と緊急地震速報を表示します。小さな揺れは日本のどこかでほぼ毎日起きていますが、このアプリは大げさに騒ぎ立てません。</p>
         <a href="https://github.com/Isaiah-Duncan/shindo-screener-app/releases/latest/download/ShindoScreener.exe" class="cta hero2-cta">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>
           <span data-t="ctaFree">無料でダウンロード</span>
@@ -372,8 +372,8 @@
 
     <div class="hero2-benefits">
       <div class="benefit">
-        <svg class="benefit-icon" viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="5" width="30" height="30" rx="6" fill="none" stroke="#f5f5f0" stroke-width="2.2"/><text x="20" y="28.5" text-anchor="middle" font-size="22" font-weight="900" fill="#f5f5f0" font-family="Archivo, sans-serif">4</text></svg>
-        <div><div class="benefit-title" data-t="b1Title">読みやすい</div><div class="benefit-body" data-t="b1Body">大きな震度の数字だけを表示。</div></div>
+        <svg class="benefit-icon" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="15" fill="none" stroke="#f5f5f0" stroke-width="2.2"/><circle cx="20" cy="20" r="4" fill="#f5f5f0"/><line x1="20" y1="1" x2="20" y2="8" stroke="#f5f5f0" stroke-width="2.2"/><line x1="20" y1="32" x2="20" y2="39" stroke="#f5f5f0" stroke-width="2.2"/><line x1="1" y1="20" x2="8" y2="20" stroke="#f5f5f0" stroke-width="2.2"/><line x1="32" y1="20" x2="39" y2="20" stroke="#f5f5f0" stroke-width="2.2"/></svg>
+        <div><div class="benefit-title" data-t="b1Title">あなたの場所だけの震度</div><div class="benefit-body" data-t="b1Body">周辺地域の最大値ではなく、最寄り観測点の実測値。</div></div>
       </div>
       <div class="benefit">
         <svg class="benefit-icon" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="15" fill="none" stroke="#f5f5f0" stroke-width="2.2"/><text x="20" y="26.5" text-anchor="middle" font-size="16" font-weight="900" fill="#f5f5f0" font-family="Archivo, sans-serif">¥0</text></svg>
@@ -735,12 +735,12 @@
       typeLabel: "監視地点",
       heroProblem: "M6.5と言われても、あなたの場所はどれくらい揺れた？",
       heroTitle: "あなたの場所の震度を、\nひと目で。",
-      heroBody: "気象庁が最寄りの観測点で観測した震度と、緊急地震速報を表示する常駐型Windowsアプリ。地震がないときは静かなまま。",
+      heroBody: "気象庁が観測した、あなたの場所の震度と緊急地震速報を表示します。小さな揺れは日本のどこかでほぼ毎日起きていますが、このアプリは大げさに騒ぎ立てません。",
       ctaFree: "無料でダウンロード",
       ctaMicro: "Windows · 無料 · 登録不要",
       labelEpicenter: "震央",
-      b1Title: "読みやすい",
-      b1Body: "大きな震度の数字だけを表示。",
+      b1Title: "あなたの場所だけの震度",
+      b1Body: "周辺地域の最大値ではなく、最寄り観測点の実測値。",
       b2Title: "完全無料",
       b2Body: "広告なし、登録不要。",
       b3Title: "日本のために設計",
@@ -762,12 +762,12 @@
       typeLabel: "MONITORING",
       heroProblem: "Magnitude 6.5. But how hard did it shake where you are?",
       heroTitle: "Your location's Shindo, at a glance.",
-      heroBody: "A Windows app that shows the Shindo JMA measured at the station nearest you, with JMA's early warnings. Quiet until there's seismic activity.",
+      heroBody: "Shows the Shindo JMA measured at your location, plus JMA's early warnings. Small tremors happen somewhere in Japan almost every day; this app never makes more of them than they are.",
       ctaFree: "Download free",
       ctaMicro: "Windows · Free · No account needed",
       labelEpicenter: "Epicenter",
-      b1Title: "Easy to read",
-      b1Body: "Just one big Shindo number.",
+      b1Title: "Your location, not the region",
+      b1Body: "Not the area's worst-hit max: the real reading at your nearest station.",
       b2Title: "Completely free",
       b2Body: "No ads, no account.",
       b3Title: "Built for Japan",

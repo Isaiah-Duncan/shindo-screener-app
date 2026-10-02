@@ -203,6 +203,12 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  /* "Last felt here: ..." line (see renderActive): plain context, not
+     a warning, so it sits visually subordinate to .meta above it. */
+  .meta-sub {
+    opacity: 0.55;
+    margin-top: 0.3vh;
+  }
   .gear-btn {
     width: 30px;
     height: 30px;
@@ -636,6 +642,7 @@
     </button>
     <div class="meta-wrap">
       <div class="meta" id="metaText"></div>
+      <div class="meta meta-sub" id="lastFeltText"></div>
     </div>
     <div class="location-label" id="locationLabel"></div>
   </div>
@@ -825,9 +832,14 @@ const BANDS = {
   "6+": { bg: '#c21818', fg: '#f5f0e8' },
   "7":  { bg: '#c21818', fg: '#f5f0e8' },
 };
+// Steps 2-3 are worded for an awake, attentive person: someone who is
+// up and paying attention will clearly register these, not wonder
+// whether anything happened. Step 1 is left as a near-threshold
+// description on purpose, since that's genuinely where perception
+// starts depending on the person and what they're doing/sitting on.
 const LABELS_EN = {
-  "0": "Not felt", "1": "Barely felt indoors", "2": "Slight indoor shaking",
-  "3": "Light indoor shaking", "4": "Moderate indoor shaking",
+  "0": "Not felt", "1": "Barely felt indoors", "2": "Noticeable indoor shaking",
+  "3": "Clearly felt indoor shaking", "4": "Moderate indoor shaking",
   "5-": "Strong indoor shaking", "5+": "Very strong indoor shaking",
   "6-": "Severe indoor shaking", "6+": "Violent indoor shaking", "7": "Extreme indoor shaking",
 };
@@ -837,8 +849,8 @@ const LABELS_EN = {
 // earlier in this build). Worth re-checking natural phrasing with a
 // native speaker rather than treating this as verified terminology.
 const LABELS_JA = {
-  "0": "揺れなし", "1": "屋内でわずかに揺れを感じる", "2": "屋内で揺れを感じる",
-  "3": "屋内で弱い揺れ", "4": "屋内でやや強い揺れ",
+  "0": "揺れなし", "1": "屋内でわずかに揺れを感じる", "2": "屋内でしっかり揺れを感じる",
+  "3": "屋内ではっきりとした揺れ", "4": "屋内でやや強い揺れ",
   "5-": "屋内で強い揺れ", "5+": "屋内で非常に強い揺れ",
   "6-": "屋内で激しい揺れ", "6+": "屋内で猛烈な揺れ", "7": "屋内で極めて激しい揺れ",
 };
@@ -849,9 +861,19 @@ const LABELS_JA = {
 // normal descriptive one, since at those levels the person has said
 // this kind of reading doesn't need much made of it. "High"/"normal"
 // still use the regular label even for a quiet-tier step, since those
-// levels mean "I do want to know what this is."
-const LABEL_QUIET_EN = "Minor, common shaking for this area";
-const LABEL_QUIET_JA = "この地域ではよくある軽微な揺れ";
+// levels mean "I do want to know what this is." Keyed per step rather
+// than one shared phrase, since step 3 is objectively stronger than
+// 1-2 and collapsing all three into identical wording understates it.
+const LABEL_QUIET_EN = {
+  "1": "Minor, common shaking for this area",
+  "2": "Minor, common shaking for this area",
+  "3": "A bit more than the usual minor shaking here",
+};
+const LABEL_QUIET_JA = {
+  "1": "この地域ではよくある軽微な揺れ",
+  "2": "この地域ではよくある軽微な揺れ",
+  "3": "この地域にしてはやや大きめの揺れ",
+};
 
 const MATURITY_EN = { preliminary: "Early warning, first report", updated: "Early warning, updated", final: "Early warning, final report",
   measured_quick: "JMA quick intensity report", measured_detail: "JMA measured intensities", test: "Test only, not a real earthquake" };
@@ -1081,7 +1103,7 @@ const STRINGS = {
   },
 };
 
-const APP_VERSION = "0.1.8";
+const APP_VERSION = "0.1.9";
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
 // BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
@@ -1113,6 +1135,7 @@ const els = {
   code: document.getElementById('code'),
   labelText: document.getElementById('labelText'),
   metaText: document.getElementById('metaText'),
+  lastFeltText: document.getElementById('lastFeltText'),
   idleLine: document.getElementById('idleLine'),
   locationLabel: document.getElementById('locationLabel'),
   tsunamiBox: document.getElementById('tsunamiBox'),
@@ -1459,6 +1482,23 @@ function renderIdle() {
   els.idleLine.style.background = '#f5f5f0';
   els.labelText.textContent = '';
   els.metaText.textContent = '';
+  els.lastFeltText.textContent = '';
+}
+
+// Plain "time since the last felt earthquake here" line (steps 1-3
+// only, see renderActive). Reports the gap, nothing more: it never
+// editorializes about whether this one will feel stronger than usual
+// because of it. ISO timestamp comes from the backend's felt log
+// (app.py build_state -> last_felt_at), already excluding today's event.
+function describeLastFelt(iso, ja) {
+  const then = new Date(iso).getTime();
+  if (!iso || Number.isNaN(then)) return '';
+  const minutes = Math.max(0, Math.round((Date.now() - then) / 60000));
+  if (minutes < 60) return ja ? '前回この地域で地震を感じたのは1時間以内です' : 'Last felt here: within the last hour';
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return ja ? `前回この地域で地震を感じたのは約${hours}時間前です` : `Last felt here: about ${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.round(hours / 24);
+  return ja ? `前回この地域で地震を感じたのは約${days}日前です` : `Last felt here: about ${days} day${days === 1 ? '' : 's'} ago`;
 }
 
 function jaStep(step) { return String(step).replace('-', '弱').replace('+', '強'); }
@@ -1555,7 +1595,8 @@ function renderActive(state) {
   } else if (isQuietStep && (currentSensitivity === 'low' || currentSensitivity === 'off')) {
     // Sensitivity affects more than timing: at "low"/"off" a muted step
     // also gets a calmer description instead of the regular one.
-    label = ja ? LABEL_QUIET_JA : LABEL_QUIET_EN;
+    const quiet = ja ? LABEL_QUIET_JA : LABEL_QUIET_EN;
+    label = quiet[step] || quiet["1"];
   }
   els.labelText.textContent = label;
 
@@ -1569,6 +1610,13 @@ function renderActive(state) {
     parts.push(ja ? `周辺: ${n.station}で震度${jaStep(n.step)}` : `Nearby: Shindo ${n.step} at ${n.station}`);
   }
   els.metaText.textContent = parts.join(' · ');
+
+  // Neutral "time since last felt" context (see describeLastFelt):
+  // only for steps 1-3, where recency plausibly affects how a reading
+  // lands, and only once there's a prior felt event to compare to.
+  els.lastFeltText.textContent = (['1', '2', '3'].includes(step) && state.last_felt_at && src !== 'test')
+    ? describeLastFelt(state.last_felt_at, ja)
+    : '';
 }
 
 function applyState(state) {
