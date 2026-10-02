@@ -52,16 +52,14 @@ QUIET_STEPS = {"1", "2"}
 # Personalization for the quiet tier (Settings > Alerts > "Sensitivity").
 # Replaces the old binary "Don't light up for" opt-out with a single
 # dial: how long the brief bright flash is held before the 30s(-ish)
-# fade to dark starts, and how long that fade itself takes. "off" skips
-# the flash entirely (the old opt-out's behavior). Only applies to
-# Shindo 1-2 (QUIET_STEPS); 3+ always gets the full bright/loud display
-# regardless of this setting. The actual (flash_ms, hold_ms, fade_ms)
-# values live in screener_app.html's SENSITIVITY_PROFILES, since this is
-# purely a display-timing choice with no JMA data behind it.
+# fade to dark starts, and how long that fade itself takes, as well as
+# which Shindo steps get this quieter treatment at all (how calmly the
+# app reacts, not just for how long) and whether a muted step's
+# description reads as the normal detailed phrase or a calmer one.
+# "off" skips the flash entirely for its quiet steps. The actual
+# per-level values live in screener_app.html's SENSITIVITY_PROFILES,
+# since this is purely a display choice with no JMA data behind it.
 SENSITIVITY_LEVELS = ("high", "normal", "low", "off")
-# Independent of sensitivity: how bright the flash itself is, not how
-# long it lasts. Also display-only.
-BRIGHTNESS_LEVELS = ("full", "dimmed")
 # How long a personal "felt this" log entry is kept before being pruned,
 # per Isaiah's explicit request: this is a local convenience record, not
 # an archive, so it's bounded rather than growing forever on disk.
@@ -155,7 +153,6 @@ SETTINGS_DEFAULTS = {
     "alert_wake_screen": "on",
     "alert_volume": alert.DEFAULT_ALERT_VOLUME,
     "sensitivity": "normal",
-    "brightness": "full",
 }
 
 
@@ -327,17 +324,6 @@ class Api:
             listener.sensitivity = level
         return {"ok": True}
 
-    def set_brightness(self, level):
-        if level not in BRIGHTNESS_LEVELS:
-            return {"ok": False, "error": f"Not a selectable brightness level: {level}"}
-        existing = load_settings()
-        if existing:
-            save_settings(merged_settings(existing, brightness=level))
-        listener = self._get_listener()
-        if listener is not None:
-            listener.brightness = level
-        return {"ok": True}
-
     def get_felt_log(self):
         """The personal "earthquakes felt here" log (Settings > History),
         for the frontend to list and export. Entries older than
@@ -445,7 +431,7 @@ class Listener:
 
     def __init__(self, window, home, alert_min_step=alert.DEFAULT_ALERT_MIN_STEP,
                  alert_wake_screen=True, alert_volume=alert.DEFAULT_ALERT_VOLUME,
-                 sensitivity="normal", brightness="full"):
+                 sensitivity="normal"):
         self.window = window
         self.stations = jma_sources.load_stations(resource_path(STATIONS_JSON_RELATIVE_PATH))
         self._home = None
@@ -470,7 +456,6 @@ class Listener:
         self.alert_wake_screen = alert_wake_screen
         self.alert_volume = alert_volume
         self.sensitivity = sensitivity
-        self.brightness = brightness
 
     @property
     def home(self):
@@ -590,12 +575,11 @@ class Listener:
             s.update(display_step=af["from"], display_source="area_warning", area_forecast=af,
                      alert_step=af.get("to") or af["from"])
         # Passed straight through for the frontend to apply (Settings >
-        # Alerts > "Sensitivity" / "Brightness"): how long the quiet
-        # tier's (Shindo 1-2) bright flash is held and how it fades, and
-        # how bright the flash itself is. Pure display timing/intensity,
-        # not JMA data, so the actual profiles live in screener_app.html.
+        # Alerts > "Sensitivity"): which steps get the quieter treatment,
+        # how long that takes, and how the reading is described. Pure
+        # display behavior, not JMA data, so the actual profiles live in
+        # screener_app.html.
         s["sensitivity"] = self.sensitivity
-        s["brightness"] = self.brightness
         return s
 
     # ------------------------------------------------------------ EEW (Wolfx)
@@ -764,7 +748,6 @@ def main():
             alert_wake_screen=settings.get("alert_wake_screen", "on") == "on",
             alert_volume=settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME),
             sensitivity=settings.get("sensitivity", "normal"),
-            brightness=settings.get("brightness", "full"),
         )
         listener_holder["instance"] = listener
         threading.Thread(target=listener.run, daemon=True).start()
@@ -794,7 +777,6 @@ def main():
             alert_wake_screen = settings.get("alert_wake_screen", "on")
             alert_volume = settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME)
             sensitivity = settings.get("sensitivity", "normal")
-            brightness = settings.get("brightness", "full")
             window.evaluate_js(f"window.applyLanguageOnly({json.dumps(lang)})")
             window.evaluate_js(f"window.applyTimeFormatOnly({json.dumps(time_fmt)})")
             window.evaluate_js(f"window.applyTextScaleOnly({json.dumps(text_scale)})")
@@ -803,7 +785,6 @@ def main():
             window.evaluate_js(f"window.applyAlertWakeScreenOnly({json.dumps(alert_wake_screen)})")
             window.evaluate_js(f"window.applyAlertVolumeOnly({json.dumps(alert_volume)})")
             window.evaluate_js(f"window.applySensitivityOnly({json.dumps(sensitivity)})")
-            window.evaluate_js(f"window.applyBrightnessOnly({json.dumps(brightness)})")
             window.evaluate_js(f"window.showMainScreen({json.dumps(settings['name'])})")
             start_listener(settings)
         else:
