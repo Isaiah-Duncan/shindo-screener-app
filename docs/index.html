@@ -58,6 +58,7 @@
 
   .wrap { width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; background: #0b0a08; color: #f5f5f0; }
   .nav { position: relative; z-index: 3; background: #0b0a08; width: 100%; box-sizing: border-box; padding: 22px 64px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #201f1a; }
+  .old-beta-notice { position: relative; z-index: 3; background: #4a1f10; color: #ffe8d8; border-bottom: 1px solid #6b2f18; padding: 12px 64px; font-size: 14px; font-weight: 600; text-align: center; }
   .nav-brand { display: flex; align-items: center; gap: 10px; }
   .nav-brand img { width: 24px; height: 24px; display: block; }
   .nav-brand span { font-size: 18px; font-weight: 800; letter-spacing: 0.02em; }
@@ -252,6 +253,7 @@
   }
 
   @media (max-width: 900px) {
+    .old-beta-notice { padding: 10px 20px; font-size: 13px; }
     .nav { padding: 16px 20px; flex-wrap: wrap; gap: 12px; row-gap: 10px; }
     .nav-brand span { font-size: 15px; }
     .nav-right { flex-wrap: wrap; gap: 10px; width: 100%; justify-content: space-between; }
@@ -291,6 +293,14 @@
       <a href="https://github.com/Isaiah-Duncan/shindo-screener-app/releases/latest/download/ShindoScreener.exe" class="cta cta-outline nav-cta" data-t="download">Windows版をダウンロード</a>
     </div>
   </div>
+
+  <!-- old-beta notice: v0.1.0/v0.1.1 were pulled from distribution (see
+       CHANGELOG/commit history around v0.1.6), at JMA's request, since
+       their self-computed location forecast required a forecasting
+       business permit this app doesn't hold. Anyone who still has one
+       of those installed needs to see this, so it sits right under the
+       nav, above the fold, not buried in a FAQ entry. -->
+  <div class="old-beta-notice" role="alert" data-t="oldBetaNotice">以前のベータ版（v0.1.0・v0.1.1）をダウンロードした方へ: 直ちに使用を中止し、最新版をダウンロードしてください。</div>
 
   <!-- hero -->
   <section class="hero2">
@@ -736,6 +746,7 @@
       b3Title: "日本のために設計",
       b3Body: "気象庁の震度データをそのまま使用。",
       mockupCaption: "アプリの表示を再現したデモ",
+      oldBetaNotice: "以前のベータ版（v0.1.0・v0.1.1）をダウンロードした方へ: 直ちに使用を中止し、最新版をダウンロードしてください。",
       download: "Windows版をダウンロード",
       smartscreenNote: "初回起動時にWindowsのSmartScreenが警告を表示する場合があります。「詳細情報」→「実行」で起動できます。",
       closing: "地震活動があるまで、静かなまま。",
@@ -762,6 +773,7 @@
       b3Title: "Built for Japan",
       b3Body: "Uses JMA's own Shindo data.",
       mockupCaption: "DEMO OF THE APP'S DISPLAY",
+      oldBetaNotice: "If you downloaded an earlier beta (v0.1.0 or v0.1.1): please stop using it immediately and download the current version.",
       download: "Download for Windows",
       smartscreenNote: "Windows may show a SmartScreen warning on first launch, since the app isn't code-signed. Click \"More info\" → \"Run anyway\" to continue.",
       closing: "Quiet until there's seismic activity.",
