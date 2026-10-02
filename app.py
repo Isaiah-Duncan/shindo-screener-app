@@ -324,6 +324,20 @@ class Api:
             listener.sensitivity = level
         return {"ok": True}
 
+    def dismiss_active(self):
+        """Manually clears whatever reading is on screen back to idle,
+        instead of waiting out the automatic idle timeout
+        (EEW_IDLE_MINUTES / MEASURED_IDLE_MINUTES / QUIET_IDLE_MINUTES).
+        Just clears Listener.event; nothing JMA-related is discarded,
+        a later message for a *different* quake is handled normally,
+        and a repeat message for the same quake is free to start a new
+        event rather than silently reviving the dismissed one."""
+        listener = self._get_listener()
+        if listener is not None:
+            with listener.lock:
+                listener.go_idle()
+        return {"ok": True}
+
     def get_felt_log(self):
         """The personal "earthquakes felt here" log (Settings > History),
         for the frontend to list and export. Entries older than

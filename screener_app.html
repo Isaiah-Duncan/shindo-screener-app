@@ -131,6 +131,33 @@
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.18); }
   }
+  /* Lets someone manually clear the current reading back to idle,
+     rather than waiting out app.py's automatic idle timeout (1-10
+     minutes depending on severity). Only shown while a reading is
+     actually on screen, top-right, mirroring the post-quake badge's
+     own top-left circular treatment so the two read as a pair. */
+  .dismiss-btn {
+    position: absolute;
+    top: 0.8vh;
+    right: 0.8vw;
+    z-index: 20;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.6vw;
+    height: 2.6vw;
+    min-width: 30px;
+    min-height: 30px;
+    background: rgba(0,0,0,0.35);
+    border: 1.5px solid currentColor;
+    border-radius: 999px;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.55;
+    transition: opacity 150ms ease;
+  }
+  .dismiss-btn:hover { opacity: 1; }
+  .dismiss-btn svg { width: 50%; height: 50%; }
   .tsunami-box {
     margin-top: 1.5vh;
     background: #b01010;
@@ -301,7 +328,7 @@
     flex-direction: column;
     align-items: center;
     font-family: 'Bahnschrift', Arial, Helvetica, sans-serif;
-    z-index: 10;
+    z-index: 30;
     overflow-y: auto;
     padding: 5vh 0 4vh;
   }
@@ -479,7 +506,7 @@
     flex-direction: column;
     align-items: center;
     font-family: 'Bahnschrift', Arial, Helvetica, sans-serif;
-    z-index: 10;
+    z-index: 30;
     overflow-y: auto;
     padding: 5vh 0 4vh;
   }
@@ -574,6 +601,11 @@
       <path d="M2 13h3.2l2-7.5 3.3 15 3-10.5 2 5.5h3.3l2-2.5"/>
     </svg>
   </div>
+  <button class="dismiss-btn" id="dismissBtn" onclick="dismissActiveReading()" title="" aria-label="">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 6l12 12M18 6L6 18"/>
+    </svg>
+  </button>
   <div class="top-row" id="topRow">
     <div class="meta-block">
       <div id="eventSummaryLine" class="meta-line-1"></div>
@@ -901,6 +933,19 @@ function dismissPostQuakeBadge() {
   els.postQuakeBadge.classList.remove('pulse');
 }
 
+// Manually clears the current reading back to idle, rather than
+// waiting out app.py's automatic idle timeout. Tells the backend first
+// (so Listener.event is actually cleared and a repeat of the same
+// message won't just bring it right back), then renders idle locally
+// right away rather than waiting on the round trip, since there's
+// nothing to confirm: dismissing is not a JMA value, just a local
+// display choice.
+function dismissActiveReading() {
+  if (window.pywebview) window.pywebview.api.dismiss_active();
+  renderIdle();
+}
+window.dismissActiveReading = dismissActiveReading;
+
 const STRINGS = {
   en: {
     appTitle: "Shindo Screener",
@@ -938,6 +983,7 @@ const STRINGS = {
     sensitivity_normal: "Normal",
     sensitivity_low: "Low — I'm used to these",
     sensitivity_off: "Off — don't light up for minor shaking",
+    dismissReadingTitle: "Dismiss (return to idle)",
     alertWakeScreen: "Wake screen automatically",
     alertVolume: "Chime volume",
     volumeQuiet: "Quiet",
@@ -1003,6 +1049,7 @@ const STRINGS = {
     sensitivity_normal: "普通",
     sensitivity_low: "低い — この程度の揺れには慣れている",
     sensitivity_off: "オフ — 軽微な揺れでは点灯させない",
+    dismissReadingTitle: "消去（待機状態に戻す）",
     alertWakeScreen: "画面を自動的に起動する",
     alertVolume: "チャイムの音量",
     volumeQuiet: "小さめ",
@@ -1053,6 +1100,7 @@ let lastActiveState = null;
 const els = {
   screen: document.getElementById('screen'),
   postQuakeBadge: document.getElementById('postQuakeBadge'),
+  dismissBtn: document.getElementById('dismissBtn'),
   topRow: document.getElementById('topRow'),
   eventSummaryLine: document.getElementById('eventSummaryLine'),
   jmaMaxLine: document.getElementById('jmaMaxLine'),
@@ -1166,6 +1214,8 @@ function applyLanguage() {
   els.sensitivityLabel.textContent = s.sensitivity;
   els.sensitivityHint.textContent = s.sensitivityHint;
   if (els.sensitivitySelect.children.length) buildSensitivitySelect();
+  els.dismissBtn.title = s.dismissReadingTitle;
+  els.dismissBtn.setAttribute('aria-label', s.dismissReadingTitle);
   els.alertWakeScreenLabel.textContent = s.alertWakeScreen;
   els.wakeScreenOnBtn.textContent = s.onLabel;
   els.wakeScreenOffBtn.textContent = s.offLabel;
@@ -1396,6 +1446,7 @@ function renderIdle() {
   lastActiveState = null;
   clearQuietTimers();
   applyScreenColors('#000000', '#f5f5f0', 700, 'ease');
+  els.dismissBtn.style.display = 'none';
   els.topRow.style.visibility = 'visible';
   els.tsunamiBox.style.display = 'none';
   els.eventSummaryLine.textContent = '';
@@ -1440,6 +1491,7 @@ function renderActive(state) {
     applyScreenColors(band.bg, band.fg, 700, 'ease');
   }
   showPostQuakeBadge(state);
+  els.dismissBtn.style.display = 'flex';
   els.topRow.style.visibility = 'visible';
   els.mid.style.display = 'flex';
   els.idleLine.style.display = 'none';
