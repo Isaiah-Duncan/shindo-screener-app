@@ -93,6 +93,47 @@
      the bottom-left block, since it took over the numeral's old spot. */
   .label { font-size: var(--tier3-size); font-weight: 700; }
   .meta { font-size: var(--tier4-size); opacity: 0.75; margin-top: 1vh; }
+  /* A persistent "you felt this" indicator, shown at the extreme top
+     left corner (inside the screen's own padding, clear of .top-row's
+     meta-block) when a reading actually felt at the user's location
+     arrives, and left up until they dismiss it by clicking it. Pulses
+     (.live) for a duration scaled to severity (BADGE_DURATION_MS),
+     then settles into a quieter steady state that keeps counting
+     elapsed time, so a glance answers "did something just happen, and
+     how long ago." */
+  .post-quake-badge {
+    position: absolute;
+    top: 0.8vh;
+    left: 0.8vw;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 0.35vh 0.9vw;
+    font-size: calc(0.85vw * var(--text-scale));
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    opacity: 0.85;
+  }
+  .post-quake-badge-dot {
+    width: 0.6vw;
+    height: 0.6vw;
+    min-width: 7px;
+    min-height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+  .post-quake-badge.live .post-quake-badge-dot {
+    animation: postQuakeBadgePulse 1.2s ease-in-out infinite;
+  }
+  @keyframes postQuakeBadgePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
   .tsunami-box {
     margin-top: 1.5vh;
     background: #b01010;
@@ -432,6 +473,11 @@
 <body>
 
 <div class="screen" id="screen">
+  <div class="post-quake-badge" id="postQuakeBadge" style="display:none;" onclick="dismissPostQuakeBadge()" title="">
+    <span class="post-quake-badge-dot"></span>
+    <span class="post-quake-badge-step" id="postQuakeBadgeStep"></span>
+    <span class="post-quake-badge-time" id="postQuakeBadgeTime"></span>
+  </div>
   <div class="top-row" id="topRow">
     <div class="meta-block">
       <div id="eventSummaryLine" class="meta-line-1"></div>
@@ -562,9 +608,18 @@
     </div>
   </div>
   <div class="settings-section">
-    <label id="quietOptOutLabel">Don't light up for</label>
-    <div class="alert-threshold-hint" id="quietOptOutHint">Shindo 1-2 readings still flash briefly, then dim on their own. Pick a level here to skip the flash entirely for readings at or below it.</div>
-    <select class="threshold-select" id="quietOptOutSelect" onchange="setQuietOptOut(this.value)"></select>
+    <label id="sensitivityLabel">Sensitivity</label>
+    <div class="alert-threshold-hint" id="sensitivityHint">How long a Shindo 1-2 reading stays bright before dimming. "Off" skips the flash entirely for that severity.</div>
+    <select class="threshold-select" id="sensitivitySelect" onchange="setSensitivity(this.value)"></select>
+  </div>
+  <div class="settings-section">
+    <div class="row-inline">
+      <label id="brightnessLabel" style="margin:0;">Brightness</label>
+      <div class="format-switch">
+        <button id="brightnessFullBtn" onclick="setBrightness('full')">Full</button>
+        <button id="brightnessDimmedBtn" onclick="setBrightness('dimmed')">Dimmed</button>
+      </div>
+    </div>
   </div>
   <div class="settings-section">
     <div class="row-inline">
@@ -589,6 +644,14 @@
   <div class="settings-group-header" id="groupAbout">About this data</div>
   <div class="settings-section">
     <div class="bug-report-hint" id="dataSourceHint">All readings shown here are the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報). Delivery isn't guaranteed to be instant or complete, a report could stop arriving partway through, including before JMA's final update. For the most current information, also check the JMA website or TV/radio broadcasts.</div>
+  </div>
+
+  <div class="settings-group-header" id="groupHistory">History</div>
+  <div class="settings-section">
+    <label id="feltLogLabel">Earthquakes felt here</label>
+    <div class="bug-report-hint" id="feltLogHint">A personal record of readings this app actually showed you, kept for 30 days and then cleared automatically.</div>
+    <div class="bug-report-hint" id="feltLogCount"></div>
+    <button class="text-btn" id="feltLogDownloadBtn" onclick="downloadFeltLog()">Download log (CSV)</button>
   </div>
 
   <div class="settings-group-header" id="groupTesting">Testing</div>
@@ -618,7 +681,7 @@
     </div>
   </div>
 
-  <div class="version-footer" id="versionFooter">Shindo Screener: Beta 0.1.6</div>
+  <div class="version-footer" id="versionFooter">Shindo Screener: Beta 0.1.7</div>
 </div>
 
 <script>
@@ -664,7 +727,7 @@ const MATURITY_JA = { preliminary: "緊急地震速報（第1報）", updated: "
 // overkill for something this minor (see: being woken at 2 AM for a
 // reading that barely registered), so once it's been seen, the
 // background gradually fades down to a dim, easy-on-the-eyes tone over
-// QUIET_FADE_MS instead of snapping dark or sitting lit.
+// SENSITIVITY_PROFILES[level].fadeMs instead of snapping dark or sitting lit.
 //
 // The text color flips from dark to pale partway through that fade
 // (QUIET_COLOR_FLIP_MS, at the midpoint) rather than crossfading at the
@@ -677,18 +740,49 @@ const MATURITY_JA = { preliminary: "緊急地震速報（第1報）", updated: "
 // text against a background that's still fairly light, then pale text
 // against a background that's already fairly dark.
 //
-// A person can also opt out of the bright flash entirely for these
-// steps (quiet_opt_out_max_step, set in Settings > Alerts), in which
-// case the screen goes straight to the dim palette with no flash and no
-// fade at all; see state.quiet_suppressed.
+// How long that flash/fade actually takes is personal (Settings > Alerts
+// > "Sensitivity"): someone who gets woken by every light tremor wants
+// to see it clearly and stay aware of it a while; someone used to
+// frequent small quakes in their area doesn't want to keep getting lit
+// up for them. SENSITIVITY_PROFILES is the one dial for that, replacing
+// the old binary "Don't light up for" opt-out: "off" is that opt-out's
+// old behavior (straight to dim, no flash, no fade at all), the other
+// three vary how long the flash is held and how long the fade takes.
 const QUIET_STEPS = new Set(["1", "2"]);
 const QUIET_DIM = { bg: '#121210', fg: '#e8e6dc' };
-const QUIET_FLASH_MS = 400;        // the initial bright flash-in
-const QUIET_FLASH_HOLD_MS = 600;   // how long it stays at full brightness before dimming
-const QUIET_FADE_MS = 30000;       // the background's fade down to QUIET_DIM.bg
-const QUIET_COLOR_FLIP_MS = 500;   // how quick the text-color flip itself is
+const QUIET_COLOR_FLIP_MS = 500;   // how quick the text-color flip itself is, at every sensitivity
+const SENSITIVITY_PROFILES = {
+  high:   { flashMs: 400, holdMs: 1500, fadeMs: 60000 },  // "I notice everything": hold longer, fade slower
+  normal: { flashMs: 400, holdMs: 600,  fadeMs: 30000 },  // the original v0.1.5 behavior
+  low:    { flashMs: 250, holdMs: 300,  fadeMs: 10000 },  // "I'm used to these": brief flash, quick fade
+  off:    null,                                            // no flash at all, straight to dim (the old opt-out)
+};
+// Independent of sensitivity (Settings > Alerts > "Brightness"): how
+// bright the flash's peak itself is, not how long it's held. "dimmed"
+// scales each BANDS color for steps 1-2 toward QUIET_DIM rather than
+// showing them at full strength, for a room where even a brief full
+// flash is too much.
+const BRIGHTNESS_DIM_MIX = 0.45;  // 0 = full brightness, 1 = same as QUIET_DIM
+let currentSensitivity = 'normal';
+let currentBrightness = 'full';
 let quietFadeTimer = null;
 let quietColorFlipTimer = null;
+
+function mixColor(hex, towardHex, amount) {
+  const a = parseInt(hex.slice(1), 16), b = parseInt(towardHex.slice(1), 16);
+  const ar = (a >> 16) & 255, ag = (a >> 8) & 255, ab = a & 255;
+  const br = (b >> 16) & 255, bg = (b >> 8) & 255, bb = b & 255;
+  const mix = (x, y) => Math.round(x + (y - x) * amount);
+  return `#${[mix(ar, br), mix(ag, bg), mix(ab, bb)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function quietFlashColors(band) {
+  if (currentBrightness !== 'dimmed') return band;
+  return {
+    bg: mixColor(band.bg, QUIET_DIM.bg, BRIGHTNESS_DIM_MIX),
+    fg: mixColor(band.fg, QUIET_DIM.fg, BRIGHTNESS_DIM_MIX),
+  };
+}
 
 function clearQuietTimers() {
   clearTimeout(quietFadeTimer);
@@ -701,6 +795,71 @@ function applyScreenColors(bg, fg, transitionMs, easing) {
   els.screen.style.transition = `background ${transitionMs}ms ${easing}, color ${transitionMs}ms ${easing}`;
   els.screen.style.background = bg;
   els.screen.style.color = fg;
+}
+
+// Post-quake badge: a small persistent indicator (top-left corner) for
+// "something was actually felt here", separate from the main display's
+// own idle/active state, so it survives the screen going idle and stays
+// until the person dismisses it. How long it visibly pulses (rather
+// than just sitting there counting elapsed time) scales with severity:
+// a Shindo 1 only needs to catch the eye briefly, a Shindo 7 should
+// stay obviously "live" much longer.
+const FELT_BADGE_SOURCES = new Set(['station', 'area', 'test']);
+const BADGE_DURATION_MS = {
+  "0": 30000, "1": 30000, "2": 35000, "3": 40000, "4": 45000,
+  "5-": 50000, "5+": 53000, "6-": 56000, "6+": 58000, "7": 60000,
+};
+let postQuakeBadgeEventKey = null;
+let postQuakeBadgeFeltAt = null;
+let postQuakeBadgeStep = null;
+let postQuakeBadgeTickTimer = null;
+let postQuakeBadgeLiveTimer = null;
+
+function formatElapsed(sec) {
+  const ja = currentLang === 'ja';
+  if (sec < 60) return ja ? `${sec}秒前` : `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return ja ? `${min}分前` : `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  return ja ? `${hr}時間前` : `${hr}h ago`;
+}
+
+function updatePostQuakeBadgeText() {
+  if (!postQuakeBadgeFeltAt) return;
+  const elapsedSec = Math.max(0, Math.floor((Date.now() - postQuakeBadgeFeltAt.getTime()) / 1000));
+  els.postQuakeBadgeTime.textContent = formatElapsed(elapsedSec);
+  els.postQuakeBadgeStep.textContent = postQuakeBadgeStep != null ? postQuakeBadgeStep : '';
+}
+
+// Called on every active-state render; only actually (re)shows the
+// badge when this is a *new* felt event (a different event_key), so
+// repeat pushes for the same ongoing quake (a detail report replacing a
+// quick one, say) don't keep resetting an already-dismissed badge.
+function showPostQuakeBadge(state) {
+  if (!FELT_BADGE_SOURCES.has(state.display_source) || !state.display_step) return;
+  if (state.event_key === postQuakeBadgeEventKey) return;
+  postQuakeBadgeEventKey = state.event_key;
+  postQuakeBadgeStep = state.display_step;
+  postQuakeBadgeFeltAt = state.updated_at ? new Date(state.updated_at) : new Date();
+  els.postQuakeBadge.style.display = 'flex';
+  els.postQuakeBadge.classList.add('live');
+  updatePostQuakeBadgeText();
+  clearInterval(postQuakeBadgeTickTimer);
+  postQuakeBadgeTickTimer = setInterval(updatePostQuakeBadgeText, 1000);
+  clearTimeout(postQuakeBadgeLiveTimer);
+  const liveMs = BADGE_DURATION_MS[postQuakeBadgeStep] || BADGE_DURATION_MS["1"];
+  postQuakeBadgeLiveTimer = setTimeout(() => {
+    els.postQuakeBadge.classList.remove('live');
+  }, liveMs);
+}
+
+function dismissPostQuakeBadge() {
+  els.postQuakeBadge.style.display = 'none';
+  els.postQuakeBadge.classList.remove('live');
+  clearInterval(postQuakeBadgeTickTimer);
+  postQuakeBadgeTickTimer = null;
+  clearTimeout(postQuakeBadgeLiveTimer);
+  postQuakeBadgeLiveTimer = null;
 }
 
 const STRINGS = {
@@ -720,6 +879,12 @@ const STRINGS = {
     groupAlerts: "Alerts",
     groupAbout: "About this data",
     dataSourceHint: "All readings shown here are the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報). Delivery isn't guaranteed to be instant or complete, a report could stop arriving partway through, including before JMA's final update. For the most current information, also check the JMA website or TV/radio broadcasts.",
+    groupHistory: "History",
+    feltLogLabel: "Earthquakes felt here",
+    feltLogHint: "A personal record of readings this app actually showed you, kept for 30 days and then cleared automatically.",
+    feltLogEmpty: "Nothing logged in the last 30 days.",
+    feltLogCount: "{n} felt in the last 30 days.",
+    feltLogDownloadBtn: "Download log (CSV)",
     groupTesting: "Testing",
     groupSupport: "Support",
     currentLocation: "Current location",
@@ -729,9 +894,15 @@ const STRINGS = {
     textSize: "Text size",
     alertThreshold: "Alert me at",
     alertThresholdHint: "Wakes the screen and plays a chime at this Shindo level or stronger.",
-    quietOptOut: "Don't light up for",
-    quietOptOutHint: "Shindo 1-2 readings still flash briefly, then dim on their own. Pick a level here to skip the flash entirely for readings at or below it.",
-    quietOptOutOff: "Nothing, always flash",
+    sensitivity: "Sensitivity",
+    sensitivityHint: "How long a Shindo 1-2 reading stays bright before dimming. \"Off\" skips the flash entirely for that severity.",
+    sensitivity_high: "High — I notice every small tremor",
+    sensitivity_normal: "Normal",
+    sensitivity_low: "Low — I'm used to these",
+    sensitivity_off: "Off — don't light up at all",
+    brightness: "Brightness",
+    brightnessFull: "Full",
+    brightnessDimmed: "Dimmed",
     alertWakeScreen: "Wake screen automatically",
     alertVolume: "Chime volume",
     volumeQuiet: "Quiet",
@@ -777,6 +948,12 @@ const STRINGS = {
     groupAlerts: "アラート",
     groupAbout: "このデータについて",
     dataSourceHint: "表示される観測値はすべて気象庁が発表したもので、第三者の配信サービス（Wolfx、P2P地震情報）を経由してお届けしています。配信の即時性・確実性は保証されておらず、気象庁の最終報より前に配信が途絶える可能性があります。最新の情報は気象庁のウェブサイトやテレビ・ラジオの放送でも合わせてご確認ください。",
+    groupHistory: "記録",
+    feltLogLabel: "ここで感じた地震",
+    feltLogHint: "このアプリが実際に表示した観測値の個人記録です。30日間保存され、その後自動的に削除されます。",
+    feltLogEmpty: "過去30日間の記録はありません。",
+    feltLogCount: "過去30日間に{n}件記録されました。",
+    feltLogDownloadBtn: "記録をダウンロード（CSV）",
     groupTesting: "テスト",
     groupSupport: "サポート",
     currentLocation: "現在の地点",
@@ -786,9 +963,15 @@ const STRINGS = {
     textSize: "文字サイズ",
     alertThreshold: "アラートを鳴らす震度",
     alertThresholdHint: "この震度以上になると、画面を起動しチャイムを鳴らします。",
-    quietOptOut: "点灯させない震度",
-    quietOptOutHint: "震度1〜2は、一度明るく表示されたあと自動的に暗くなります。ここで震度を選ぶと、その震度以下では明るい表示自体を省略します。",
-    quietOptOutOff: "なし（常に表示）",
+    sensitivity: "感度",
+    sensitivityHint: "震度1〜2がどれくらい明るいまま表示され続けるか。「オフ」を選ぶとその震度では点灯自体を省略します。",
+    sensitivity_high: "高い — わずかな揺れにも気づきたい",
+    sensitivity_normal: "普通",
+    sensitivity_low: "低い — この程度の揺れには慣れている",
+    sensitivity_off: "オフ — 点灯させない",
+    brightness: "明るさ",
+    brightnessFull: "最大",
+    brightnessDimmed: "控えめ",
     alertWakeScreen: "画面を自動的に起動する",
     alertVolume: "チャイムの音量",
     volumeQuiet: "小さめ",
@@ -820,7 +1003,7 @@ const STRINGS = {
   },
 };
 
-const APP_VERSION = "0.1.6";
+const APP_VERSION = "0.1.7";
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
 // BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
@@ -838,6 +1021,9 @@ let lastActiveState = null;
 
 const els = {
   screen: document.getElementById('screen'),
+  postQuakeBadge: document.getElementById('postQuakeBadge'),
+  postQuakeBadgeStep: document.getElementById('postQuakeBadgeStep'),
+  postQuakeBadgeTime: document.getElementById('postQuakeBadgeTime'),
   topRow: document.getElementById('topRow'),
   eventSummaryLine: document.getElementById('eventSummaryLine'),
   jmaMaxLine: document.getElementById('jmaMaxLine'),
@@ -868,6 +1054,11 @@ const els = {
   groupAlerts: document.getElementById('groupAlerts'),
   groupAbout: document.getElementById('groupAbout'),
   dataSourceHint: document.getElementById('dataSourceHint'),
+  groupHistory: document.getElementById('groupHistory'),
+  feltLogLabel: document.getElementById('feltLogLabel'),
+  feltLogHint: document.getElementById('feltLogHint'),
+  feltLogCount: document.getElementById('feltLogCount'),
+  feltLogDownloadBtn: document.getElementById('feltLogDownloadBtn'),
   groupTesting: document.getElementById('groupTesting'),
   groupSupport: document.getElementById('groupSupport'),
   currentLocLabel: document.getElementById('currentLocLabel'),
@@ -889,9 +1080,12 @@ const els = {
   alertThresholdHint: document.getElementById('alertThresholdHint'),
   thresholdSwatchDot: document.getElementById('thresholdSwatchDot'),
   thresholdSelect: document.getElementById('thresholdSelect'),
-  quietOptOutLabel: document.getElementById('quietOptOutLabel'),
-  quietOptOutHint: document.getElementById('quietOptOutHint'),
-  quietOptOutSelect: document.getElementById('quietOptOutSelect'),
+  sensitivityLabel: document.getElementById('sensitivityLabel'),
+  sensitivityHint: document.getElementById('sensitivityHint'),
+  sensitivitySelect: document.getElementById('sensitivitySelect'),
+  brightnessLabel: document.getElementById('brightnessLabel'),
+  brightnessFullBtn: document.getElementById('brightnessFullBtn'),
+  brightnessDimmedBtn: document.getElementById('brightnessDimmedBtn'),
   alertWakeScreenLabel: document.getElementById('alertWakeScreenLabel'),
   wakeScreenOnBtn: document.getElementById('wakeScreenOnBtn'),
   wakeScreenOffBtn: document.getElementById('wakeScreenOffBtn'),
@@ -922,6 +1116,11 @@ function applyLanguage() {
   els.groupAlerts.textContent = s.groupAlerts;
   els.groupAbout.textContent = s.groupAbout;
   els.dataSourceHint.textContent = s.dataSourceHint;
+  els.groupHistory.textContent = s.groupHistory;
+  els.feltLogLabel.textContent = s.feltLogLabel;
+  els.feltLogHint.textContent = s.feltLogHint;
+  els.feltLogDownloadBtn.textContent = s.feltLogDownloadBtn;
+  refreshFeltLogCount();
   els.groupTesting.textContent = s.groupTesting;
   els.groupSupport.textContent = s.groupSupport;
   els.currentLocLabel.textContent = s.currentLocation;
@@ -934,9 +1133,12 @@ function applyLanguage() {
   els.textSizeLabel.textContent = s.textSize;
   els.alertThresholdLabel.textContent = s.alertThreshold;
   els.alertThresholdHint.textContent = s.alertThresholdHint;
-  els.quietOptOutLabel.textContent = s.quietOptOut;
-  els.quietOptOutHint.textContent = s.quietOptOutHint;
-  if (els.quietOptOutSelect.children.length) buildQuietOptOutSelect();
+  els.sensitivityLabel.textContent = s.sensitivity;
+  els.sensitivityHint.textContent = s.sensitivityHint;
+  if (els.sensitivitySelect.children.length) buildSensitivitySelect();
+  els.brightnessLabel.textContent = s.brightness;
+  els.brightnessFullBtn.textContent = s.brightnessFull;
+  els.brightnessDimmedBtn.textContent = s.brightnessDimmed;
   els.alertWakeScreenLabel.textContent = s.alertWakeScreen;
   els.wakeScreenOnBtn.textContent = s.onLabel;
   els.wakeScreenOffBtn.textContent = s.offLabel;
@@ -1070,41 +1272,53 @@ function applyAlertMinStepOnly(step) {
 }
 window.applyAlertMinStepOnly = applyAlertMinStepOnly;
 
-// The opt-out choices are just QUIET_STEPS itself, plus an "off" value
-// ('') meaning nothing is suppressed, so this never needs its own list
-// to stay in sync with QUIET_STEPS by hand.
-let currentQuietOptOut = '';
+// The sensitivity choices are just SENSITIVITY_PROFILES' own keys, so
+// this never needs its own list to stay in sync by hand.
+const SENSITIVITY_ORDER = ['high', 'normal', 'low', 'off'];
 
-function buildQuietOptOutSelect() {
-  els.quietOptOutSelect.innerHTML = '';
-  const off = document.createElement('option');
-  off.value = '';
-  off.textContent = STRINGS[currentLang].quietOptOutOff;
-  els.quietOptOutSelect.appendChild(off);
-  [...QUIET_STEPS].sort().forEach((step) => {
+function buildSensitivitySelect() {
+  els.sensitivitySelect.innerHTML = '';
+  SENSITIVITY_ORDER.forEach((level) => {
     const option = document.createElement('option');
-    option.value = step;
-    option.textContent = step;
-    els.quietOptOutSelect.appendChild(option);
+    option.value = level;
+    option.textContent = STRINGS[currentLang]['sensitivity_' + level];
+    els.sensitivitySelect.appendChild(option);
   });
-  applyQuietOptOutSelection();
+  applySensitivitySelection();
 }
 
-function applyQuietOptOutSelection() {
-  els.quietOptOutSelect.value = currentQuietOptOut;
+function applySensitivitySelection() {
+  els.sensitivitySelect.value = currentSensitivity;
 }
 
-function setQuietOptOut(step) {
-  currentQuietOptOut = step;
-  applyQuietOptOutSelection();
-  if (window.pywebview) window.pywebview.api.set_quiet_opt_out_max_step(step);
+function setSensitivity(level) {
+  currentSensitivity = level;
+  applySensitivitySelection();
+  if (window.pywebview) window.pywebview.api.set_sensitivity(level);
 }
 
-function applyQuietOptOutOnly(step) {
-  currentQuietOptOut = step || '';
-  if (els.quietOptOutSelect.children.length) applyQuietOptOutSelection();
+function applySensitivityOnly(level) {
+  currentSensitivity = level || 'normal';
+  if (els.sensitivitySelect.children.length) applySensitivitySelection();
 }
-window.applyQuietOptOutOnly = applyQuietOptOutOnly;
+window.applySensitivityOnly = applySensitivityOnly;
+
+function applyBrightnessButtons() {
+  els.brightnessFullBtn.classList.toggle('active', currentBrightness === 'full');
+  els.brightnessDimmedBtn.classList.toggle('active', currentBrightness === 'dimmed');
+}
+
+function setBrightness(level) {
+  currentBrightness = level;
+  applyBrightnessButtons();
+  if (window.pywebview) window.pywebview.api.set_brightness(level);
+}
+
+function applyBrightnessOnly(level) {
+  currentBrightness = level || 'full';
+  applyBrightnessButtons();
+}
+window.applyBrightnessOnly = applyBrightnessOnly;
 
 let currentAlertWakeScreen = 'on';
 
@@ -1198,27 +1412,32 @@ function renderActive(state) {
   const band = BANDS[step] || BANDS["0"];
 
   clearQuietTimers();
-  if (QUIET_STEPS.has(step) && state.quiet_suppressed) {
-    // Opted out of being woken for this severity (Settings > Alerts):
+  const sensitivityProfile = SENSITIVITY_PROFILES[currentSensitivity] || SENSITIVITY_PROFILES.normal;
+  if (QUIET_STEPS.has(step) && !sensitivityProfile) {
+    // Sensitivity set to "off" for this severity (Settings > Alerts):
     // go straight to the dim display, no bright flash at all.
     applyScreenColors(QUIET_DIM.bg, QUIET_DIM.fg, 700, 'ease');
   } else if (QUIET_STEPS.has(step)) {
-    // Flash bright immediately so the reading still gets noticed.
-    applyScreenColors(band.bg, band.fg, QUIET_FLASH_MS, 'ease');
+    // Flash bright immediately so the reading still gets noticed, at
+    // whatever intensity (Brightness) and for however long (Sensitivity)
+    // the person has chosen.
+    const flash = quietFlashColors(band);
+    applyScreenColors(flash.bg, flash.fg, sensitivityProfile.flashMs, 'ease');
     quietFadeTimer = setTimeout(() => {
       // Start the slow background fade toward the dim tone; text stays
       // dark a while longer (see QUIET_COLOR_FLIP_MS note above the
       // constants) and gets its own short transition declared here so
       // the later flip animates instead of snapping.
-      els.screen.style.transition = `background ${QUIET_FADE_MS}ms linear, color ${QUIET_COLOR_FLIP_MS}ms ease`;
+      els.screen.style.transition = `background ${sensitivityProfile.fadeMs}ms linear, color ${QUIET_COLOR_FLIP_MS}ms ease`;
       els.screen.style.background = QUIET_DIM.bg;
       quietColorFlipTimer = setTimeout(() => {
         els.screen.style.color = QUIET_DIM.fg;
-      }, QUIET_FADE_MS / 2);
-    }, QUIET_FLASH_HOLD_MS);
+      }, sensitivityProfile.fadeMs / 2);
+    }, sensitivityProfile.holdMs);
   } else {
     applyScreenColors(band.bg, band.fg, 700, 'ease');
   }
+  showPostQuakeBadge(state);
   els.topRow.style.visibility = 'visible';
   els.mid.style.display = 'flex';
   els.idleLine.style.display = 'none';
@@ -1444,6 +1663,36 @@ function openSettings() {
   setBugReportStatus('', null);
   els.bugReportBox.value = '';
   els.settingsPanel.style.display = 'flex';
+  refreshFeltLogCount();
+}
+
+async function refreshFeltLogCount() {
+  if (!window.pywebview) return;
+  const res = await window.pywebview.api.get_felt_log();
+  const n = (res && res.entries) ? res.entries.length : 0;
+  const s = STRINGS[currentLang];
+  els.feltLogCount.textContent = n === 0 ? s.feltLogEmpty : s.feltLogCount.replace('{n}', n);
+}
+
+async function downloadFeltLog() {
+  if (!window.pywebview) return;
+  const res = await window.pywebview.api.get_felt_log();
+  const entries = (res && res.entries) || [];
+  const header = ['felt_at', 'display_step', 'magnitude', 'hypocenter', 'station', 'station_km'];
+  const rows = entries.map((e) => header.map((k) => {
+    const v = e[k] == null ? '' : String(e[k]);
+    return v.includes(',') || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v;
+  }).join(','));
+  const csv = [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `shindo-screener-felt-log-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function buildDiagnosticInfo() {
@@ -1612,7 +1861,8 @@ applyLanguage();
 applyTimeFormatButtons();
 applyTextScaleButtons();
 buildThresholdSelect();
-buildQuietOptOutSelect();
+buildSensitivitySelect();
+applyBrightnessButtons();
 applyWakeScreenButtons();
 applyVolumeButtons();
 renderIdle();

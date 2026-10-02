@@ -29,7 +29,7 @@ import time
 import traceback
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import webview
 import websockets
@@ -49,12 +49,23 @@ QUIET_IDLE_MINUTES = 1        # Shindo 1-2 readings (see QUIET_STEPS) clear afte
                                # minutes (e.g. overnight: see no reason to keep a room lit for a
                                # "barely felt" reading long after the shaking itself is over)
 QUIET_STEPS = {"1", "2"}
-# A person can opt out of even the brief bright flash for the quiet tier
-# (Settings > Alerts > "Don't light up for"). "" means nothing is
-# suppressed (the default: everything still flashes). Only "1"/"2" are
-# otherwise offered, since 3+ always gets the full bright/loud display
-# regardless of this setting; see Listener.build_state's quiet_suppressed.
-QUIET_OPT_OUT_SELECTABLE_STEPS = ("", "1", "2")
+# Personalization for the quiet tier (Settings > Alerts > "Sensitivity").
+# Replaces the old binary "Don't light up for" opt-out with a single
+# dial: how long the brief bright flash is held before the 30s(-ish)
+# fade to dark starts, and how long that fade itself takes. "off" skips
+# the flash entirely (the old opt-out's behavior). Only applies to
+# Shindo 1-2 (QUIET_STEPS); 3+ always gets the full bright/loud display
+# regardless of this setting. The actual (flash_ms, hold_ms, fade_ms)
+# values live in screener_app.html's SENSITIVITY_PROFILES, since this is
+# purely a display-timing choice with no JMA data behind it.
+SENSITIVITY_LEVELS = ("high", "normal", "low", "off")
+# Independent of sensitivity: how bright the flash itself is, not how
+# long it lasts. Also display-only.
+BRIGHTNESS_LEVELS = ("full", "dimmed")
+# How long a personal "felt this" log entry is kept before being pruned,
+# per Isaiah's explicit request: this is a local convenience record, not
+# an archive, so it's bounded rather than growing forever on disk.
+FELT_LOG_RETENTION_DAYS = 30
 EEW_NOTICE_RADIUS_KM = 300    # show early warnings for quakes this close even when JMA hasn't warned your area
 HOME_CHANGE_REPLAY_MINUTES = 10  # re-show a recent quake against a newly chosen location, see recheck_last_events
 CHECK_INTERVAL_SECONDS = 15
@@ -90,6 +101,7 @@ def settings_dir():
 
 
 SETTINGS_PATH = os.path.join(settings_dir(), "settings.json")
+FELT_LOG_PATH = os.path.join(settings_dir(), "felt_log.json")
 
 
 def load_settings():
@@ -98,6 +110,37 @@ def load_settings():
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return None
+
+
+def prune_felt_log(entries):
+    """Drops any logged "felt this" entry older than the retention
+    window, so the file this app accumulates on disk is self-cleaning
+    rather than growing forever. An entry with a missing/unparseable
+    timestamp is dropped too, rather than kept forever by accident."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=FELT_LOG_RETENTION_DAYS)
+    kept = []
+    for e in entries:
+        try:
+            felt_at = datetime.fromisoformat(e["felt_at"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if felt_at >= cutoff:
+            kept.append(e)
+    return kept
+
+
+def load_felt_log():
+    try:
+        with open(FELT_LOG_PATH, "r", encoding="utf-8") as f:
+            entries = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        entries = []
+    return prune_felt_log(entries)
+
+
+def save_felt_log(entries):
+    with open(FELT_LOG_PATH, "w", encoding="utf-8") as f:
+        json.dump(entries, f)
 
 
 # Every setting besides name/lat/lon, with its default for a settings.json
@@ -111,7 +154,8 @@ SETTINGS_DEFAULTS = {
     "alert_min_step": alert.DEFAULT_ALERT_MIN_STEP,
     "alert_wake_screen": "on",
     "alert_volume": alert.DEFAULT_ALERT_VOLUME,
-    "quiet_opt_out_max_step": "",
+    "sensitivity": "normal",
+    "brightness": "full",
 }
 
 
@@ -272,16 +316,33 @@ class Api:
             listener.alert_min_step = step
         return {"ok": True}
 
-    def set_quiet_opt_out_max_step(self, step):
-        if step not in QUIET_OPT_OUT_SELECTABLE_STEPS:
-            return {"ok": False, "error": f"Not a selectable quiet opt-out level: {step}"}
+    def set_sensitivity(self, level):
+        if level not in SENSITIVITY_LEVELS:
+            return {"ok": False, "error": f"Not a selectable sensitivity level: {level}"}
         existing = load_settings()
         if existing:
-            save_settings(merged_settings(existing, quiet_opt_out_max_step=step))
+            save_settings(merged_settings(existing, sensitivity=level))
         listener = self._get_listener()
         if listener is not None:
-            listener.quiet_opt_out_max_step = step
+            listener.sensitivity = level
         return {"ok": True}
+
+    def set_brightness(self, level):
+        if level not in BRIGHTNESS_LEVELS:
+            return {"ok": False, "error": f"Not a selectable brightness level: {level}"}
+        existing = load_settings()
+        if existing:
+            save_settings(merged_settings(existing, brightness=level))
+        listener = self._get_listener()
+        if listener is not None:
+            listener.brightness = level
+        return {"ok": True}
+
+    def get_felt_log(self):
+        """The personal "earthquakes felt here" log (Settings > History),
+        for the frontend to list and export. Entries older than
+        FELT_LOG_RETENTION_DAYS are already dropped by load_felt_log."""
+        return {"ok": True, "entries": load_felt_log()}
 
     def set_alert_wake_screen(self, value):
         existing = load_settings()
@@ -384,7 +445,7 @@ class Listener:
 
     def __init__(self, window, home, alert_min_step=alert.DEFAULT_ALERT_MIN_STEP,
                  alert_wake_screen=True, alert_volume=alert.DEFAULT_ALERT_VOLUME,
-                 quiet_opt_out_max_step=""):
+                 sensitivity="normal", brightness="full"):
         self.window = window
         self.stations = jma_sources.load_stations(resource_path(STATIONS_JSON_RELATIVE_PATH))
         self._home = None
@@ -408,7 +469,8 @@ class Listener:
         self.alert_min_step = alert_min_step
         self.alert_wake_screen = alert_wake_screen
         self.alert_volume = alert_volume
-        self.quiet_opt_out_max_step = quiet_opt_out_max_step
+        self.sensitivity = sensitivity
+        self.brightness = brightness
 
     @property
     def home(self):
@@ -527,14 +589,13 @@ class Listener:
             af = ev["area_forecast"]
             s.update(display_step=af["from"], display_source="area_warning", area_forecast=af,
                      alert_step=af.get("to") or af["from"])
-        # Whether the display should skip its usual bright flash for this
-        # reading (Settings > Alerts > "Don't light up for"). Only ever
-        # true for the quiet tier (Shindo 1-2); 3+ always flashes.
-        s["quiet_suppressed"] = bool(
-            self.quiet_opt_out_max_step
-            and s["display_step"] in QUIET_STEPS
-            and jma_sources.rank(s["display_step"]) <= jma_sources.rank(self.quiet_opt_out_max_step)
-        )
+        # Passed straight through for the frontend to apply (Settings >
+        # Alerts > "Sensitivity" / "Brightness"): how long the quiet
+        # tier's (Shindo 1-2) bright flash is held and how it fades, and
+        # how bright the flash itself is. Pure display timing/intensity,
+        # not JMA data, so the actual profiles live in screener_app.html.
+        s["sensitivity"] = self.sensitivity
+        s["brightness"] = self.brightness
         return s
 
     # ------------------------------------------------------------ EEW (Wolfx)
@@ -617,7 +678,40 @@ class Listener:
                 ev["tsunami"] = info["tsunami"]
             elif info.get("tsunami_cleared"):
                 ev["tsunami"] = None
+            # Personal log (Settings > History): only earthquakes actually
+            # felt at the user's nearest station/area, never every nearby
+            # quake JMA reported. info["felt_near_user"] reflects *this*
+            # message's reading; record_felt_event is itself safe to call
+            # repeatedly for the same event (it updates in place rather
+            # than duplicating), so a later, more detailed report for an
+            # already-logged quake just refines that one entry.
+            if info.get("felt_near_user"):
+                self.record_felt_event(ev)
             self.push(self.build_state())
+
+    def record_felt_event(self, ev):
+        """Adds or updates this event's entry in the local "felt this"
+        log (see FELT_LOG_PATH), for the Settings > History export. Not
+        JMA data in itself, just a personal record of when the app's own
+        relayed JMA readings actually showed something felt here."""
+        reading = ev.get("reading") or {}
+        step = reading.get("step")
+        if not step:
+            return
+        now = self.now_iso()
+        entries = load_felt_log()
+        for e in entries:
+            if e.get("event_key") == ev["key"]:
+                e.update(display_step=step, magnitude=ev.get("magnitude"), hypocenter=ev.get("hypocenter"),
+                         station=reading.get("station"), station_km=reading.get("station_km"), updated_at=now)
+                break
+        else:
+            entries.append({
+                "event_key": ev["key"], "felt_at": now, "updated_at": now,
+                "display_step": step, "magnitude": ev.get("magnitude"), "hypocenter": ev.get("hypocenter"),
+                "station": reading.get("station"), "station_km": reading.get("station_km"),
+            })
+        save_felt_log(prune_felt_log(entries))
 
     # ------------------------------------------------------------ connections
 
@@ -669,7 +763,8 @@ def main():
             alert_min_step=settings.get("alert_min_step", alert.DEFAULT_ALERT_MIN_STEP),
             alert_wake_screen=settings.get("alert_wake_screen", "on") == "on",
             alert_volume=settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME),
-            quiet_opt_out_max_step=settings.get("quiet_opt_out_max_step", ""),
+            sensitivity=settings.get("sensitivity", "normal"),
+            brightness=settings.get("brightness", "full"),
         )
         listener_holder["instance"] = listener
         threading.Thread(target=listener.run, daemon=True).start()
@@ -698,7 +793,8 @@ def main():
             alert_min_step = settings.get("alert_min_step", alert.DEFAULT_ALERT_MIN_STEP)
             alert_wake_screen = settings.get("alert_wake_screen", "on")
             alert_volume = settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME)
-            quiet_opt_out_max_step = settings.get("quiet_opt_out_max_step", "")
+            sensitivity = settings.get("sensitivity", "normal")
+            brightness = settings.get("brightness", "full")
             window.evaluate_js(f"window.applyLanguageOnly({json.dumps(lang)})")
             window.evaluate_js(f"window.applyTimeFormatOnly({json.dumps(time_fmt)})")
             window.evaluate_js(f"window.applyTextScaleOnly({json.dumps(text_scale)})")
@@ -706,7 +802,8 @@ def main():
             window.evaluate_js(f"window.applyAlertMinStepOnly({json.dumps(alert_min_step)})")
             window.evaluate_js(f"window.applyAlertWakeScreenOnly({json.dumps(alert_wake_screen)})")
             window.evaluate_js(f"window.applyAlertVolumeOnly({json.dumps(alert_volume)})")
-            window.evaluate_js(f"window.applyQuietOptOutOnly({json.dumps(quiet_opt_out_max_step)})")
+            window.evaluate_js(f"window.applySensitivityOnly({json.dumps(sensitivity)})")
+            window.evaluate_js(f"window.applyBrightnessOnly({json.dumps(brightness)})")
             window.evaluate_js(f"window.showMainScreen({json.dumps(settings['name'])})")
             start_listener(settings)
         else:
