@@ -104,24 +104,39 @@
     display: inline-block;
     border: 2px solid #f5f0e8;
   }
+  /* Was `position: absolute; bottom: 3vh; right: 5vw;`, floating free of
+     the document flow. That meant nothing reserved space for it, so a
+     long .meta line (distance + nearby-station text) could run straight
+     underneath it and the two would visibly overlap. It's now a flex
+     item in .bottom-row instead, with its own column so it always has
+     real, non-overlapping space regardless of how long either line gets. */
   .location-label {
-    position: absolute;
-    bottom: 3vh;
-    right: 5vw;
     font-size: var(--tier3-size);
     font-weight: 700;
     letter-spacing: 0.05em;
     color: currentColor;
+    text-align: right;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
-  /* No longer absolutely positioned: the gear button lives in normal
-     document flow alongside the bottom-left text block (see .bottom-row),
-     which now only holds .meta (the distance line), since .label moved
-     up into .readout. */
+  /* The gear button lives in normal document flow alongside the
+     bottom-left text block (.meta) and the location label, as three
+     flex items: gear | meta (grows, truncates if needed) | location
+     label (fixed, right-aligned, never overlapped). */
   .bottom-row {
     display: flex;
     align-items: flex-end;
     gap: 16px;
+  }
+  .bottom-row .meta-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .bottom-row .meta-wrap .meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .gear-btn {
     width: 30px;
@@ -445,11 +460,11 @@
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
       </svg>
     </button>
-    <div>
+    <div class="meta-wrap">
       <div class="meta" id="metaText"></div>
     </div>
+    <div class="location-label" id="locationLabel"></div>
   </div>
-  <div class="location-label" id="locationLabel"></div>
 </div>
 
 <div class="setup" id="setup">
@@ -597,10 +612,17 @@
 </div>
 
 <script>
+// Steps 1-2 ("barely felt" / "slight indoor shaking") deliberately stay
+// dark instead of inverting to a bright panel: this is the quiet tier,
+// meant to be checkable without lighting up a dark room, and it also
+// clears in QUIET_IDLE_MINUTES (see app.py) rather than sitting lit for
+// the full MEASURED_IDLE_MINUTES hold that 3+ gets. 3 and up keep the
+// original bright/inverted treatment since that's the point where the
+// shaking is worth a loud, hard-to-miss display.
 const BANDS = {
   "0":  { bg: '#000000', fg: '#f5f5f0' },
-  "1":  { bg: '#e8e6dc', fg: '#0e0e0c' },
-  "2":  { bg: '#e8e6dc', fg: '#0e0e0c' },
+  "1":  { bg: '#121210', fg: '#e8e6dc' },
+  "2":  { bg: '#121210', fg: '#e8e6dc' },
   "3":  { bg: '#a8e6e8', fg: '#0e0e0c' },
   "4":  { bg: '#a8e6e8', fg: '#0e0e0c' },
   "5-": { bg: '#e8d842', fg: '#0e0e0c' },

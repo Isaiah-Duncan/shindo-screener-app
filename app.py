@@ -44,6 +44,11 @@ STATIONS_JSON_RELATIVE_PATH = "stations_jp.json"
 IDLE_STATE = {"status": "idle", "updated_at": None}
 EEW_IDLE_MINUTES = 5          # an early warning stays up this long if no measured report follows
 MEASURED_IDLE_MINUTES = 10    # a measured reading stays up this long, then the screen goes quiet
+QUIET_IDLE_MINUTES = 1        # Shindo 1-2 readings (see QUIET_STEPS) clear after this instead,
+                               # since they're the dark/dim display tier, not worth holding for 10
+                               # minutes (e.g. overnight: see no reason to keep a room lit for a
+                               # "barely felt" reading long after the shaking itself is over)
+QUIET_STEPS = {"1", "2"}
 EEW_NOTICE_RADIUS_KM = 300    # show early warnings for quakes this close even when JMA hasn't warned your area
 HOME_CHANGE_REPLAY_MINUTES = 10  # re-show a recent quake against a newly chosen location, see recheck_last_events
 CHECK_INTERVAL_SECONDS = 15
@@ -452,7 +457,12 @@ class Listener:
             st = self.current_state
             if st.get("status") != "active":
                 return
-            limit = EEW_IDLE_MINUTES if st.get("phase") == "eew" else MEASURED_IDLE_MINUTES
+            if st.get("phase") == "eew":
+                limit = EEW_IDLE_MINUTES
+            elif st.get("display_step") in QUIET_STEPS:
+                limit = QUIET_IDLE_MINUTES
+            else:
+                limit = MEASURED_IDLE_MINUTES
             if self.minutes_since(st.get("updated_at")) > limit:
                 self.go_idle()
 
