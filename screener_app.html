@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>Shindo Screener</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root { --text-scale: 1; }
   * { box-sizing: border-box; }
@@ -13,7 +16,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Bahnschrift', Arial, Helvetica, sans-serif;
+    font-family: 'DM Sans', 'Bahnschrift', Arial, Helvetica, sans-serif;
     overflow: hidden;
   }
   .screen {
@@ -78,8 +81,19 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1vh;
+    border-radius: 16px;
+    transition: background 400ms ease, color 400ms ease, padding 400ms ease;
   }
-  .code { font-size: 14vw; font-weight: 700; line-height: 1; }
+  /* Ambient-severity readings (Shindo 0-3, see renderActive's isAmbient
+     branch) never flood the whole screen with the band color, that
+     register is reserved for 4+, which is genuinely alert-worthy. Low
+     severity instead lights up a contained card around the number
+     itself: the screen stays on its calm, constant dark tone the whole
+     time, only this element's background moves through applyTileColors.
+     .datum-tile just adds the padding that makes the background read as
+     a card instead of a stray rectangle hugging the text. */
+  .readout.datum-tile { padding: 3vh 3vw; }
+  .code { font-family: 'Barlow', 'DM Sans', sans-serif; font-size: 14vw; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
   .rule { width: 20vw; height: 4px; background: currentColor; }
   .idle-line { width: 55%; height: 3px; background: currentColor; margin-top: 4vh; }
   /* .label (severity phrase) and .location-label (monitored location)
@@ -239,7 +253,7 @@
     align-items: center;
     justify-content: center;
     gap: 16px;
-    font-family: 'Bahnschrift', Arial, Helvetica, sans-serif;
+    font-family: 'DM Sans', 'Bahnschrift', Arial, Helvetica, sans-serif;
     text-align: center;
     padding: 0 10vw;
   }
@@ -333,7 +347,7 @@
     display: none;
     flex-direction: column;
     align-items: center;
-    font-family: 'Bahnschrift', Arial, Helvetica, sans-serif;
+    font-family: 'DM Sans', 'Bahnschrift', Arial, Helvetica, sans-serif;
     z-index: 30;
     overflow-y: auto;
     padding: 5vh 0 4vh;
@@ -511,7 +525,7 @@
     display: none;
     flex-direction: column;
     align-items: center;
-    font-family: 'Bahnschrift', Arial, Helvetica, sans-serif;
+    font-family: 'DM Sans', 'Bahnschrift', Arial, Helvetica, sans-serif;
     z-index: 30;
     overflow-y: auto;
     padding: 5vh 0 4vh;
@@ -625,7 +639,7 @@
   </div>
   <div class="tsunami-box" id="tsunamiBox" style="display:none;"></div>
   <div class="mid" id="mid">
-    <div class="readout">
+    <div class="readout" id="readout">
       <div class="estimate-label" id="estimateLabel"></div>
       <div class="code" id="code"></div>
       <div class="rule" id="rule"></div>
@@ -880,30 +894,49 @@ const MATURITY_EN = { preliminary: "Early warning, first report", updated: "Earl
 const MATURITY_JA = { preliminary: "緊急地震速報（第1報）", updated: "緊急地震速報（続報）", final: "緊急地震速報（最終報）",
   measured_quick: "気象庁 震度速報", measured_detail: "気象庁 震源・震度情報", test: "テスト表示（実際の地震ではありません）" };
 
-// Minor readings still flash the full bright BANDS panel on arrival,
-// same as any other reading, so the screen still does its job of
+// Minor readings still rise to the full bright BANDS color on arrival
+// (now contained to the number's own card, not the whole screen, see
+// isAmbient in renderActive), so the display still does its job of
 // actually notifying someone. But holding that at full brightness for
 // the whole display window is overkill for something minor (see: being
 // woken at 2 AM for a reading that barely registered), so once it's
-// been seen, the screen settles to true black (QUIET_DIM, the same
-// tone as idle) over a single short transition — background and text
-// move together in one step, not a slow fade with a separate color
-// flip partway through, so there's no stretch where both are
-// mid-transition and the screen just looks washed out.
+// been seen, it settles back to the calm ambient tone over a single
+// short transition, background and text move together in one step,
+// not a slow fade with a separate color flip partway through, so
+// there's no stretch where both are mid-transition and the card just
+// looks washed out.
 //
-// Which readings get this quieter treatment, and how fast, is personal
-// (Settings > Alerts > "Sensitivity"): someone who gets woken by every
-// light tremor wants every step shown in full; someone used to
-// frequent small quakes wants more steps muted, and faster. That's
-// what quietSteps/flashMs/holdMs/fadeMs vary per level below. "off"
+// Which readings get this quieter treatment, and how long they stay
+// lit before fading, is personal (Settings > Alerts > "Sensitivity"):
+// someone who gets woken by every light tremor wants every step shown
+// in full; someone used to frequent small quakes wants more steps
+// muted, and settling sooner. That's what quietSteps/holdMs/fadeMs
+// vary per level below. The RISE to brightness is deliberately not
+// one of those per-level knobs (see SAFE_RISE_MS above renderActive):
+// a fast flash is a photosensitivity risk regardless of how "low" the
+// sensitivity setting is, so every level rises at the same safe
+// speed and only differs in how long it stays and how slowly it
+// fades. "off"
 // skips the flash for its quiet steps entirely, going straight to
 // black.
 const QUIET_DIM = { bg: '#000000', fg: '#f5f5f0' };
+// SAFE_RISE_MS is a photosensitivity-safety floor, not a tunable: the
+// rise to full brightness must never be fast, regardless of
+// sensitivity setting, since a quick, high-contrast, dark-to-bright
+// transition is the exact pattern flash-sensitivity guidance (WCAG's
+// flash thresholds) treats as higher-risk, worse at night when the
+// eye is dark-adapted. Sensitivity is only allowed to control how
+// long a reading stays lit (holdMs) and how slowly it fades back
+// (fadeMs), never how abruptly it appears. Do not lower this to make
+// a profile feel "snappier": that was the exact bug ("low" used to
+// rise in 250ms, faster than every other setting, including the
+// genuine Shindo 4+ alert screen) that this constant replaced.
+const SAFE_RISE_MS = 700;
 const SENSITIVITY_PROFILES = {
-  high:   { quietSteps: [],              flashMs: 400, holdMs: 1200, fadeMs: 2500 },
-  normal: { quietSteps: ["1", "2"],      flashMs: 400, holdMs: 600,  fadeMs: 1500 },
-  low:    { quietSteps: ["1", "2", "3"], flashMs: 250, holdMs: 300,  fadeMs: 900 },
-  off:    { quietSteps: ["1", "2", "3"], flashMs: 0,   holdMs: 0,    fadeMs: 700 },
+  high:   { quietSteps: [],              holdMs: 1200, fadeMs: 2500 },
+  normal: { quietSteps: ["1", "2"],      holdMs: 600,  fadeMs: 1500 },
+  low:    { quietSteps: ["1", "2", "3"], holdMs: 300,  fadeMs: 900 },
+  off:    { quietSteps: ["1", "2", "3"], holdMs: 0,    fadeMs: 700, noFlash: true },
 };
 let currentSensitivity = 'normal';
 let quietFadeTimer = null;
@@ -917,6 +950,47 @@ function applyScreenColors(bg, fg, transitionMs, easing) {
   els.screen.style.transition = `background ${transitionMs}ms ${easing}, color ${transitionMs}ms ${easing}`;
   els.screen.style.background = bg;
   els.screen.style.color = fg;
+}
+
+// Severity is communicated two different ways depending on how much it
+// actually warrants, instead of one register for everything:
+//   - Shindo 0-3 ("ambient"): this is near-continuous background
+//     seismicity (see the app's own thesis doc), not an event. The
+//     screen itself stays on one constant, calm dark tone the whole
+//     time; only the number's own card (#readout, via
+//     applyTileColors) moves through the band color, so the room
+//     doesn't flood with saturated light over something this common.
+//   - Shindo 4+ ("alert"): genuinely alert-worthy, so the existing
+//     full-screen flash (applyScreenColors straight to the band color)
+//     stays exactly as it was, uncontained, since that urgency is
+//     earned here.
+const AMBIENT_STEPS = ['0', '1', '2', '3'];
+const AMBIENT_SCREEN = { bg: '#0b0a08', fg: '#f5f5f0' };
+
+function applyTileColors(bg, fg, transitionMs, easing) {
+  els.readout.style.transition = `background ${transitionMs}ms ${easing}, color ${transitionMs}ms ${easing}, padding 400ms ease`;
+  els.readout.style.background = bg;
+  els.readout.style.color = fg;
+}
+
+function resetTile() {
+  els.readout.classList.remove('datum-tile');
+  els.readout.style.background = '';
+  els.readout.style.color = '';
+}
+
+// Reads the OS-level "reduce motion" accessibility preference, when
+// the webview exposes it. Checked fresh each time rather than cached,
+// since the person can change this OS setting while the app is
+// running. Unsupported (matchMedia missing or throws) is treated as
+// false, not true: this only ever makes the quiet-tier flash safer by
+// skipping it, never less safe by assuming consent to flash.
+function prefersReducedMotion() {
+  try {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch (e) {
+    return false;
+  }
 }
 
 // Post-quake badge: a small persistent indicator (top-left corner) for
@@ -1103,7 +1177,7 @@ const STRINGS = {
   },
 };
 
-const APP_VERSION = "0.1.9";
+const APP_VERSION = "0.2.1";
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
 // BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
@@ -1131,6 +1205,7 @@ const els = {
   dateEl: document.getElementById('dateEl'),
   timeEl: document.getElementById('timeEl'),
   mid: document.getElementById('mid'),
+  readout: document.getElementById('readout'),
   rule: document.getElementById('rule'),
   code: document.getElementById('code'),
   labelText: document.getElementById('labelText'),
@@ -1468,6 +1543,7 @@ window.applyMotionEffectsOnly = applyMotionEffectsOnly;
 function renderIdle() {
   lastActiveState = null;
   clearQuietTimers();
+  resetTile();
   applyScreenColors('#000000', '#f5f5f0', 700, 'ease');
   els.dismissBtn.style.display = 'none';
   els.topRow.style.visibility = 'visible';
@@ -1515,19 +1591,40 @@ function renderActive(state) {
   clearQuietTimers();
   const sensitivityProfile = SENSITIVITY_PROFILES[currentSensitivity] || SENSITIVITY_PROFILES.normal;
   const isQuietStep = sensitivityProfile.quietSteps.includes(step);
-  if (isQuietStep && sensitivityProfile.flashMs === 0) {
-    // "Off" for this severity (Settings > Alerts > Sensitivity): go
-    // straight to black, no bright flash at all.
-    applyScreenColors(QUIET_DIM.bg, QUIET_DIM.fg, sensitivityProfile.fadeMs, 'ease');
-  } else if (isQuietStep) {
-    // Flash bright immediately so the reading still gets noticed, then
-    // settle to black in a single transition (background and text move
-    // together, same duration) once it's held long enough to register.
-    applyScreenColors(band.bg, band.fg, sensitivityProfile.flashMs, 'ease');
-    quietFadeTimer = setTimeout(() => {
-      applyScreenColors(QUIET_DIM.bg, QUIET_DIM.fg, sensitivityProfile.fadeMs, 'ease');
-    }, sensitivityProfile.holdMs);
+  const isAmbient = AMBIENT_STEPS.includes(step);
+
+  if (isAmbient) {
+    // Screen itself never leaves its constant calm tone for 0-3; only
+    // the number's own card does. "Sensitivity" still controls how
+    // much the card lights up and for how long, same profiles as
+    // before, just retargeted from the whole screen to this one
+    // element (see applyTileColors above).
+    applyScreenColors(AMBIENT_SCREEN.bg, AMBIENT_SCREEN.fg, 500, 'ease');
+    els.readout.classList.add('datum-tile');
+    // A system-level "reduce motion" preference is this user telling
+    // their OS they don't want this category of visual change at all,
+    // which overrides whatever sensitivity level is selected: skip the
+    // flash entirely, same as "off" does, rather than just slowing it
+    // down.
+    const skipFlash = sensitivityProfile.noFlash || prefersReducedMotion();
+    if (isQuietStep && skipFlash) {
+      applyTileColors(AMBIENT_SCREEN.bg, AMBIENT_SCREEN.fg, sensitivityProfile.fadeMs, 'ease');
+    } else if (isQuietStep) {
+      applyTileColors(band.bg, band.fg, SAFE_RISE_MS, 'ease');
+      quietFadeTimer = setTimeout(() => {
+        applyTileColors(AMBIENT_SCREEN.bg, AMBIENT_SCREEN.fg, sensitivityProfile.fadeMs, 'ease');
+      }, sensitivityProfile.holdMs);
+    } else {
+      // High/normal sensitivity, not a quiet step: card stays lit at
+      // the band color rather than fading, since "I do want to know
+      // what this is" (unchanged from the old full-screen behavior,
+      // just contained to the card now). Same safe rise speed either way.
+      applyTileColors(band.bg, band.fg, SAFE_RISE_MS, 'ease');
+    }
   } else {
+    // Shindo 4+: genuinely alert-worthy, so the full-screen flash is
+    // unchanged and earned here. No card, no containment.
+    resetTile();
     applyScreenColors(band.bg, band.fg, 700, 'ease');
   }
   showPostQuakeBadge(state);
