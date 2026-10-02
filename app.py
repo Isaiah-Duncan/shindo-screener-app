@@ -49,6 +49,12 @@ QUIET_IDLE_MINUTES = 1        # Shindo 1-2 readings (see QUIET_STEPS) clear afte
                                # minutes (e.g. overnight: see no reason to keep a room lit for a
                                # "barely felt" reading long after the shaking itself is over)
 QUIET_STEPS = {"1", "2"}
+# A person can opt out of even the brief bright flash for the quiet tier
+# (Settings > Alerts > "Don't light up for"). "" means nothing is
+# suppressed (the default: everything still flashes). Only "1"/"2" are
+# otherwise offered, since 3+ always gets the full bright/loud display
+# regardless of this setting; see Listener.build_state's quiet_suppressed.
+QUIET_OPT_OUT_SELECTABLE_STEPS = ("", "1", "2")
 EEW_NOTICE_RADIUS_KM = 300    # show early warnings for quakes this close even when JMA hasn't warned your area
 HOME_CHANGE_REPLAY_MINUTES = 10  # re-show a recent quake against a newly chosen location, see recheck_last_events
 CHECK_INTERVAL_SECONDS = 15
@@ -105,6 +111,7 @@ SETTINGS_DEFAULTS = {
     "alert_min_step": alert.DEFAULT_ALERT_MIN_STEP,
     "alert_wake_screen": "on",
     "alert_volume": alert.DEFAULT_ALERT_VOLUME,
+    "quiet_opt_out_max_step": "",
 }
 
 
@@ -265,6 +272,17 @@ class Api:
             listener.alert_min_step = step
         return {"ok": True}
 
+    def set_quiet_opt_out_max_step(self, step):
+        if step not in QUIET_OPT_OUT_SELECTABLE_STEPS:
+            return {"ok": False, "error": f"Not a selectable quiet opt-out level: {step}"}
+        existing = load_settings()
+        if existing:
+            save_settings(merged_settings(existing, quiet_opt_out_max_step=step))
+        listener = self._get_listener()
+        if listener is not None:
+            listener.quiet_opt_out_max_step = step
+        return {"ok": True}
+
     def set_alert_wake_screen(self, value):
         existing = load_settings()
         if existing:
@@ -365,7 +383,8 @@ class Listener:
     """
 
     def __init__(self, window, home, alert_min_step=alert.DEFAULT_ALERT_MIN_STEP,
-                 alert_wake_screen=True, alert_volume=alert.DEFAULT_ALERT_VOLUME):
+                 alert_wake_screen=True, alert_volume=alert.DEFAULT_ALERT_VOLUME,
+                 quiet_opt_out_max_step=""):
         self.window = window
         self.stations = jma_sources.load_stations(resource_path(STATIONS_JSON_RELATIVE_PATH))
         self._home = None
@@ -389,6 +408,7 @@ class Listener:
         self.alert_min_step = alert_min_step
         self.alert_wake_screen = alert_wake_screen
         self.alert_volume = alert_volume
+        self.quiet_opt_out_max_step = quiet_opt_out_max_step
 
     @property
     def home(self):
@@ -507,6 +527,14 @@ class Listener:
             af = ev["area_forecast"]
             s.update(display_step=af["from"], display_source="area_warning", area_forecast=af,
                      alert_step=af.get("to") or af["from"])
+        # Whether the display should skip its usual bright flash for this
+        # reading (Settings > Alerts > "Don't light up for"). Only ever
+        # true for the quiet tier (Shindo 1-2); 3+ always flashes.
+        s["quiet_suppressed"] = bool(
+            self.quiet_opt_out_max_step
+            and s["display_step"] in QUIET_STEPS
+            and jma_sources.rank(s["display_step"]) <= jma_sources.rank(self.quiet_opt_out_max_step)
+        )
         return s
 
     # ------------------------------------------------------------ EEW (Wolfx)
@@ -634,6 +662,7 @@ def main():
             alert_min_step=settings.get("alert_min_step", alert.DEFAULT_ALERT_MIN_STEP),
             alert_wake_screen=settings.get("alert_wake_screen", "on") == "on",
             alert_volume=settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME),
+            quiet_opt_out_max_step=settings.get("quiet_opt_out_max_step", ""),
         )
         listener_holder["instance"] = listener
         threading.Thread(target=listener.run, daemon=True).start()
@@ -662,6 +691,7 @@ def main():
             alert_min_step = settings.get("alert_min_step", alert.DEFAULT_ALERT_MIN_STEP)
             alert_wake_screen = settings.get("alert_wake_screen", "on")
             alert_volume = settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME)
+            quiet_opt_out_max_step = settings.get("quiet_opt_out_max_step", "")
             window.evaluate_js(f"window.applyLanguageOnly({json.dumps(lang)})")
             window.evaluate_js(f"window.applyTimeFormatOnly({json.dumps(time_fmt)})")
             window.evaluate_js(f"window.applyTextScaleOnly({json.dumps(text_scale)})")
@@ -669,6 +699,7 @@ def main():
             window.evaluate_js(f"window.applyAlertMinStepOnly({json.dumps(alert_min_step)})")
             window.evaluate_js(f"window.applyAlertWakeScreenOnly({json.dumps(alert_wake_screen)})")
             window.evaluate_js(f"window.applyAlertVolumeOnly({json.dumps(alert_volume)})")
+            window.evaluate_js(f"window.applyQuietOptOutOnly({json.dumps(quiet_opt_out_max_step)})")
             window.evaluate_js(f"window.showMainScreen({json.dumps(settings['name'])})")
             start_listener(settings)
         else:

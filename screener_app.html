@@ -562,6 +562,11 @@
     </div>
   </div>
   <div class="settings-section">
+    <label id="quietOptOutLabel">Don't light up for</label>
+    <div class="alert-threshold-hint" id="quietOptOutHint">Shindo 1-2 readings still flash briefly, then dim on their own. Pick a level here to skip the flash entirely for readings at or below it.</div>
+    <select class="threshold-select" id="quietOptOutSelect" onchange="setQuietOptOut(this.value)"></select>
+  </div>
+  <div class="settings-section">
     <div class="row-inline">
       <label id="alertWakeScreenLabel" style="margin:0;">Wake screen automatically</label>
       <div class="format-switch">
@@ -608,21 +613,14 @@
     </div>
   </div>
 
-  <div class="version-footer" id="versionFooter">Shindo Screener: Beta 0.1.3</div>
+  <div class="version-footer" id="versionFooter">Shindo Screener: Beta 0.1.5</div>
 </div>
 
 <script>
-// Steps 1-2 ("barely felt" / "slight indoor shaking") deliberately stay
-// dark instead of inverting to a bright panel: this is the quiet tier,
-// meant to be checkable without lighting up a dark room, and it also
-// clears in QUIET_IDLE_MINUTES (see app.py) rather than sitting lit for
-// the full MEASURED_IDLE_MINUTES hold that 3+ gets. 3 and up keep the
-// original bright/inverted treatment since that's the point where the
-// shaking is worth a loud, hard-to-miss display.
 const BANDS = {
   "0":  { bg: '#000000', fg: '#f5f5f0' },
-  "1":  { bg: '#121210', fg: '#e8e6dc' },
-  "2":  { bg: '#121210', fg: '#e8e6dc' },
+  "1":  { bg: '#e8e6dc', fg: '#0e0e0c' },
+  "2":  { bg: '#e8e6dc', fg: '#0e0e0c' },
   "3":  { bg: '#a8e6e8', fg: '#0e0e0c' },
   "4":  { bg: '#a8e6e8', fg: '#0e0e0c' },
   "5-": { bg: '#e8d842', fg: '#0e0e0c' },
@@ -654,6 +652,52 @@ const MATURITY_EN = { preliminary: "Early warning, first report", updated: "Earl
 const MATURITY_JA = { preliminary: "緊急地震速報（第1報）", updated: "緊急地震速報（続報）", final: "緊急地震速報（最終報）",
   measured_quick: "気象庁 震度速報", measured_detail: "気象庁 震源・震度情報", test: "テスト表示（実際の地震ではありません）" };
 
+// Steps 1-2 ("barely felt" / "slight indoor shaking") still flash the
+// full bright BANDS panel on arrival, same as any other reading, so
+// the screen still does its job of actually notifying someone. But
+// holding that at full brightness for the whole display window is
+// overkill for something this minor (see: being woken at 2 AM for a
+// reading that barely registered), so once it's been seen, the
+// background gradually fades down to a dim, easy-on-the-eyes tone over
+// QUIET_FADE_MS instead of snapping dark or sitting lit.
+//
+// The text color flips from dark to pale partway through that fade
+// (QUIET_COLOR_FLIP_MS, at the midpoint) rather than crossfading at the
+// same steady rate as the background. A straight simultaneous crossfade
+// was tried first and looks broken: dark-to-pale text and bright-to-dark
+// background both pass through the middle of their range at the same
+// moment, landing on almost the same mid-grey at once, so the text
+// nearly vanishes right as the background is at its most-transitional.
+// A quick flip instead keeps both halves of the fade readable: dark
+// text against a background that's still fairly light, then pale text
+// against a background that's already fairly dark.
+//
+// A person can also opt out of the bright flash entirely for these
+// steps (quiet_opt_out_max_step, set in Settings > Alerts), in which
+// case the screen goes straight to the dim palette with no flash and no
+// fade at all; see state.quiet_suppressed.
+const QUIET_STEPS = new Set(["1", "2"]);
+const QUIET_DIM = { bg: '#121210', fg: '#e8e6dc' };
+const QUIET_FLASH_MS = 400;        // the initial bright flash-in
+const QUIET_FLASH_HOLD_MS = 600;   // how long it stays at full brightness before dimming
+const QUIET_FADE_MS = 30000;       // the background's fade down to QUIET_DIM.bg
+const QUIET_COLOR_FLIP_MS = 500;   // how quick the text-color flip itself is
+let quietFadeTimer = null;
+let quietColorFlipTimer = null;
+
+function clearQuietTimers() {
+  clearTimeout(quietFadeTimer);
+  clearTimeout(quietColorFlipTimer);
+  quietFadeTimer = null;
+  quietColorFlipTimer = null;
+}
+
+function applyScreenColors(bg, fg, transitionMs, easing) {
+  els.screen.style.transition = `background ${transitionMs}ms ${easing}, color ${transitionMs}ms ${easing}`;
+  els.screen.style.background = bg;
+  els.screen.style.color = fg;
+}
+
 const STRINGS = {
   en: {
     appTitle: "Shindo Screener",
@@ -678,6 +722,9 @@ const STRINGS = {
     textSize: "Text size",
     alertThreshold: "Alert me at",
     alertThresholdHint: "Wakes the screen and plays a chime at this Shindo level or stronger.",
+    quietOptOut: "Don't light up for",
+    quietOptOutHint: "Shindo 1-2 readings still flash briefly, then dim on their own. Pick a level here to skip the flash entirely for readings at or below it.",
+    quietOptOutOff: "Nothing, always flash",
     alertWakeScreen: "Wake screen automatically",
     alertVolume: "Chime volume",
     volumeQuiet: "Quiet",
@@ -730,6 +777,9 @@ const STRINGS = {
     textSize: "文字サイズ",
     alertThreshold: "アラートを鳴らす震度",
     alertThresholdHint: "この震度以上になると、画面を起動しチャイムを鳴らします。",
+    quietOptOut: "点灯させない震度",
+    quietOptOutHint: "震度1〜2は、一度明るく表示されたあと自動的に暗くなります。ここで震度を選ぶと、その震度以下では明るい表示自体を省略します。",
+    quietOptOutOff: "なし（常に表示）",
     alertWakeScreen: "画面を自動的に起動する",
     alertVolume: "チャイムの音量",
     volumeQuiet: "小さめ",
@@ -761,7 +811,7 @@ const STRINGS = {
   },
 };
 
-const APP_VERSION = "0.1.3";
+const APP_VERSION = "0.1.5";
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
 // BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
@@ -828,6 +878,9 @@ const els = {
   alertThresholdHint: document.getElementById('alertThresholdHint'),
   thresholdSwatchDot: document.getElementById('thresholdSwatchDot'),
   thresholdSelect: document.getElementById('thresholdSelect'),
+  quietOptOutLabel: document.getElementById('quietOptOutLabel'),
+  quietOptOutHint: document.getElementById('quietOptOutHint'),
+  quietOptOutSelect: document.getElementById('quietOptOutSelect'),
   alertWakeScreenLabel: document.getElementById('alertWakeScreenLabel'),
   wakeScreenOnBtn: document.getElementById('wakeScreenOnBtn'),
   wakeScreenOffBtn: document.getElementById('wakeScreenOffBtn'),
@@ -868,6 +921,9 @@ function applyLanguage() {
   els.textSizeLabel.textContent = s.textSize;
   els.alertThresholdLabel.textContent = s.alertThreshold;
   els.alertThresholdHint.textContent = s.alertThresholdHint;
+  els.quietOptOutLabel.textContent = s.quietOptOut;
+  els.quietOptOutHint.textContent = s.quietOptOutHint;
+  if (els.quietOptOutSelect.children.length) buildQuietOptOutSelect();
   els.alertWakeScreenLabel.textContent = s.alertWakeScreen;
   els.wakeScreenOnBtn.textContent = s.onLabel;
   els.wakeScreenOffBtn.textContent = s.offLabel;
@@ -1001,6 +1057,42 @@ function applyAlertMinStepOnly(step) {
 }
 window.applyAlertMinStepOnly = applyAlertMinStepOnly;
 
+// The opt-out choices are just QUIET_STEPS itself, plus an "off" value
+// ('') meaning nothing is suppressed, so this never needs its own list
+// to stay in sync with QUIET_STEPS by hand.
+let currentQuietOptOut = '';
+
+function buildQuietOptOutSelect() {
+  els.quietOptOutSelect.innerHTML = '';
+  const off = document.createElement('option');
+  off.value = '';
+  off.textContent = STRINGS[currentLang].quietOptOutOff;
+  els.quietOptOutSelect.appendChild(off);
+  [...QUIET_STEPS].sort().forEach((step) => {
+    const option = document.createElement('option');
+    option.value = step;
+    option.textContent = step;
+    els.quietOptOutSelect.appendChild(option);
+  });
+  applyQuietOptOutSelection();
+}
+
+function applyQuietOptOutSelection() {
+  els.quietOptOutSelect.value = currentQuietOptOut;
+}
+
+function setQuietOptOut(step) {
+  currentQuietOptOut = step;
+  applyQuietOptOutSelection();
+  if (window.pywebview) window.pywebview.api.set_quiet_opt_out_max_step(step);
+}
+
+function applyQuietOptOutOnly(step) {
+  currentQuietOptOut = step || '';
+  if (els.quietOptOutSelect.children.length) applyQuietOptOutSelection();
+}
+window.applyQuietOptOutOnly = applyQuietOptOutOnly;
+
 let currentAlertWakeScreen = 'on';
 
 function applyWakeScreenButtons() {
@@ -1065,8 +1157,8 @@ window.applyMotionEffectsOnly = applyMotionEffectsOnly;
 
 function renderIdle() {
   lastActiveState = null;
-  els.screen.style.background = '#000000';
-  els.screen.style.color = '#f5f5f0';
+  clearQuietTimers();
+  applyScreenColors('#000000', '#f5f5f0', 700, 'ease');
   els.topRow.style.visibility = 'visible';
   els.tsunamiBox.style.display = 'none';
   els.eventSummaryLine.textContent = '';
@@ -1075,7 +1167,7 @@ function renderIdle() {
   els.estimateLabel.textContent = '';
   els.mid.style.display = 'none';
   els.idleLine.style.display = 'block';
-  els.rule.style.background = '#f5f5f0';
+  els.rule.style.background = 'currentColor';
   els.idleLine.style.background = '#f5f5f0';
   els.labelText.textContent = '';
   els.metaText.textContent = '';
@@ -1091,12 +1183,33 @@ function renderActive(state) {
   const src = state.display_source;
   const step = state.display_step;
   const band = BANDS[step] || BANDS["0"];
-  els.screen.style.background = band.bg;
-  els.screen.style.color = band.fg;
+
+  clearQuietTimers();
+  if (QUIET_STEPS.has(step) && state.quiet_suppressed) {
+    // Opted out of being woken for this severity (Settings > Alerts):
+    // go straight to the dim display, no bright flash at all.
+    applyScreenColors(QUIET_DIM.bg, QUIET_DIM.fg, 700, 'ease');
+  } else if (QUIET_STEPS.has(step)) {
+    // Flash bright immediately so the reading still gets noticed.
+    applyScreenColors(band.bg, band.fg, QUIET_FLASH_MS, 'ease');
+    quietFadeTimer = setTimeout(() => {
+      // Start the slow background fade toward the dim tone; text stays
+      // dark a while longer (see QUIET_COLOR_FLIP_MS note above the
+      // constants) and gets its own short transition declared here so
+      // the later flip animates instead of snapping.
+      els.screen.style.transition = `background ${QUIET_FADE_MS}ms linear, color ${QUIET_COLOR_FLIP_MS}ms ease`;
+      els.screen.style.background = QUIET_DIM.bg;
+      quietColorFlipTimer = setTimeout(() => {
+        els.screen.style.color = QUIET_DIM.fg;
+      }, QUIET_FADE_MS / 2);
+    }, QUIET_FLASH_HOLD_MS);
+  } else {
+    applyScreenColors(band.bg, band.fg, 700, 'ease');
+  }
   els.topRow.style.visibility = 'visible';
   els.mid.style.display = 'flex';
   els.idleLine.style.display = 'none';
-  els.rule.style.background = band.fg;
+  els.rule.style.background = 'currentColor';
 
   const magStr = state.magnitude != null ? state.magnitude.toFixed(1) : '?';
   els.eventSummaryLine.textContent = `M${magStr} — ${state.hypocenter || (ja ? '震源調査中' : 'Epicenter not yet known')}`;
@@ -1484,6 +1597,7 @@ applyLanguage();
 applyTimeFormatButtons();
 applyTextScaleButtons();
 buildThresholdSelect();
+buildQuietOptOutSelect();
 applyWakeScreenButtons();
 applyVolumeButtons();
 renderIdle();
