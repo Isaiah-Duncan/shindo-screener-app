@@ -217,7 +217,15 @@ def parse_p2p_quake(msg, home):
         "lat": num(hyp.get("latitude")) if hyp.get("latitude") not in (None, -200) else None,
         "lon": num(hyp.get("longitude")) if hyp.get("longitude") not in (None, -200) else None,
         "jma_max_measured": P2P_SCALE.get(eq.get("maxScale")),
+        # domesticTsunami distinguishes three states, which matter for not
+        # leaving a stale tsunami warning on screen: a real level ("Watch",
+        # "Warning", ...), an explicit "None" (JMA confirms no tsunami, or
+        # a prior warning has been cancelled), and "Unknown"/"Checking"/
+        # missing (JMA hasn't determined this yet - not an answer either
+        # way, so callers should leave any existing warning as-is rather
+        # than treat this as a cancellation).
         "tsunami": eq.get("domesticTsunami") if eq.get("domesticTsunami") not in (None, "None", "Unknown", "Checking") else None,
+        "tsunami_cleared": eq.get("domesticTsunami") == "None",
         "reading": reading,
         "nearby_max": nearby_max,
         "felt_near_user": reading is not None and reading["source"] != "station_below_1",

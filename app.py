@@ -608,8 +608,15 @@ class Listener:
             for k in ("hypocenter", "magnitude", "depth_km", "lat", "lon"):
                 if info.get(k) is not None:
                     ev[k] = info[k]
+            # Keep the tsunami banner in sync with JMA, including clearing
+            # it: a real level always updates it, an explicit "no tsunami"
+            # from JMA clears a stale warning, and "unknown/checking" (or
+            # no tsunami field at all in this message) leaves whatever is
+            # already shown untouched rather than guessing.
             if info.get("tsunami"):
                 ev["tsunami"] = info["tsunami"]
+            elif info.get("tsunami_cleared"):
+                ev["tsunami"] = None
             self.push(self.build_state())
 
     # ------------------------------------------------------------ connections

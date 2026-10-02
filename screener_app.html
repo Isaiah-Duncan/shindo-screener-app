@@ -586,6 +586,11 @@
     </div>
   </div>
 
+  <div class="settings-group-header" id="groupAbout">About this data</div>
+  <div class="settings-section">
+    <div class="bug-report-hint" id="dataSourceHint">All readings shown here are the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報). Delivery isn't guaranteed to be instant or complete, a report could stop arriving partway through, including before JMA's final update. For the most current information, also check the JMA website or TV/radio broadcasts.</div>
+  </div>
+
   <div class="settings-group-header" id="groupTesting">Testing</div>
   <div class="settings-section">
     <label id="testEventLabel">Test event</label>
@@ -613,7 +618,7 @@
     </div>
   </div>
 
-  <div class="version-footer" id="versionFooter">Shindo Screener: Beta 0.1.5</div>
+  <div class="version-footer" id="versionFooter">Shindo Screener: Beta 0.1.6</div>
 </div>
 
 <script>
@@ -713,6 +718,8 @@ const STRINGS = {
     groupDisplay: "Display",
     groupAccessibility: "Accessibility",
     groupAlerts: "Alerts",
+    groupAbout: "About this data",
+    dataSourceHint: "All readings shown here are the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報). Delivery isn't guaranteed to be instant or complete, a report could stop arriving partway through, including before JMA's final update. For the most current information, also check the JMA website or TV/radio broadcasts.",
     groupTesting: "Testing",
     groupSupport: "Support",
     currentLocation: "Current location",
@@ -768,6 +775,8 @@ const STRINGS = {
     groupDisplay: "表示",
     groupAccessibility: "アクセシビリティ",
     groupAlerts: "アラート",
+    groupAbout: "このデータについて",
+    dataSourceHint: "表示される観測値はすべて気象庁が発表したもので、第三者の配信サービス（Wolfx、P2P地震情報）を経由してお届けしています。配信の即時性・確実性は保証されておらず、気象庁の最終報より前に配信が途絶える可能性があります。最新の情報は気象庁のウェブサイトやテレビ・ラジオの放送でも合わせてご確認ください。",
     groupTesting: "テスト",
     groupSupport: "サポート",
     currentLocation: "現在の地点",
@@ -811,7 +820,7 @@ const STRINGS = {
   },
 };
 
-const APP_VERSION = "0.1.5";
+const APP_VERSION = "0.1.6";
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
 // BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
@@ -857,6 +866,8 @@ const els = {
   groupDisplay: document.getElementById('groupDisplay'),
   groupAccessibility: document.getElementById('groupAccessibility'),
   groupAlerts: document.getElementById('groupAlerts'),
+  groupAbout: document.getElementById('groupAbout'),
+  dataSourceHint: document.getElementById('dataSourceHint'),
   groupTesting: document.getElementById('groupTesting'),
   groupSupport: document.getElementById('groupSupport'),
   currentLocLabel: document.getElementById('currentLocLabel'),
@@ -909,6 +920,8 @@ function applyLanguage() {
   els.groupDisplay.textContent = s.groupDisplay;
   els.groupAccessibility.textContent = s.groupAccessibility;
   els.groupAlerts.textContent = s.groupAlerts;
+  els.groupAbout.textContent = s.groupAbout;
+  els.dataSourceHint.textContent = s.dataSourceHint;
   els.groupTesting.textContent = s.groupTesting;
   els.groupSupport.textContent = s.groupSupport;
   els.currentLocLabel.textContent = s.currentLocation;
@@ -1269,9 +1282,11 @@ function renderActive(state) {
   }
   els.labelText.textContent = label;
 
-  // Bottom line: distance to the epicenter (plain geometry) and nearby context
+  // Bottom line: distance to the epicenter (plain geometry) and nearby context.
+  // Worded per JMA's guidance to make clear this is a distance to JMA's own
+  // reported epicenter, not an app-computed intensity forecast for this spot.
   const parts = [];
-  if (state.epicenter_km != null) parts.push(ja ? `震源から約${state.epicenter_km} km` : `~${state.epicenter_km} km from the epicenter`);
+  if (state.epicenter_km != null) parts.push(ja ? `気象庁発表の震源から約${state.epicenter_km} km` : `~${state.epicenter_km} km from JMA's reported epicenter`);
   if (state.nearby_max) {
     const n = state.nearby_max;
     parts.push(ja ? `周辺: ${n.station}で震度${jaStep(n.step)}` : `Nearby: Shindo ${n.step} at ${n.station}`);
