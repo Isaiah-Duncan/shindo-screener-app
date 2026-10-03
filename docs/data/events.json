@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-02T23:15:11Z",
- "count": 97,
+ "updated_at": "2026-10-03T02:09:13Z",
+ "count": 98,
  "events": [
+  {
+   "id": "20261003091155",
+   "time": "2026-10-03T09:11:00+09:00",
+   "location_ja": "鹿児島湾",
+   "lat": 31.4,
+   "lon": 130.7,
+   "depth_km": 130.0,
+   "magnitude": 3.9,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261003064150",
    "time": "2026-10-03T06:41:00+09:00",
