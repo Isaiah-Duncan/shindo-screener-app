@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-03T13:20:32Z",
- "count": 104,
+ "updated_at": "2026-10-03T20:03:57Z",
+ "count": 105,
  "events": [
+  {
+   "id": "20261004034055",
+   "time": "2026-10-04T03:40:00+09:00",
+   "location_ja": "宮崎県北部平野部",
+   "lat": 32.1,
+   "lon": 131.3,
+   "depth_km": 60.0,
+   "magnitude": 2.8,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261003171723",
    "time": "2026-10-03T17:17:00+09:00",
