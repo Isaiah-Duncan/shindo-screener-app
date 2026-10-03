@@ -148,30 +148,37 @@
   /* Lets someone manually clear the current reading back to idle,
      rather than waiting out app.py's automatic idle timeout (1-10
      minutes depending on severity). Only shown while a reading is
-     actually on screen, top-right, mirroring the post-quake badge's
-     own top-left circular treatment so the two read as a pair. */
+     actually on screen, top-right. Plain text + "x", no button
+     chrome — it reads as a quiet label, not another badge competing
+     with the post-quake badge for visual weight. Font is inherited
+     (the app's body font, same one the title/subtitle lines use),
+     sized to match the .meta subtitle treatment rather than the
+     larger headline text. */
   .dismiss-btn {
     position: absolute;
     top: 0.8vh;
     right: 0.8vw;
     z-index: 20;
     display: none;
-    align-items: center;
+    align-items: baseline;
     justify-content: center;
-    width: 2.6vw;
-    height: 2.6vw;
-    min-width: 30px;
-    min-height: 30px;
-    background: rgba(0,0,0,0.35);
-    border: 1.5px solid currentColor;
-    border-radius: 999px;
+    gap: 0.3vw;
+    background: none;
+    border: none;
+    padding: 0;
     color: inherit;
+    font-size: var(--tier4-size);
+    font-weight: 600;
     cursor: pointer;
-    opacity: 0.55;
+    opacity: 0.6;
     transition: opacity 150ms ease;
   }
   .dismiss-btn:hover { opacity: 1; }
-  .dismiss-btn svg { width: 50%; height: 50%; }
+  .dismiss-btn .dismiss-btn-x {
+    font-size: 1.3em;
+    line-height: 1;
+    font-weight: 600;
+  }
   .tsunami-box {
     margin-top: 1.5vh;
     background: #b01010;
@@ -353,30 +360,77 @@
     padding: 5vh 0 4vh;
   }
   .settings-panel .rings { width: 52px; height: 52px; margin-bottom: 6px; }
-  .settings-panel h2 { font-size: calc(20px * var(--text-scale)); margin: 0 0 28px; letter-spacing: 0.03em; }
+  .settings-panel h2 { font-size: calc(20px * var(--text-scale)); margin: 0 0 16px; letter-spacing: 0.03em; }
+  /* Quick-jump nav: the panel has six topics (Location, Display,
+     Alerts, History, Testing, Support) stacked one after another with
+     a fair amount of explanatory text in each. Scrolling through all
+     of it to find one setting was the "dense, clustered, no
+     navigational guidance" complaint. This sticks to the top of the
+     scroll area so there's always a one-tap way to jump straight to a
+     topic instead of hunting through the rest. */
+  .settings-nav {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 360px;
+    max-width: 85vw;
+    padding: 12px 0 16px;
+    margin-bottom: 4px;
+    background: #000;
+  }
+  .settings-nav-item {
+    flex: 0 0 auto;
+    background: rgba(245, 245, 240, 0.08);
+    border: 1px solid rgba(245, 245, 240, 0.16);
+    color: #f5f5f0;
+    font-family: inherit;
+    font-size: calc(11px * var(--text-scale));
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 7px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    opacity: 0.78;
+    transition: opacity 150ms ease, background 150ms ease;
+    white-space: nowrap;
+  }
+  .settings-nav-item:hover { opacity: 1; background: rgba(245, 245, 240, 0.15); }
   .settings-section {
     width: 360px;
     max-width: 85vw;
-    padding: 18px 0;
-    border-top: 1px solid #222;
+    padding: 16px 0;
+    border-top: 1px solid rgba(245, 245, 240, 0.08);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
   }
   .settings-section:first-of-type { border-top: none; }
+  /* Group headers are the primary wayfinding cue while scrolling, so
+     they need to actually stand out rather than blend in at the same
+     muted opacity as the body text around them: a filled band, full
+     width, with real air above it to read as "new topic starts here". */
   .settings-group-header {
     width: 360px;
     max-width: 85vw;
-    font-size: calc(11px * var(--text-scale));
+    box-sizing: border-box;
+    font-size: calc(12px * var(--text-scale));
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    opacity: 0.4;
-    margin-top: 22px;
-    padding-bottom: 4px;
+    color: #f5f5f0;
+    opacity: 0.9;
+    background: rgba(245, 245, 240, 0.07);
+    border-radius: 6px;
+    padding: 9px 14px;
+    margin-top: 40px;
+    margin-bottom: 2px;
   }
-  #groupLocation { margin-top: 4px; }
+  #groupLocation { margin-top: 6px; }
   .settings-section label {
     font-size: calc(11px * var(--text-scale));
     text-transform: uppercase;
@@ -622,9 +676,7 @@
     </svg>
   </div>
   <button class="dismiss-btn" id="dismissBtn" onclick="dismissActiveReading()" title="" aria-label="">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M6 6l12 12M18 6L6 18"/>
-    </svg>
+    <span id="dismissBtnLabel"></span><span class="dismiss-btn-x" aria-hidden="true">&times;</span>
   </button>
   <div class="top-row" id="topRow">
     <div class="meta-block">
@@ -696,6 +748,15 @@
     <circle cx="128" cy="128" r="6" fill="#f5f5f0"/>
   </svg>
   <h2 id="settingsTitle">Settings</h2>
+
+  <div class="settings-nav" id="settingsNav">
+    <button type="button" class="settings-nav-item" id="navLocation" onclick="scrollToSettingsGroup('groupLocation')">Location</button>
+    <button type="button" class="settings-nav-item" id="navDisplay" onclick="scrollToSettingsGroup('groupDisplay')">Display</button>
+    <button type="button" class="settings-nav-item" id="navAlerts" onclick="scrollToSettingsGroup('groupAlerts')">Alerts</button>
+    <button type="button" class="settings-nav-item" id="navHistory" onclick="scrollToSettingsGroup('groupHistory')">History</button>
+    <button type="button" class="settings-nav-item" id="navTesting" onclick="scrollToSettingsGroup('groupTesting')">Testing</button>
+    <button type="button" class="settings-nav-item" id="navSupport" onclick="scrollToSettingsGroup('groupSupport')">Support</button>
+  </div>
 
   <div class="settings-group-header" id="groupLocation">Location</div>
   <div class="settings-section">
@@ -1080,6 +1141,7 @@ const STRINGS = {
     sensitivity_low: "Low — I'm used to these",
     sensitivity_off: "Off — don't light up for minor shaking",
     dismissReadingTitle: "Dismiss (return to idle)",
+    dismissLabel: "Dismiss",
     alertWakeScreen: "Wake screen automatically",
     alertVolume: "Chime volume",
     volumeQuiet: "Quiet",
@@ -1146,6 +1208,7 @@ const STRINGS = {
     sensitivity_low: "低い — この程度の揺れには慣れている",
     sensitivity_off: "オフ — 軽微な揺れでは点灯させない",
     dismissReadingTitle: "消去（待機状態に戻す）",
+    dismissLabel: "消去",
     alertWakeScreen: "画面を自動的に起動する",
     alertVolume: "チャイムの音量",
     volumeQuiet: "小さめ",
@@ -1177,7 +1240,7 @@ const STRINGS = {
   },
 };
 
-const APP_VERSION = "0.2.1";
+const APP_VERSION = "0.2.2";
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
 // BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
@@ -1197,6 +1260,7 @@ const els = {
   screen: document.getElementById('screen'),
   postQuakeBadge: document.getElementById('postQuakeBadge'),
   dismissBtn: document.getElementById('dismissBtn'),
+  dismissBtnLabel: document.getElementById('dismissBtnLabel'),
   topRow: document.getElementById('topRow'),
   eventSummaryLine: document.getElementById('eventSummaryLine'),
   jmaMaxLine: document.getElementById('jmaMaxLine'),
@@ -1240,6 +1304,12 @@ const els = {
   historyDownloadBtn: document.getElementById('historyDownloadBtn'),
   groupTesting: document.getElementById('groupTesting'),
   groupSupport: document.getElementById('groupSupport'),
+  navLocation: document.getElementById('navLocation'),
+  navDisplay: document.getElementById('navDisplay'),
+  navAlerts: document.getElementById('navAlerts'),
+  navHistory: document.getElementById('navHistory'),
+  navTesting: document.getElementById('navTesting'),
+  navSupport: document.getElementById('navSupport'),
   currentLocLabel: document.getElementById('currentLocLabel'),
   currentLocValue: document.getElementById('currentLocValue'),
   changeLocLabel: document.getElementById('changeLocLabel'),
@@ -1299,6 +1369,12 @@ function applyLanguage() {
   if (els.historyPanel.style.display === 'flex') renderCalendar();
   els.groupTesting.textContent = s.groupTesting;
   els.groupSupport.textContent = s.groupSupport;
+  els.navLocation.textContent = s.groupLocation;
+  els.navDisplay.textContent = s.groupDisplay;
+  els.navAlerts.textContent = s.groupAlerts;
+  els.navHistory.textContent = s.groupHistory;
+  els.navTesting.textContent = s.groupTesting;
+  els.navSupport.textContent = s.groupSupport;
   els.currentLocLabel.textContent = s.currentLocation;
   els.changeLocLabel.textContent = s.changeLocation;
   els.settingsCityInput.placeholder = s.inputPlaceholder;
@@ -1314,6 +1390,7 @@ function applyLanguage() {
   if (els.sensitivitySelect.children.length) buildSensitivitySelect();
   els.dismissBtn.title = s.dismissReadingTitle;
   els.dismissBtn.setAttribute('aria-label', s.dismissReadingTitle);
+  els.dismissBtnLabel.textContent = s.dismissLabel;
   els.alertWakeScreenLabel.textContent = s.alertWakeScreen;
   els.wakeScreenOnBtn.textContent = s.onLabel;
   els.wakeScreenOffBtn.textContent = s.offLabel;
@@ -2099,6 +2176,16 @@ function closeSettings() {
   els.settingsPanel.style.display = 'none';
 }
 window.closeSettings = closeSettings;
+
+// Quick-jump nav at the top of the Settings panel: scrolls the panel
+// so the chosen group's header lands at the top of the view, instead
+// of making someone scroll past five other topics to find one setting.
+function scrollToSettingsGroup(groupId) {
+  const target = document.getElementById(groupId);
+  if (!target) return;
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+window.scrollToSettingsGroup = scrollToSettingsGroup;
 
 function buildStepGrid() {
   els.stepGrid.innerHTML = '';
