@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-03T20:03:57Z",
- "count": 105,
+ "updated_at": "2026-10-04T02:15:32Z",
+ "count": 108,
  "events": [
+  {
+   "id": "20261004095203",
+   "time": "2026-10-04T09:52:00+09:00",
+   "location_ja": "石川県能登地方",
+   "lat": 37.2,
+   "lon": 136.8,
+   "depth_km": 10.0,
+   "magnitude": 2.9,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261004085824",
+   "time": "2026-10-04T08:58:00+09:00",
+   "location_ja": "熊本県熊本地方",
+   "lat": 32.7,
+   "lon": 130.7,
+   "depth_km": 10.0,
+   "magnitude": 2.4,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261004084522",
+   "time": "2026-10-04T08:45:00+09:00",
+   "location_ja": "宮古島近海",
+   "lat": 24.8,
+   "lon": 125.4,
+   "depth_km": 50.0,
+   "magnitude": 3.9,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261004034055",
    "time": "2026-10-04T03:40:00+09:00",
