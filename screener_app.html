@@ -360,77 +360,85 @@
     padding: 5vh 0 4vh;
   }
   .settings-panel .rings { width: 52px; height: 52px; margin-bottom: 6px; }
-  .settings-panel h2 { font-size: calc(20px * var(--text-scale)); margin: 0 0 16px; letter-spacing: 0.03em; }
-  /* Quick-jump nav: the panel has six topics (Location, Display,
-     Alerts, History, Testing, Support) stacked one after another with
-     a fair amount of explanatory text in each. Scrolling through all
-     of it to find one setting was the "dense, clustered, no
-     navigational guidance" complaint. This sticks to the top of the
-     scroll area so there's always a one-tap way to jump straight to a
-     topic instead of hunting through the rest. */
-  .settings-nav {
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
+  .settings-panel h2 { font-size: calc(20px * var(--text-scale)); margin: 0 0 6px; letter-spacing: 0.03em; }
+  /* Collapsible accordion: all six topics (Location, Display, Alerts,
+     Recent Earthquakes, Testing, Support) start collapsed to a single
+     row — icon, title, and (where there's a current value worth
+     showing) a one-line summary. Opening one closes whichever other
+     topic was open, so only the thing you're actually reading ever
+     takes up room; nothing else on the page competes for attention.
+     This replaced an earlier sticky quick-nav + banded-header layout,
+     which fixed hierarchy but not density. */
+  .acc-group {
     width: 360px;
     max-width: 85vw;
-    padding: 12px 0 16px;
-    margin-bottom: 4px;
-    background: #000;
+    border-top: 1px solid rgba(245, 245, 240, 0.1);
   }
-  .settings-nav-item {
-    flex: 0 0 auto;
-    background: rgba(245, 245, 240, 0.08);
-    border: 1px solid rgba(245, 245, 240, 0.16);
-    color: #f5f5f0;
+  .acc-group:first-of-type { border-top: none; }
+  .acc-header {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 18px 2px;
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: inherit;
     font-family: inherit;
-    font-size: calc(11px * var(--text-scale));
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    padding: 7px 13px;
-    border-radius: 999px;
+    text-align: left;
     cursor: pointer;
-    opacity: 0.78;
-    transition: opacity 150ms ease, background 150ms ease;
+  }
+  .acc-header-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 0;
+  }
+  .acc-icon {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    opacity: 0.75;
+  }
+  .acc-header-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .acc-title { font-size: calc(14px * var(--text-scale)); font-weight: 700; }
+  .acc-summary {
+    font-size: calc(12px * var(--text-scale));
+    opacity: 0.5;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .settings-nav-item:hover { opacity: 1; background: rgba(245, 245, 240, 0.15); }
+  .acc-chevron {
+    flex: 0 0 auto;
+    font-size: calc(14px * var(--text-scale));
+    opacity: 0.6;
+    transform: rotate(-90deg);
+    transition: transform 150ms ease;
+    margin-left: 10px;
+  }
+  .acc-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 20px;
+  }
   .settings-section {
-    width: 360px;
-    max-width: 85vw;
-    padding: 16px 0;
+    width: 100%;
+    padding: 10px 2px 0;
     border-top: 1px solid rgba(245, 245, 240, 0.08);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
   }
-  .settings-section:first-of-type { border-top: none; }
-  /* Group headers are the primary wayfinding cue while scrolling, so
-     they need to actually stand out rather than blend in at the same
-     muted opacity as the body text around them: a filled band, full
-     width, with real air above it to read as "new topic starts here". */
-  .settings-group-header {
-    width: 360px;
-    max-width: 85vw;
-    box-sizing: border-box;
-    font-size: calc(12px * var(--text-scale));
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #f5f5f0;
-    opacity: 0.9;
-    background: rgba(245, 245, 240, 0.07);
-    border-radius: 6px;
-    padding: 9px 14px;
-    margin-top: 40px;
-    margin-bottom: 2px;
-  }
-  #groupLocation { margin-top: 6px; }
+  .settings-section:first-of-type { border-top: none; padding-top: 0; }
   .settings-section label {
     font-size: calc(11px * var(--text-scale));
     text-transform: uppercase;
@@ -749,131 +757,204 @@
   </svg>
   <h2 id="settingsTitle">Settings</h2>
 
-  <div class="settings-nav" id="settingsNav">
-    <button type="button" class="settings-nav-item" id="navLocation" onclick="scrollToSettingsGroup('groupLocation')">Location</button>
-    <button type="button" class="settings-nav-item" id="navDisplay" onclick="scrollToSettingsGroup('groupDisplay')">Display</button>
-    <button type="button" class="settings-nav-item" id="navAlerts" onclick="scrollToSettingsGroup('groupAlerts')">Alerts</button>
-    <button type="button" class="settings-nav-item" id="navHistory" onclick="scrollToSettingsGroup('groupHistory')">History</button>
-    <button type="button" class="settings-nav-item" id="navTesting" onclick="scrollToSettingsGroup('groupTesting')">Testing</button>
-    <button type="button" class="settings-nav-item" id="navSupport" onclick="scrollToSettingsGroup('groupSupport')">Support</button>
-  </div>
-
-  <div class="settings-group-header" id="groupLocation">Location</div>
-  <div class="settings-section">
-    <label id="currentLocLabel">Current location</label>
-    <div class="current-loc" id="currentLocValue"></div>
-  </div>
-
-  <div class="settings-section">
-    <label id="changeLocLabel">Change location</label>
-    <div class="search-wrap">
-      <input type="text" id="settingsCityInput" placeholder="e.g. Sapporo, Osaka, Naha" autocomplete="off">
-      <div class="candidates" id="settingsCandidates"></div>
-    </div>
-    <button class="primary" id="settingsSaveBtn" onclick="saveSelected('settings')" disabled>Save</button>
-    <div class="error" id="settingsError"></div>
-    <div class="success" id="settingsSuccess"></div>
-  </div>
-
-  <div class="settings-group-header" id="groupDisplay">Display</div>
-  <div class="settings-section">
-    <div class="row-inline">
-      <label id="languageLabel" style="margin:0;">Language</label>
-      <div class="lang-switch">
-        <button id="settingsLangEnBtn" onclick="setLanguage('en')">EN</button>
-        <button id="settingsLangJaBtn" onclick="setLanguage('ja')">日本語</button>
+  <!-- Location -->
+  <div class="acc-group">
+    <button type="button" class="acc-header" id="accLocation" onclick="toggleAccGroup('location')" aria-expanded="false">
+      <span class="acc-header-main">
+        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        <span class="acc-header-text">
+          <span class="acc-title" id="groupLocation">Location</span>
+          <span class="acc-summary" id="groupLocationSummary"></span>
+        </span>
+      </span>
+      <span class="acc-chevron" id="groupLocationChevron">▾</span>
+    </button>
+    <div class="acc-body" id="bodyLocation" style="display:none;">
+      <div class="settings-section">
+        <label id="currentLocLabel">Current location</label>
+        <div class="current-loc" id="currentLocValue"></div>
+      </div>
+      <div class="settings-section">
+        <label id="changeLocLabel">Change location</label>
+        <div class="search-wrap">
+          <input type="text" id="settingsCityInput" placeholder="e.g. Sapporo, Osaka, Naha" autocomplete="off">
+          <div class="candidates" id="settingsCandidates"></div>
+        </div>
+        <button class="primary" id="settingsSaveBtn" onclick="saveSelected('settings')" disabled>Save</button>
+        <div class="error" id="settingsError"></div>
+        <div class="success" id="settingsSuccess"></div>
       </div>
     </div>
   </div>
 
-  <div class="settings-section">
-    <div class="row-inline">
-      <label id="timeFormatLabel" style="margin:0;">Time format</label>
-      <div class="format-switch">
-        <button id="format24Btn" onclick="setTimeFormat('24h')">24h</button>
-        <button id="format12Btn" onclick="setTimeFormat('12h')">12h</button>
+  <!-- Display -->
+  <div class="acc-group">
+    <button type="button" class="acc-header" id="accDisplay" onclick="toggleAccGroup('display')" aria-expanded="false">
+      <span class="acc-header-main">
+        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>
+        <span class="acc-header-text">
+          <span class="acc-title" id="groupDisplay">Display</span>
+          <span class="acc-summary" id="groupDisplaySummary"></span>
+        </span>
+      </span>
+      <span class="acc-chevron" id="groupDisplayChevron">▾</span>
+    </button>
+    <div class="acc-body" id="bodyDisplay" style="display:none;">
+      <div class="settings-section">
+        <div class="row-inline">
+          <label id="languageLabel" style="margin:0;">Language</label>
+          <div class="lang-switch">
+            <button id="settingsLangEnBtn" onclick="setLanguage('en')">EN</button>
+            <button id="settingsLangJaBtn" onclick="setLanguage('ja')">日本語</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-  <div class="settings-section">
-    <div class="row-inline">
-      <label id="textSizeLabel" style="margin:0;">Text size</label>
-      <div class="format-switch">
-        <button id="textSizeNormalBtn" onclick="setTextScale('normal')" style="font-size:13px;">A</button>
-        <button id="textSizeLargeBtn" onclick="setTextScale('large')" style="font-size:17px;">A</button>
-        <button id="textSizeXLargeBtn" onclick="setTextScale('xlarge')" style="font-size:21px;">A</button>
+      <div class="settings-section">
+        <div class="row-inline">
+          <label id="timeFormatLabel" style="margin:0;">Time format</label>
+          <div class="format-switch">
+            <button id="format24Btn" onclick="setTimeFormat('24h')">24h</button>
+            <button id="format12Btn" onclick="setTimeFormat('12h')">12h</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-
-  <div class="settings-group-header" id="groupAlerts">Alerts</div>
-  <div class="settings-section">
-    <label id="alertThresholdLabel">Alert me at</label>
-    <div class="alert-threshold-hint" id="alertThresholdHint">Wakes the screen and plays a chime at this Shindo level or stronger.</div>
-    <div class="threshold-select-row">
-      <span class="threshold-swatch-dot" id="thresholdSwatchDot"></span>
-      <select class="threshold-select" id="thresholdSelect" onchange="setAlertMinStep(this.value)"></select>
-    </div>
-  </div>
-  <div class="settings-section">
-    <label id="sensitivityLabel">Sensitivity</label>
-    <div class="alert-threshold-hint" id="sensitivityHint">How calmly this reacts to minor shaking: which readings get a brief, dimmed response instead of the full display, and how long that response takes.</div>
-    <select class="threshold-select" id="sensitivitySelect" onchange="setSensitivity(this.value)"></select>
-  </div>
-  <div class="settings-section">
-    <div class="row-inline">
-      <label id="alertWakeScreenLabel" style="margin:0;">Wake screen automatically</label>
-      <div class="format-switch">
-        <button id="wakeScreenOnBtn" onclick="setAlertWakeScreen('on')">On</button>
-        <button id="wakeScreenOffBtn" onclick="setAlertWakeScreen('off')">Off</button>
-      </div>
-    </div>
-  </div>
-  <div class="settings-section">
-    <div class="row-inline">
-      <label id="alertVolumeLabel" style="margin:0;">Chime volume</label>
-      <div class="format-switch">
-        <button id="volumeQuietBtn" onclick="setAlertVolume('quiet')">Quiet</button>
-        <button id="volumeNormalBtn" onclick="setAlertVolume('normal')">Normal</button>
-        <button id="volumeLoudBtn" onclick="setAlertVolume('loud')">Loud</button>
+      <div class="settings-section">
+        <div class="row-inline">
+          <label id="textSizeLabel" style="margin:0;">Text size</label>
+          <div class="format-switch">
+            <button id="textSizeNormalBtn" onclick="setTextScale('normal')" style="font-size:13px;">A</button>
+            <button id="textSizeLargeBtn" onclick="setTextScale('large')" style="font-size:17px;">A</button>
+            <button id="textSizeXLargeBtn" onclick="setTextScale('xlarge')" style="font-size:21px;">A</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="settings-group-header" id="groupHistory">History</div>
-  <div class="settings-section">
-    <label id="feltLogLabel">Earthquakes felt here</label>
-    <div class="bug-report-hint" id="feltLogHint">A personal calendar of readings this app actually showed you, kept for 30 days and then cleared automatically.</div>
-    <button class="text-btn" id="feltLogOpenBtn" onclick="openHistory()">View calendar</button>
-  </div>
-
-  <div class="settings-group-header" id="groupTesting">Testing</div>
-  <div class="settings-section">
-    <label id="testEventLabel">Test event</label>
-    <button class="text-btn" id="testEventLink" onclick="showTestWarning()">Show a sample reading on the display</button>
-    <div class="test-warning" id="testWarning">
-      This puts a fake earthquake reading on your actual screen. If
-      anyone else can see this display, make sure they know it's a
-      test before you trigger it, a real-looking alert shown by
-      mistake is not a good surprise.
+  <!-- Alerts -->
+  <div class="acc-group">
+    <button type="button" class="acc-header" id="accAlerts" onclick="toggleAccGroup('alerts')" aria-expanded="false">
+      <span class="acc-header-main">
+        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        <span class="acc-header-text">
+          <span class="acc-title" id="groupAlerts">Alerts</span>
+          <span class="acc-summary" id="groupAlertsSummary"></span>
+        </span>
+      </span>
+      <span class="acc-chevron" id="groupAlertsChevron">▾</span>
+    </button>
+    <div class="acc-body" id="bodyAlerts" style="display:none;">
+      <div class="settings-section">
+        <label id="alertThresholdLabel">Alert me at</label>
+        <div class="alert-threshold-hint" id="alertThresholdHint">Wakes the screen and plays a chime at this Shindo level or stronger.</div>
+        <div class="threshold-select-row">
+          <span class="threshold-swatch-dot" id="thresholdSwatchDot"></span>
+          <select class="threshold-select" id="thresholdSelect" onchange="setAlertMinStep(this.value)"></select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <label id="sensitivityLabel">Sensitivity</label>
+        <div class="alert-threshold-hint" id="sensitivityHint">How calmly this reacts to minor shaking: which readings get a brief, dimmed response instead of the full display, and how long that response takes.</div>
+        <select class="threshold-select" id="sensitivitySelect" onchange="setSensitivity(this.value)"></select>
+      </div>
+      <div class="settings-section">
+        <div class="row-inline">
+          <label id="alertWakeScreenLabel" style="margin:0;">Wake screen automatically</label>
+          <div class="format-switch">
+            <button id="wakeScreenOnBtn" onclick="setAlertWakeScreen('on')">On</button>
+            <button id="wakeScreenOffBtn" onclick="setAlertWakeScreen('off')">Off</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="row-inline">
+          <label id="alertVolumeLabel" style="margin:0;">Chime volume</label>
+          <div class="format-switch">
+            <button id="volumeQuietBtn" onclick="setAlertVolume('quiet')">Quiet</button>
+            <button id="volumeNormalBtn" onclick="setAlertVolume('normal')">Normal</button>
+            <button id="volumeLoudBtn" onclick="setAlertVolume('loud')">Loud</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="step-grid" id="stepGrid" style="display:none;"></div>
   </div>
 
-  <div class="settings-group-header" id="groupSupport">Support</div>
-  <div class="settings-section">
-    <div class="bug-report-hint" id="dataSourceHint">All readings shown here are the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報). Delivery isn't guaranteed to be instant or complete, a report could stop arriving partway through, including before JMA's final update. For the most current information, also check the JMA website or TV/radio broadcasts.</div>
+  <!-- Recent Earthquakes (was "History") -->
+  <div class="acc-group">
+    <button type="button" class="acc-header" id="accHistory" onclick="toggleAccGroup('history')" aria-expanded="false">
+      <span class="acc-header-main">
+        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span class="acc-header-text">
+          <span class="acc-title" id="groupHistory">Recent Earthquakes</span>
+          <span class="acc-summary" id="groupHistorySummary"></span>
+        </span>
+      </span>
+      <span class="acc-chevron" id="groupHistoryChevron">▾</span>
+    </button>
+    <div class="acc-body" id="bodyHistory" style="display:none;">
+      <div class="settings-section">
+        <label id="feltLogLabel">Earthquakes felt here</label>
+        <div class="bug-report-hint" id="feltLogHint">A personal calendar of readings this app actually showed you, kept for 30 days and then cleared automatically.</div>
+        <button class="text-btn" id="feltLogOpenBtn" onclick="openHistory()">View calendar</button>
+      </div>
+    </div>
   </div>
-  <div class="settings-section">
-    <label id="bugReportLabel">Report a bug</label>
-    <div class="bug-report-hint" id="bugReportHint">Found something wrong? Send a quick report below (it already includes basic app info to help track down the issue).</div>
-    <textarea class="bug-report-box" id="bugReportBox"></textarea>
-    <button class="primary" id="bugReportSubmitBtn" onclick="submitBugReport()" style="width:100%;">Submit report</button>
-    <div class="bug-report-status" id="bugReportStatus"></div>
-    <div class="bug-report-fallback-hint" id="bugReportFallbackHint">Report not going through?</div>
-    <div class="bug-report-actions">
-      <button class="text-btn" id="bugReportOpenBtn" onclick="openBugReportEmail()">Open email app</button>
-      <button class="text-btn" id="bugReportCopyBtn" onclick="copyBugReportText()">Copy text</button>
+
+  <!-- Testing -->
+  <div class="acc-group">
+    <button type="button" class="acc-header" id="accTesting" onclick="toggleAccGroup('testing')" aria-expanded="false">
+      <span class="acc-header-main">
+        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.5L4.5 18a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 8.5V2"/><path d="M8.5 2h7"/><path d="M7.5 14h9"/></svg>
+        <span class="acc-header-text">
+          <span class="acc-title" id="groupTesting">Testing</span>
+          <span class="acc-summary" id="groupTestingSummary"></span>
+        </span>
+      </span>
+      <span class="acc-chevron" id="groupTestingChevron">▾</span>
+    </button>
+    <div class="acc-body" id="bodyTesting" style="display:none;">
+      <div class="settings-section">
+        <label id="testEventLabel">Test event</label>
+        <button class="text-btn" id="testEventLink" onclick="showTestWarning()">Show a sample reading on the display</button>
+        <div class="test-warning" id="testWarning">
+          This puts a fake earthquake reading on your actual screen. If
+          anyone else can see this display, make sure they know it's a
+          test before you trigger it, a real-looking alert shown by
+          mistake is not a good surprise.
+        </div>
+        <div class="step-grid" id="stepGrid" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Support -->
+  <div class="acc-group">
+    <button type="button" class="acc-header" id="accSupport" onclick="toggleAccGroup('support')" aria-expanded="false">
+      <span class="acc-header-main">
+        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 1 1 3.8 2.6c-.8.3-1 1-1 1.7v.3"/><circle cx="12" cy="17.2" r="0.1" fill="currentColor"/></svg>
+        <span class="acc-header-text">
+          <span class="acc-title" id="groupSupport">Support</span>
+          <span class="acc-summary" id="groupSupportSummary"></span>
+        </span>
+      </span>
+      <span class="acc-chevron" id="groupSupportChevron">▾</span>
+    </button>
+    <div class="acc-body" id="bodySupport" style="display:none;">
+      <div class="settings-section">
+        <div class="bug-report-hint" id="dataSourceHint">All readings shown here are the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報). Delivery isn't guaranteed to be instant or complete, a report could stop arriving partway through, including before JMA's final update. For the most current information, also check the JMA website or TV/radio broadcasts.</div>
+      </div>
+      <div class="settings-section">
+        <label id="bugReportLabel">Report a bug</label>
+        <div class="bug-report-hint" id="bugReportHint">Found something wrong? Send a quick report below (it already includes basic app info to help track down the issue).</div>
+        <textarea class="bug-report-box" id="bugReportBox"></textarea>
+        <button class="primary" id="bugReportSubmitBtn" onclick="submitBugReport()" style="width:100%;">Submit report</button>
+        <div class="bug-report-status" id="bugReportStatus"></div>
+        <div class="bug-report-fallback-hint" id="bugReportFallbackHint">Report not going through?</div>
+        <div class="bug-report-actions">
+          <button class="text-btn" id="bugReportOpenBtn" onclick="openBugReportEmail()">Open email app</button>
+          <button class="text-btn" id="bugReportCopyBtn" onclick="copyBugReportText()">Copy text</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1118,7 +1199,8 @@ const STRINGS = {
     groupDisplay: "Display",
     groupAlerts: "Alerts",
     dataSourceHint: "All readings shown here are the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報). Delivery isn't guaranteed to be instant or complete, a report could stop arriving partway through, including before JMA's final update. For the most current information, also check the JMA website or TV/radio broadcasts.",
-    groupHistory: "History",
+    groupHistory: "Recent Earthquakes",
+    groupHistorySummary: "View your felt-earthquake calendar",
     feltLogLabel: "Earthquakes felt here",
     feltLogHint: "A personal calendar of readings this app actually showed you, kept for 30 days and then cleared automatically.",
     feltLogOpenBtn: "View calendar",
@@ -1126,7 +1208,9 @@ const STRINGS = {
     feltLogDownloadBtn: "Download log (CSV)",
     calendarLegendText: "Each colored date is a reading this app showed you here. The number is the Shindo level felt that day.",
     groupTesting: "Testing",
+    groupTestingSummary: "Try a sample reading on the display",
     groupSupport: "Support",
+    groupSupportSummary: "Data sources & bug reports",
     currentLocation: "Current location",
     changeLocation: "Change location",
     language: "Language",
@@ -1185,7 +1269,8 @@ const STRINGS = {
     groupDisplay: "表示",
     groupAlerts: "アラート",
     dataSourceHint: "表示される観測値はすべて気象庁が発表したもので、第三者の配信サービス（Wolfx、P2P地震情報）を経由してお届けしています。配信の即時性・確実性は保証されておらず、気象庁の最終報より前に配信が途絶える可能性があります。最新の情報は気象庁のウェブサイトやテレビ・ラジオの放送でも合わせてご確認ください。",
-    groupHistory: "記録",
+    groupHistory: "最近の地震",
+    groupHistorySummary: "体感した地震のカレンダーを見る",
     feltLogLabel: "ここで感じた地震",
     feltLogHint: "このアプリが実際に表示した観測値の個人カレンダーです。30日間保存され、その後自動的に削除されます。",
     feltLogOpenBtn: "カレンダーを見る",
@@ -1193,7 +1278,9 @@ const STRINGS = {
     feltLogDownloadBtn: "記録をダウンロード（CSV）",
     calendarLegendText: "色がついた日は、このアプリがここで表示した観測値があった日です。数字はその日に感じた震度を表します。",
     groupTesting: "テスト",
+    groupTestingSummary: "テスト用の表示を試す",
     groupSupport: "サポート",
+    groupSupportSummary: "データ提供元・不具合報告",
     currentLocation: "現在の地点",
     changeLocation: "地点を変更",
     language: "言語",
@@ -1240,7 +1327,7 @@ const STRINGS = {
   },
 };
 
-const APP_VERSION = "0.2.2";
+const APP_VERSION = "0.3.0";
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
 // BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
@@ -1304,12 +1391,12 @@ const els = {
   historyDownloadBtn: document.getElementById('historyDownloadBtn'),
   groupTesting: document.getElementById('groupTesting'),
   groupSupport: document.getElementById('groupSupport'),
-  navLocation: document.getElementById('navLocation'),
-  navDisplay: document.getElementById('navDisplay'),
-  navAlerts: document.getElementById('navAlerts'),
-  navHistory: document.getElementById('navHistory'),
-  navTesting: document.getElementById('navTesting'),
-  navSupport: document.getElementById('navSupport'),
+  groupLocationSummary: document.getElementById('groupLocationSummary'),
+  groupDisplaySummary: document.getElementById('groupDisplaySummary'),
+  groupAlertsSummary: document.getElementById('groupAlertsSummary'),
+  groupHistorySummary: document.getElementById('groupHistorySummary'),
+  groupTestingSummary: document.getElementById('groupTestingSummary'),
+  groupSupportSummary: document.getElementById('groupSupportSummary'),
   currentLocLabel: document.getElementById('currentLocLabel'),
   currentLocValue: document.getElementById('currentLocValue'),
   changeLocLabel: document.getElementById('changeLocLabel'),
@@ -1364,17 +1451,14 @@ function applyLanguage() {
   els.feltLogLabel.textContent = s.feltLogLabel;
   els.feltLogHint.textContent = s.feltLogHint;
   els.feltLogOpenBtn.textContent = s.feltLogOpenBtn;
-  els.historyTitle.textContent = s.feltLogLabel;
+  els.historyTitle.textContent = s.groupHistory;
   els.historyDownloadBtn.textContent = s.feltLogDownloadBtn;
   if (els.historyPanel.style.display === 'flex') renderCalendar();
   els.groupTesting.textContent = s.groupTesting;
   els.groupSupport.textContent = s.groupSupport;
-  els.navLocation.textContent = s.groupLocation;
-  els.navDisplay.textContent = s.groupDisplay;
-  els.navAlerts.textContent = s.groupAlerts;
-  els.navHistory.textContent = s.groupHistory;
-  els.navTesting.textContent = s.groupTesting;
-  els.navSupport.textContent = s.groupSupport;
+  els.groupHistorySummary.textContent = s.groupHistorySummary;
+  els.groupTestingSummary.textContent = s.groupTestingSummary;
+  els.groupSupportSummary.textContent = s.groupSupportSummary;
   els.currentLocLabel.textContent = s.currentLocation;
   els.changeLocLabel.textContent = s.changeLocation;
   els.settingsCityInput.placeholder = s.inputPlaceholder;
@@ -1428,6 +1512,7 @@ function applyLanguage() {
   // a language change. Rebuilding is cheap (10 small elements) and safe
   // even before the grid has ever been shown.
   buildStepGrid();
+  updateAccSummaries();
 }
 
 function setLanguage(lang) {
@@ -1445,6 +1530,7 @@ window.applyLanguageOnly = applyLanguageOnly;
 function applyTimeFormatButtons() {
   document.getElementById('format24Btn').classList.toggle('active', currentTimeFormat === '24h');
   document.getElementById('format12Btn').classList.toggle('active', currentTimeFormat === '12h');
+  updateAccSummaries();
 }
 
 function setTimeFormat(fmt) {
@@ -1510,6 +1596,7 @@ function applyThresholdSelection() {
     els.thresholdSwatchDot.style.background = band.bg;
     els.thresholdSwatchDot.style.borderColor = band.bg;
   }
+  updateAccSummaries();
 }
 
 function setAlertMinStep(step) {
@@ -1541,6 +1628,7 @@ function buildSensitivitySelect() {
 
 function applySensitivitySelection() {
   els.sensitivitySelect.value = currentSensitivity;
+  updateAccSummaries();
 }
 
 function setSensitivity(level) {
@@ -1914,6 +2002,7 @@ async function saveSelected(context) {
       currentHomeName = result.name;
       els.currentLocValue.textContent = result.name;
       els.locationLabel.textContent = `${STRINGS[currentLang].monitoring}: ${result.name}`;
+      updateAccSummaries();
       if (isSetup) {
         showMainScreen(result.name);
       } else {
@@ -1931,6 +2020,61 @@ async function saveSelected(context) {
 }
 window.saveSelected = saveSelected;
 
+// Settings accordion: the six topics (Location, Display, Alerts, Recent
+// Earthquakes, Testing, Support) each collapse to a single icon+title(+
+// summary) row, and only one can be open at a time. Clicking the open
+// one closes it back down; clicking a different one swaps which is
+// open. This keeps whatever you're not reading out of the way instead
+// of listing every field for every topic at once.
+const ACC_GROUPS = ['location', 'display', 'alerts', 'history', 'testing', 'support'];
+let openSettingsGroup = null;
+
+function accGroupIds(id) {
+  const cap = id.charAt(0).toUpperCase() + id.slice(1);
+  return {
+    header: document.getElementById('acc' + cap),
+    body: document.getElementById('body' + cap),
+    chevron: document.getElementById('group' + cap + 'Chevron'),
+  };
+}
+
+function applyAccGroupState() {
+  ACC_GROUPS.forEach((id) => {
+    const { header, body, chevron } = accGroupIds(id);
+    const isOpen = openSettingsGroup === id;
+    if (body) body.style.display = isOpen ? 'flex' : 'none';
+    if (chevron) chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
+    if (header) header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+}
+
+function toggleAccGroup(id) {
+  openSettingsGroup = openSettingsGroup === id ? null : id;
+  applyAccGroupState();
+}
+window.toggleAccGroup = toggleAccGroup;
+
+// Short, language-aware labels for the one-line summaries — deliberately
+// not the long descriptive sensitivity_* strings (those are written for
+// a dropdown, not a condensed row), so this keeps its own tiny map.
+const SENSITIVITY_SHORT_LABEL = {
+  en: { high: 'High', normal: 'Normal', low: 'Low', off: 'Off' },
+  ja: { high: '高い', normal: '普通', low: '低い', off: 'オフ' },
+};
+
+function updateAccSummaries() {
+  if (!els.groupLocationSummary) return;
+  els.groupLocationSummary.textContent = currentHomeName || '';
+
+  const langLabel = currentLang === 'en' ? 'EN' : '日本語';
+  const fmtLabel = currentTimeFormat === '12h' ? '12h' : '24h';
+  els.groupDisplaySummary.textContent = `${langLabel} · ${fmtLabel}`;
+
+  const stepText = currentLang === 'ja' ? `震度${currentAlertMinStep}以上` : `Shindo ${currentAlertMinStep}+`;
+  const sensLabel = (SENSITIVITY_SHORT_LABEL[currentLang] || SENSITIVITY_SHORT_LABEL.en)[currentSensitivity] || '';
+  els.groupAlertsSummary.textContent = sensLabel ? `${stepText} · ${sensLabel}` : stepText;
+}
+
 function openSettings() {
   els.settingsCityInput.value = '';
   els.settingsError.textContent = '';
@@ -1942,6 +2086,9 @@ function openSettings() {
   els.stepGrid.style.display = 'none';
   setBugReportStatus('', null);
   els.bugReportBox.value = '';
+  openSettingsGroup = null;
+  applyAccGroupState();
+  updateAccSummaries();
   els.settingsPanel.style.display = 'flex';
 }
 
@@ -2176,16 +2323,6 @@ function closeSettings() {
   els.settingsPanel.style.display = 'none';
 }
 window.closeSettings = closeSettings;
-
-// Quick-jump nav at the top of the Settings panel: scrolls the panel
-// so the chosen group's header lands at the top of the view, instead
-// of making someone scroll past five other topics to find one setting.
-function scrollToSettingsGroup(groupId) {
-  const target = document.getElementById(groupId);
-  if (!target) return;
-  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-window.scrollToSettingsGroup = scrollToSettingsGroup;
 
 function buildStepGrid() {
   els.stepGrid.innerHTML = '';
