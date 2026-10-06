@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-05T12:37:30Z",
- "count": 119,
+ "updated_at": "2026-10-06T01:29:40Z",
+ "count": 120,
  "events": [
+  {
+   "id": "20261005223109",
+   "time": "2026-10-05T22:30:00+09:00",
+   "location_ja": "石垣島北西沖",
+   "lat": 25.1,
+   "lon": 123.4,
+   "depth_km": 150.0,
+   "magnitude": 4.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261005210926",
    "time": "2026-10-05T21:09:00+09:00",
