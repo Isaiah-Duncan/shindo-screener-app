@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-06T14:44:33Z",
- "count": 123,
+ "updated_at": "2026-10-06T19:51:10Z",
+ "count": 126,
  "events": [
+  {
+   "id": "20261007024730",
+   "time": "2026-10-07T02:47:00+09:00",
+   "location_ja": "北海道東方沖",
+   "lat": 43.9,
+   "lon": 147.0,
+   "depth_km": 10.0,
+   "magnitude": 4.6,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261007020150",
+   "time": "2026-10-07T02:01:00+09:00",
+   "location_ja": "沖縄本島近海",
+   "lat": 27.3,
+   "lon": 128.9,
+   "depth_km": 30.0,
+   "magnitude": 2.8,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261006234746",
+   "time": "2026-10-06T23:47:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.3,
+   "lon": 130.5,
+   "depth_km": 10.0,
+   "magnitude": 1.9,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261006195357",
    "time": "2026-10-06T19:53:00+09:00",
