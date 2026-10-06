@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-06T07:57:47Z",
- "count": 122,
+ "updated_at": "2026-10-06T14:44:33Z",
+ "count": 123,
  "events": [
+  {
+   "id": "20261006195357",
+   "time": "2026-10-06T19:53:00+09:00",
+   "location_ja": "神奈川県西部",
+   "lat": 35.4,
+   "lon": 139.3,
+   "depth_km": 40.0,
+   "magnitude": 3.4,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261006134727",
    "time": "2026-10-06T13:47:00+09:00",
