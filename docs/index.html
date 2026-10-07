@@ -168,20 +168,6 @@
   .scale-desc { margin-top: auto; padding-top: 14px; font-size: 13.5px; font-weight: 600; line-height: 1.6; word-break: auto-phrase; }
   .scale-note { margin: 18px 0 0; font-size: 13px; line-height: 1.7; color: var(--dim); }
 
-  /* recent quakes */
-  .quake-list { list-style: none; margin: 40px 0 0; padding: 4px 28px; max-width: 880px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
-  .quake-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--line); }
-  .quake-row:last-child { border-bottom: none; }
-  .quake-chip { width: 56px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Barlow', 'Archivo', sans-serif; font-size: 27px; font-weight: 700; line-height: 1; }
-  .quake-chip.is-zero, .quake-chip.is-none { border: 1px solid var(--line-2); }
-  .quake-chip.is-none { font-size: 22px; color: var(--dim); }
-  .quake-place { font-size: 18px; font-weight: 700; line-height: 1.35; word-break: auto-phrase; }
-  .quake-meta { margin-top: 3px; font-size: 14px; font-weight: 500; color: var(--muted); }
-  .quake-time { text-align: right; font-size: 14px; font-weight: 700; color: var(--soft); white-space: nowrap; }
-  .quake-time small { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 500; color: var(--dim); }
-  .quake-empty { padding: 22px 0; font-size: 16px; color: var(--muted); }
-  .quake-note { margin: 14px 0 0; font-size: 13px; line-height: 1.7; color: var(--dim); }
-
   /* faq */
   .faq-list { margin-top: 40px; max-width: 820px; }
   .faq-list details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; transition: border-color 150ms ease; }
@@ -231,17 +217,11 @@
     .step-copy h3 { font-size: 24px; }
     .scale-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .scale-tile { min-height: 140px; }
-    .quake-list { padding: 2px 18px; }
     .closing-block { padding: 88px 22px 80px; }
     .closing-text { font-size: 28px; }
     .footer-row { flex-direction: column; align-items: flex-start; }
   }
   @media (max-width: 600px) {
-    .quake-row { grid-template-columns: 48px minmax(0, 1fr); gap: 14px; }
-    .quake-chip { width: 48px; height: 46px; font-size: 24px; }
-    .quake-place { font-size: 16.5px; }
-    .quake-time { grid-column: 2; text-align: left; margin-top: -6px; }
-    .quake-time small { display: inline; margin: 0 0 0 8px; }
     .faq-list summary { font-size: 16px; padding: 18px 48px 18px 18px; }
     .faq-a { padding: 0 18px 20px; }
     .shot-pair { grid-template-columns: 1fr; }
@@ -339,7 +319,7 @@
 
     
     <div class="hero2-benefits">
-      <div class="benefit"><svg class="benefit-icon" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14" fill="none" stroke="#f5f5f0" stroke-width="2.2"/><circle cx="20" cy="20" r="4" fill="#f5f5f0"/><path d="M20 2v8M20 30v8M2 20h8M30 20h8" stroke="#f5f5f0" stroke-width="2.2" stroke-linecap="round"/></svg><div><div class="benefit-title" data-t="b1Title"></div><div class="benefit-body" data-t="b1Body"></div></div></div>
+      <div class="benefit"><svg class="benefit-icon" viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="#f5f5f0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L20 6l15 13"/><path d="M9 16v18h22V16"/><path d="M16 34V24h8v10"/></svg><div><div class="benefit-title" data-t="b1Title"></div><div class="benefit-body" data-t="b1Body"></div></div></div>
       <div class="benefit"><svg class="benefit-icon" viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="#f5f5f0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 28V18a10 10 0 0 1 20 0v10l3 3H7z"/><path d="M16 35a4 4 0 0 0 8 0"/></svg><div><div class="benefit-title" data-t="b2Title"></div><div class="benefit-body" data-t="b2Body"></div></div></div>
       <div class="benefit"><svg class="benefit-icon" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="15" fill="none" stroke="#f5f5f0" stroke-width="2.2"/><text x="20" y="26.5" text-anchor="middle" font-size="16" font-weight="900" fill="#f5f5f0" font-family="Archivo, sans-serif">¥0</text></svg><div><div class="benefit-title" data-t="b3Title"></div><div class="benefit-body" data-t="b3Body"></div></div></div>
     </div>
@@ -441,18 +421,6 @@
     </div>
     
     <p class="scale-note"><span class="l-ja">色はアプリの表示と同じです。説明は<a href="https://www.jma.go.jp/jma/kishou/know/shindo/kaisetsu.html">気象庁震度階級関連解説表</a>の「人の体感・行動」を要約したものです。</span><span class="l-en">Colors match the app. Descriptions summarize "human sensation and behavior" from <a href="https://www.jma.go.jp/jma/kishou/know/shindo/kaisetsu.html">JMA's Shindo scale explanation table</a> (Japanese).</span></p>
-  </section>
-
-  <section class="block inner" id="recent">
-    <div class="block-head">
-      <div class="kicker"><span class="l-ja">最近の地震</span><span class="l-en">Recent earthquakes</span></div>
-      <h2><span class="l-ja">気象庁が発表した最新の地震。</span><span class="l-en">The latest earthquakes JMA has reported.</span></h2>
-      <p class="block-sub"><span class="l-ja">色の付いた数字は、その地震で観測された最大震度です。あなたの地点での震度ではありません。</span><span class="l-en">The colored number is the strongest Shindo recorded anywhere for that quake, not the reading at your location.</span></p>
-    </div>
-    <ol class="quake-list" id="quakeList" aria-live="polite">
-      <li class="quake-empty"><span class="l-ja">読み込み中…</span><span class="l-en">Loading…</span></li>
-    </ol>
-    <p class="quake-note" id="quakeNote"></p>
   </section>
 
   <section class="block inner" id="faq">
@@ -749,139 +717,12 @@
     });
   });
 
-  var initial = 'ja';
+  var initial = (navigator.language || 'en').toLowerCase().indexOf('ja') === 0 ? 'ja' : 'en';
   try {
     var saved = localStorage.getItem('shindo-lang');
     if (saved === 'ja' || saved === 'en') initial = saved;
   } catch (e) {}
   applyLang(initial);
-})();
-</script>
-
-<script>
-/* Recent earthquakes: reads JMA's list live from Wolfx, falls back to the
-   site's own log (data/events.json) if Wolfx can't be reached. */
-(function () {
-  var list = document.getElementById('quakeList');
-  var note = document.getElementById('quakeNote');
-  if (!list) return;
-
-  var LIVE_URL = 'https://api.wolfx.jp/jma_eqlist.json';
-  var LOG_URL = 'data/events.json';
-  var NAMES_URL = 'data/region-names-en.json';
-  var SHOW = 6, REFRESH_MS = 60000;
-
-  // Same colors as the app's display bands (screener_app.html BANDS).
-  var BANDS = {
-    '0': ['#000000', '#f5f5f0'], '1': ['#e8e6dc', '#0e0e0c'], '2': ['#e8e6dc', '#0e0e0c'],
-    '3': ['#a8e6e8', '#0e0e0c'], '4': ['#a8e6e8', '#0e0e0c'], '5-': ['#e8d842', '#0e0e0c'],
-    '5+': ['#e8d842', '#0e0e0c'], '6-': ['#e08228', '#2a1c10'], '6+': ['#c21818', '#f5f0e8'],
-    '7': ['#c21818', '#f5f0e8']
-  };
-  var SHINDO_MAP = { '5弱': '5-', '5強': '5+', '6弱': '6-', '6強': '6+' };
-
-  var events = [], source = null, names = {}, fetchedAt = null;
-
-  function lang() { return document.documentElement.getAttribute('data-lang') === 'en' ? 'en' : 'ja'; }
-  function num(v) { var m = String(v == null ? '' : v).match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; }
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-
-  function fromWolfx(data) {
-    var out = [];
-    Object.keys(data).forEach(function (k) {
-      if (k.indexOf('No') !== 0) return;
-      var r = data[k], t = String(r.time_full || '').replace(/\//g, '-').replace(' ', 'T');
-      if (!r.EventID || !t) return;
-      var s = String(r.shindo || '').trim(); s = SHINDO_MAP[s] || s;
-      var depth = String(r.depth || '');
-      out.push({
-        id: r.EventID, time: t + '+09:00', location_ja: (r.location || '').trim() || null,
-        depth_km: depth.indexOf('ごく浅い') >= 0 ? 0 : num(depth), magnitude: num(r.magnitude),
-        max_shindo: BANDS[s] ? s : null, report_type: r.Title || null
-      });
-    });
-    return out;
-  }
-
-  function place(e) {
-    if (!e.location_ja) return lang() === 'en' ? 'Location not yet reported' : '震源は調査中';
-    return lang() === 'en' ? (names[e.location_ja] || e.location_ja) : e.location_ja;
-  }
-
-  function timeParts(iso) {
-    var d = new Date(iso); if (isNaN(d)) return ['', ''];
-    var jst = new Date(d.getTime() + 9 * 3600e3);
-    var p = function (n) { return (n < 10 ? '0' : '') + n; };
-    var clock = (jst.getUTCMonth() + 1) + '/' + jst.getUTCDate() + ' ' + p(jst.getUTCHours()) + ':' + p(jst.getUTCMinutes());
-    var mins = Math.max(0, Math.round((Date.now() - d.getTime()) / 60000)), en = lang() === 'en', rel;
-    if (mins < 1) rel = en ? 'just now' : 'たった今';
-    else if (mins < 60) rel = en ? mins + ' min ago' : mins + '分前';
-    else if (mins < 1440) { var h = Math.round(mins / 60); rel = en ? h + (h === 1 ? ' hour ago' : ' hours ago') : h + '時間前'; }
-    else { var dd = Math.round(mins / 1440); rel = en ? dd + (dd === 1 ? ' day ago' : ' days ago') : dd + '日前'; }
-    return [rel, clock + (en ? ' JST' : '')];
-  }
-
-  function row(e) {
-    var en = lang() === 'en', s = e.max_shindo, chip;
-    if (s && BANDS[s]) {
-      chip = '<div class="quake-chip' + (s === '0' ? ' is-zero' : '') + '" style="background:' + BANDS[s][0] + ';color:' + BANDS[s][1] +
-        '" aria-label="' + (en ? 'Max Shindo ' : '最大震度') + s + '">' + esc(s) + '</div>';
-    } else {
-      chip = '<div class="quake-chip is-none" aria-label="' + (en ? 'No Shindo reported in Japan' : '国内の震度なし') + '">–</div>';
-    }
-    var meta = [];
-    if (e.magnitude != null) meta.push('M' + e.magnitude.toFixed(1));
-    if (e.depth_km != null) meta.push(e.depth_km === 0 ? (en ? 'very shallow' : 'ごく浅い') : (en ? 'depth ' : '深さ') + Math.round(e.depth_km) + ' km');
-    if (!s) meta.push(en ? 'distant quake, no shaking reported in Japan' : '遠地地震（国内の揺れなし）');
-    var t = timeParts(e.time);
-    return '<li class="quake-row">' + chip +
-      '<div><div class="quake-place">' + esc(place(e)) + '</div><div class="quake-meta">' + esc(meta.join(' · ')) + '</div></div>' +
-      '<div class="quake-time">' + esc(t[0]) + '<small>' + esc(t[1]) + '</small></div></li>';
-  }
-
-  function render() {
-    var en = lang() === 'en';
-    if (!events.length) {
-      list.innerHTML = '<li class="quake-empty">' + (source === 'error'
-        ? (en ? 'Earthquake data is unavailable right now.' : '現在、地震情報を取得できません。')
-        : (en ? 'Loading…' : '読み込み中…')) + '</li>';
-      note.textContent = '';
-      return;
-    }
-    list.innerHTML = events.slice(0, SHOW).map(row).join('');
-    var src = source === 'live'
-      ? (en ? 'Live from JMA via Wolfx, refreshed every minute.' : '気象庁の情報をWolfx経由でリアルタイム表示（1分ごとに更新）。')
-      : (en ? 'Live feed unavailable; showing this site’s saved log, which can lag by a few hours.' : 'リアルタイム情報を取得できないため、保存済みの記録を表示しています（数時間遅れる場合があります）。');
-    note.textContent = src;
-  }
-
-  function getJSON(url) {
-    return fetch(url, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
-  }
-
-  function load() {
-    getJSON(LIVE_URL).then(function (d) {
-      var ev = fromWolfx(d); if (!ev.length) throw new Error('empty');
-      events = ev; source = 'live';
-    }).catch(function () {
-      return getJSON(LOG_URL).then(function (d) { events = d.events || []; source = 'log'; });
-    }).catch(function () {
-      if (!events.length) source = 'error';
-    }).then(function () {
-      events.sort(function (a, b) { return a.time < b.time ? 1 : a.time > b.time ? -1 : 0; });
-      fetchedAt = Date.now();
-      render();
-    });
-  }
-
-  getJSON(NAMES_URL).then(function (n) { names = n; render(); }).catch(function () {});
-  load();
-  setInterval(function () { if (!document.hidden) load(); }, REFRESH_MS);
-  document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && Date.now() - (fetchedAt || 0) > REFRESH_MS) load();
-  });
-  // Re-render when the language toggle flips <html data-lang>.
-  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-lang'] });
 })();
 </script>
 </body>
