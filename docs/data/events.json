@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-07T02:34:43Z",
- "count": 127,
+ "updated_at": "2026-10-07T09:14:20Z",
+ "count": 128,
  "events": [
+  {
+   "id": "20261007160305",
+   "time": "2026-10-07T16:03:00+09:00",
+   "location_ja": "奄美大島北東沖",
+   "lat": 29.7,
+   "lon": 130.5,
+   "depth_km": 60.0,
+   "magnitude": 3.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261007092251",
    "time": "2026-10-07T09:22:00+09:00",
