@@ -106,6 +106,8 @@
      .label now lives inside .readout, directly under .rule, instead of
      the bottom-left block, since it took over the numeral's old spot. */
   .label { font-size: var(--tier3-size); font-weight: 700; }
+  .explain { font-size: var(--tier4-size); opacity: 0.75; max-width: 45vw; line-height: 1.45; font-weight: 500; }
+  .explain:empty { display: none; }
   .meta { font-size: var(--tier4-size); opacity: 0.75; margin-top: 1vh; }
   /* A persistent "you felt this" indicator, shown at the extreme top
      left corner (inside the screen's own padding, clear of .top-row's
@@ -156,29 +158,29 @@
      larger headline text. */
   .dismiss-btn {
     position: absolute;
-    top: 0.8vh;
-    right: 0.8vw;
+    top: 1.2vh;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 20;
     display: none;
-    align-items: baseline;
+    align-items: center;
     justify-content: center;
-    gap: 0.3vw;
-    background: none;
-    border: none;
-    padding: 0;
+    gap: 0.5em;
+    background: rgba(0, 0, 0, 0.1);
+    border: 1.5px solid currentColor;
+    border-radius: 999px;
+    padding: 0.35em 1em 0.35em 1.1em;
     color: inherit;
-    font-size: var(--tier4-size);
+    font-size: calc(max(14px, 1.1vw) * var(--text-scale));
     font-weight: 600;
+    line-height: 1.2;
     cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 150ms ease;
+    opacity: 0.75;
+    transition: opacity 150ms ease, background 150ms ease;
   }
-  .dismiss-btn:hover { opacity: 1; }
-  .dismiss-btn .dismiss-btn-x {
-    font-size: 1.3em;
-    line-height: 1;
-    font-weight: 600;
-  }
+  .dismiss-btn:hover, .dismiss-btn:focus-visible { opacity: 1; background: rgba(0, 0, 0, 0.2); }
+  .dismiss-btn:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+  .dismiss-btn .dismiss-btn-x { font-size: 1.25em; line-height: 1; font-weight: 500; }
   .tsunami-box {
     margin-top: 1.5vh;
     background: #b01010;
@@ -346,332 +348,225 @@
   .candidates button:hover { border-color: #333; background: rgba(232,216,66,0.10); }
 
   /* --- Settings panel --- */
+  /* ===== Settings: sidebar + one page per topic (Location, Display,
+     Alerts, Recent Earthquakes, Support). Replaced the old accordion and
+     the separate history overlay. All sizes go through --text-scale so
+     the Text size setting applies here too. ===== */
   .settings-panel {
     position: fixed;
     inset: 0;
     background: #000;
     color: #f5f5f0;
     display: none;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
     font-family: 'DM Sans', 'Bahnschrift', Arial, Helvetica, sans-serif;
     z-index: 30;
+    overflow: hidden;
+  }
+  .settings-side {
+    width: calc(204px * var(--text-scale));
+    flex: 0 0 auto;
+    border-right: 1px solid rgba(245, 245, 240, 0.1);
+    padding: 22px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     overflow-y: auto;
-    padding: 5vh 0 4vh;
   }
-  .settings-panel .rings { width: 52px; height: 52px; margin-bottom: 6px; }
-  .settings-panel h2 { font-size: calc(20px * var(--text-scale)); margin: 0 0 6px; letter-spacing: 0.03em; }
-  /* Collapsible accordion: all six topics (Location, Display, Alerts,
-     Recent Earthquakes, Testing, Support) start collapsed to a single
-     row — icon, title, and (where there's a current value worth
-     showing) a one-line summary. Opening one closes whichever other
-     topic was open, so only the thing you're actually reading ever
-     takes up room; nothing else on the page competes for attention.
-     This replaced an earlier sticky quick-nav + banded-header layout,
-     which fixed hierarchy but not density. */
-  .acc-group {
-    width: 360px;
-    max-width: 85vw;
-    border-top: 1px solid rgba(245, 245, 240, 0.1);
-  }
-  .acc-group:first-of-type { border-top: none; }
-  .acc-header {
+  .settings-side-title { font-size: calc(16px * var(--text-scale)); font-weight: 700; padding: 0 8px 16px; }
+  .nav-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     width: 100%;
     background: none;
     border: none;
-    padding: 18px 2px;
-    margin: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: inherit;
+    border-radius: 8px;
+    padding: 10px 8px;
+    color: #f5f5f0;
     font-family: inherit;
+    font-size: calc(13.5px * var(--text-scale));
     text-align: left;
     cursor: pointer;
+    opacity: 0.7;
   }
-  .acc-header-main {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    min-width: 0;
-  }
-  .acc-icon {
-    flex: 0 0 auto;
-    margin-top: 2px;
-    opacity: 0.75;
-  }
-  .acc-header-text {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-  .acc-title { font-size: calc(14px * var(--text-scale)); font-weight: 700; }
-  .acc-summary {
-    font-size: calc(12px * var(--text-scale));
-    opacity: 0.5;
-    margin-top: 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .acc-chevron {
-    flex: 0 0 auto;
-    font-size: calc(14px * var(--text-scale));
-    opacity: 0.6;
-    transform: rotate(-90deg);
-    transition: transform 150ms ease;
-    margin-left: 10px;
-  }
-  .acc-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding-bottom: 20px;
-  }
-  .settings-section {
-    width: 100%;
-    padding: 10px 2px 0;
-    border-top: 1px solid rgba(245, 245, 240, 0.08);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-  .settings-section:first-of-type { border-top: none; padding-top: 0; }
-  .settings-section label {
-    font-size: calc(11px * var(--text-scale));
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    opacity: 0.5;
-    align-self: flex-start;
-  }
-  .settings-panel .current-loc { font-size: calc(17px * var(--text-scale)); font-weight: 700; align-self: flex-start; }
-  .settings-panel .close-btn {
-    position: absolute;
-    top: 3vh;
-    right: 3vw;
-    background: transparent;
-    border: none;
-    color: #f5f5f0;
-    font-size: calc(22px * var(--text-scale));
-    cursor: pointer;
-    opacity: 0.6;
-  }
-  .settings-panel .close-btn:hover { opacity: 1; }
-  .settings-panel .row-inline { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-  .version-footer {
-    margin-top: 32px;
-    font-size: calc(10px * var(--text-scale));
-    letter-spacing: 0.08em;
-    opacity: 0.3;
-  }
-  .test-warning {
-    font-size: calc(14px * var(--text-scale));
-    font-weight: 600;
-    color: #1a1206;
-    background: #e8a04a;
-    border: none;
-    border-radius: 3px;
-    padding: 12px 14px;
-    text-align: left;
-    line-height: 1.6;
-    display: none;
-  }
-  .step-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    width: 100%;
-  }
-  .threshold-select-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-  }
-  .threshold-swatch-dot {
-    width: 22px;
-    height: 22px;
-    border-radius: 4px;
-    flex: 0 0 auto;
-    border: 1px solid rgba(245, 245, 240, 0.35);
-  }
-  .threshold-select {
-    flex: 1 1 auto;
-    background: #14140f;
-    color: #f5f5f0;
-    border: 1px solid #444;
-    border-radius: 4px;
-    padding: 8px 10px;
-    font-family: inherit;
-    font-size: calc(14px * var(--text-scale));
-  }
-  .threshold-select:focus { outline: 2px solid #f5f5f0; outline-offset: 2px; }
-  .alert-threshold-hint {
-    font-size: calc(12px * var(--text-scale));
-    opacity: 0.6;
-    line-height: 1.5;
-    align-self: flex-start;
-  }
-  .bug-report-hint {
-    font-size: calc(12px * var(--text-scale));
-    opacity: 0.6;
-    line-height: 1.5;
-    align-self: flex-start;
-  }
-  .bug-report-box {
-    width: 100%;
-    min-height: 84px;
-    resize: vertical;
-    background: #14140f;
-    color: #d8d8d0;
-    border: 1px solid #333;
-    border-radius: 3px;
-    padding: 10px;
-    font-family: inherit;
-    font-size: calc(11px * var(--text-scale));
-    line-height: 1.5;
-  }
-  .bug-report-actions {
-    display: flex;
-    gap: 16px;
-    width: 100%;
-    justify-content: center;
-  }
-  .bug-report-status {
-    font-size: calc(11px * var(--text-scale));
-    min-height: 1.2em;
-    text-align: center;
-  }
-  .bug-report-status.success { color: #8fd88f; }
-  .bug-report-status.error { color: #e0968a; }
-  .bug-report-status.pending { color: #b8b8ac; }
-  .bug-report-fallback-hint {
-    font-size: calc(10px * var(--text-scale));
-    opacity: 0.4;
-    margin-top: 4px;
-  }
-  .step-swatch {
-    aspect-ratio: 1;
-    border-radius: 3px;
-    border: 2px solid transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: calc(14px * var(--text-scale));
-    cursor: pointer;
-    transition: transform 120ms ease, border-color 120ms ease, filter 120ms ease;
-  }
-  .step-swatch:hover { transform: scale(1.08); filter: brightness(1.15); border-color: #f5f5f0; }
-  button.text-btn {
-    background: transparent;
-    border: none;
-    color: #999;
-    font-size: calc(12px * var(--text-scale));
-    text-decoration: underline;
-    cursor: pointer;
-    font-family: inherit;
-  }
-
-  /* --- History panel: a calendar of felt earthquakes, one glance per
-     month rather than a scrolling list. Each date that had a felt
-     reading shows that reading's own severity color and Shindo step,
-     same color language as the main screen. --- */
-  .history-panel {
+  .nav-row:hover { opacity: 1; background: rgba(245, 245, 240, 0.05); }
+  .nav-row.active { opacity: 1; background: rgba(245, 245, 240, 0.1); }
+  .nav-row svg { flex: 0 0 auto; width: 17px; height: 17px; }
+  .settings-side .version-footer { margin: auto 0 0; padding: 14px 8px 0; font-size: calc(12px * var(--text-scale)); letter-spacing: 0; opacity: 0.6; }
+  .settings-main { flex: 1 1 auto; min-width: 0; overflow-y: auto; padding: 28px 34px 60px; position: relative; }
+  .settings-close {
     position: fixed;
-    inset: 0;
-    background: #000;
-    color: #f5f5f0;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    font-family: 'DM Sans', 'Bahnschrift', Arial, Helvetica, sans-serif;
-    z-index: 30;
-    overflow-y: auto;
-    padding: 5vh 0 4vh;
-  }
-  .history-panel h2 { font-size: calc(20px * var(--text-scale)); margin: 0 0 18px; letter-spacing: 0.03em; }
-  .history-panel .close-btn {
-    position: absolute;
-    top: 3vh;
-    right: 3vw;
+    top: 14px;
+    right: 18px;
     background: transparent;
     border: none;
     color: #f5f5f0;
-    font-size: calc(22px * var(--text-scale));
+    font-size: calc(26px * var(--text-scale));
     cursor: pointer;
     opacity: 0.6;
+    z-index: 2;
   }
-  .history-panel .close-btn:hover { opacity: 1; }
-  .calendar-nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
-    width: 340px;
-    max-width: 88vw;
-    margin-bottom: 14px;
-  }
-  .calendar-nav button {
-    background: transparent;
-    border: 1px solid #444;
+  .settings-close:hover { opacity: 1; }
+  .settings-page { display: none; max-width: min(100%, calc(660px * var(--text-scale))); }
+  .settings-page.active { display: block; }
+  .settings-page h2 { font-size: calc(18px * var(--text-scale)); margin: 0 0 6px; letter-spacing: 0; }
+  .page-sub { font-size: calc(13px * var(--text-scale)); opacity: 0.72; line-height: 1.5; margin: 0 0 24px; }
+  .eyebrow { font-size: calc(11.5px * var(--text-scale)); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.65; margin: 0 0 10px; }
+  .card { border: 1px solid rgba(245, 245, 240, 0.14); border-radius: 14px; }
+  .settings-page input[type="text"] { text-align: left; width: 100%; max-width: none; box-sizing: border-box; border: 1px solid rgba(245, 245, 240, 0.25); border-radius: 8px; background: rgba(245, 245, 240, 0.05); }
+
+  .seg-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .seg-group button, .seg {
+    background: none;
+    border: 1px solid rgba(245, 245, 240, 0.25);
     color: #f5f5f0;
-    border-radius: 4px;
-    width: 30px;
-    height: 30px;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: calc(13px * var(--text-scale));
+    font-weight: 500;
     cursor: pointer;
-    font-size: calc(15px * var(--text-scale));
   }
-  .calendar-nav button:hover { border-color: #f5f5f0; }
-  .calendar-month-label { font-size: calc(15px * var(--text-scale)); font-weight: 700; min-width: 160px; text-align: center; }
-  .calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    width: 340px;
-    max-width: 88vw;
+  .seg-group button.active, .seg.active { background: rgba(245, 245, 240, 0.18); border-color: #f5f5f0; font-weight: 700; }
+  .seg-group button::before, .seg::before { content: ''; display: inline-block; width: 0.62em; height: 0.62em; box-sizing: border-box; border-radius: 50%; border: 1.5px solid currentColor; opacity: 0.45; margin-right: 0.55em; vertical-align: -0.02em; }
+  .seg-group button.active::before, .seg.active::before { background: currentColor; opacity: 1; }
+  #textSizeNormalBtn::before, #textSizeLargeBtn::before, #textSizeXLargeBtn::before { margin-right: 0.45em; }
+  .seg:disabled, .seg.disabled { opacity: 0.3; cursor: not-allowed; }
+  .seg-group button:focus-visible, .seg:focus-visible, .nav-row:focus-visible, .preset-card:focus-visible, .chip:focus-visible, .day-btn:focus-visible, button.primary:focus-visible, button.ghost:focus-visible {
+    outline: 2px solid #f5f5f0; outline-offset: 2px;
   }
-  .calendar-weekday {
-    font-size: calc(10px * var(--text-scale));
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    opacity: 0.45;
-    text-align: center;
-    padding-bottom: 4px;
+  button.ghost {
+    background: none; border: 1px solid rgba(245, 245, 240, 0.3); color: #f5f5f0; border-radius: 8px;
+    padding: 9px 14px; font-family: inherit; font-size: calc(13px * var(--text-scale)); cursor: pointer;
   }
-  .calendar-day {
-    aspect-ratio: 1;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(11px * var(--text-scale));
-    background: #111;
-    color: #666;
+  button.ghost:disabled { opacity: 0.35; cursor: default; }
+
+  /* Location */
+  .loc-card { display: flex; align-items: center; gap: 16px; padding: 18px 20px; margin-bottom: 28px; }
+  .loc-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(245, 245, 240, 0.08); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+  .settings-page .current-loc { font-size: calc(20px * var(--text-scale)); font-weight: 700; margin-top: 3px; }
+  .loc-label { font-size: calc(11.5px * var(--text-scale)); opacity: 0.65; text-transform: uppercase; letter-spacing: 0.08em; }
+  .settings-page .search-wrap { width: 100%; max-width: none; }
+  .settings-page .candidates { position: static; width: 100%; margin-top: 8px; max-height: none; }
+  .loc-actions { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+
+  /* Display */
+  .row-card { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; gap: 20px; }
+  .row-card + .row-card { border-top: 1px solid rgba(245, 245, 240, 0.1); }
+  .row-title { font-size: calc(14px * var(--text-scale)); font-weight: 700; }
+  .row-desc { font-size: calc(12.5px * var(--text-scale)); opacity: 0.68; margin-top: 3px; }
+  .display-preview { border: 2px solid rgba(245, 245, 240, 0.15); border-radius: 22px; padding: 24px 26px; display: flex; gap: 22px; align-items: center; margin-top: 10px; }
+  .dp-tile { background: #6b6b66; border-radius: 14px; padding: 12px 18px; line-height: 0; flex: 0 0 auto; }
+  .dp-tile svg { width: calc(44px * var(--text-scale)); height: calc(44px * var(--text-scale)); display: block; }
+  .dp-label { font-size: calc(17px * var(--text-scale)); font-weight: 600; }
+  .dp-meta { font-size: calc(13px * var(--text-scale)); opacity: 0.75; margin-top: 6px; }
+
+  /* Alerts */
+  .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .preset-card {
+    cursor: pointer; text-align: left; font-family: inherit; color: #f5f5f0; padding: 16px; border-radius: 12px;
+    background: rgba(245, 245, 240, 0.03); border: 1px solid rgba(245, 245, 240, 0.1);
+    display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; min-height: calc(130px * var(--text-scale));
   }
-  .calendar-day.empty { background: transparent; }
-  .calendar-day.felt {
-    font-weight: 700;
-    color: #0e0e0c;
+  .preset-card.active { background: rgba(245, 245, 240, 0.11); border-color: rgba(245, 245, 240, 0.45); }
+  .preset-card svg { width: 30px; height: 30px; flex: 0 0 auto; stroke: rgba(245, 245, 240, 0.6); }
+  .preset-card.active svg { stroke: #f5f5f0; }
+  .preset-title { font-size: calc(13.5px * var(--text-scale)); font-weight: 700; margin-top: auto; line-height: 1.25; }
+  .preset-sub { font-size: calc(12px * var(--text-scale)); opacity: 0.68; line-height: 1.4; }
+  .divider { height: 1px; background: rgba(245, 245, 240, 0.16); margin: 26px 0; }
+  .preset-detail { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 30px; }
+  .pd-main { min-width: 0; flex: 1 1 auto; }
+  .pd-icon { width: calc(56px * var(--text-scale)); height: calc(56px * var(--text-scale)); flex: 0 0 auto; border-radius: 16px; background: rgba(245, 245, 240, 0.08); display: flex; align-items: center; justify-content: center; }
+  .pd-icon svg { width: 34px; height: 34px; stroke: #f5f5f0; }
+  .pd-title { font-size: calc(18px * var(--text-scale)); font-weight: 700; margin-bottom: 6px; }
+  .pd-body { font-size: calc(13.5px * var(--text-scale)); opacity: 0.85; line-height: 1.5; }
+  .pd-fits { font-size: calc(12px * var(--text-scale)); opacity: 0.62; margin-top: 6px; }
+  .pd-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .pd-pill { font-size: calc(12.5px * var(--text-scale)); padding: 5px 11px; border-radius: 20px; background: rgba(245, 245, 240, 0.08); display: inline-block; }
+  .pd-pill.key { background: rgba(245, 245, 240, 0.18); font-weight: 700; }
+  .alert-preview { width: 100%; min-height: calc(330px * var(--text-scale)); border-radius: 28px; border: 2px solid rgba(245, 245, 240, 0.15); box-sizing: border-box; padding: 26px 28px; display: flex; flex-direction: column; position: relative; transition: background 300ms ease, color 300ms ease; }
+  .ap-tile { border-radius: 16px; padding: 14px 26px; font-size: calc(72px * var(--text-scale)); font-weight: 700; font-family: 'Barlow', 'DM Sans', sans-serif; line-height: 1; align-self: flex-start; }
+  .ap-big { font-size: calc(120px * var(--text-scale)); font-weight: 700; font-family: 'Barlow', 'DM Sans', sans-serif; line-height: 1; }
+  .ap-label { font-size: calc(15px * var(--text-scale)); margin-top: 16px; opacity: 0.9; }
+  .ap-explain { font-size: calc(13px * var(--text-scale)); margin-top: 8px; opacity: 0.8; max-width: 440px; line-height: 1.45; }
+  .ap-blank { font-size: calc(13px * var(--text-scale)); opacity: 0.55; text-align: center; }
+  .ap-blank.rest { font-size: calc(20px * var(--text-scale)); opacity: 0.7; }
+  .ap-meta { align-self: flex-end; text-align: right; line-height: 1.5; }
+  .ap-body { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 12px 0; min-width: 0; }
+  .ap-body.center { align-items: center; }
+  .ap-meta .k { font-size: calc(11px * var(--text-scale)); opacity: 0.6; letter-spacing: 0.06em; text-transform: uppercase; }
+  .ap-meta .v1 { font-size: calc(15px * var(--text-scale)); font-weight: 600; margin-top: 4px; }
+  .ap-meta .v2 { font-size: calc(13px * var(--text-scale)); opacity: 0.75; }
+  .ap-chips { margin-top: 8px; font-size: calc(12.5px * var(--text-scale)); font-weight: 600; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ap-chips span { padding: 5px 12px; border-radius: 20px; background: rgba(128, 128, 128, 0.35); }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin: 16px 0 8px; }
+  .chip {
+    flex: 1 1 0; min-width: calc(40px * var(--text-scale)); height: calc(54px * var(--text-scale)); border-radius: 12px; border: none; position: relative; cursor: pointer;
+    font-family: 'Barlow', 'DM Sans', sans-serif; font-size: calc(14px * var(--text-scale)); font-weight: 700; outline-offset: 2px;
   }
-  .calendar-day .day-num { font-size: calc(9px * var(--text-scale)); opacity: 0.7; line-height: 1; }
-  .calendar-day .day-step { font-size: calc(13px * var(--text-scale)); line-height: 1.3; }
-  .calendar-legend {
-    width: 340px;
-    max-width: 88vw;
-    margin-top: 18px;
-    font-size: calc(11px * var(--text-scale));
-    opacity: 0.6;
-    line-height: 1.5;
-    text-align: center;
-  }
-  .calendar-empty-note {
-    margin-top: 18px;
-    font-size: calc(12px * var(--text-scale));
-    opacity: 0.5;
+  .chip.sel { outline: 2px solid #f5f5f0; }
+  .chip.rest { border: 1px dashed rgba(245, 245, 240, 0.45); }
+  .chip.dim { opacity: 0.32; }
+  .chip .bell { position: absolute; top: 5px; right: 5px; width: 13px; height: 13px; display: none; }
+  .chip.bells .bell { display: block; }
+  .chip-note { font-size: calc(12.5px * var(--text-scale)); opacity: 0.7; margin-bottom: 30px; line-height: 1.5; }
+  .yours { display: flex; gap: 40px; flex-wrap: wrap; padding: 18px 20px; }
+  .yours-col { display: flex; flex-direction: column; gap: 8px; }
+  .yours-title { font-size: calc(13px * var(--text-scale)); font-weight: 700; }
+  .yours-help { font-size: calc(12.5px * var(--text-scale)); opacity: 0.7; max-width: calc(320px * var(--text-scale)); line-height: 1.45; }
+  .sub-title { font-size: calc(12.5px * var(--text-scale)); opacity: 0.65; margin: -4px 0 12px; line-height: 1.4; }
+  .yours-sep { height: 1px; background: rgba(245, 245, 240, 0.1); margin: 6px 0 2px; }
+  .test-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .test-btn { background: rgba(245, 245, 240, 0.08); border: 1px solid rgba(245, 245, 240, 0.3); color: #f5f5f0; border-radius: 20px; padding: 9px 16px; font-family: inherit; font-size: calc(13px * var(--text-scale)); font-weight: 600; cursor: pointer; }
+  .test-note { font-size: calc(12px * var(--text-scale)); opacity: 0.72; min-height: 16px; }
+
+  /* Recent Earthquakes */
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cal-nav button { padding: 6px 14px; font-size: calc(16px * var(--text-scale)); }
+  .calendar-month-label { font-size: calc(15px * var(--text-scale)); font-weight: 700; text-align: center; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .calendar-weekday { font-size: calc(11.5px * var(--text-scale)); opacity: 0.62; text-align: center; padding-bottom: 2px; }
+  .day-btn { border: none; aspect-ratio: 1; border-radius: 8px; font-family: inherit; font-size: calc(13px * var(--text-scale)); background: rgba(245, 245, 240, 0.05); color: #f5f5f0; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; }
+  .day-btn.empty { visibility: hidden; cursor: default; }
+  .day-btn.felt { color: #0e0e0c; font-weight: 700; }
+  .day-btn.today { outline: 1px dashed rgba(245, 245, 240, 0.6); outline-offset: 2px; }
+  .day-btn.sel { outline: 2px solid #f5f5f0; outline-offset: 2px; }
+  .day-btn .day-step { font-size: calc(11px * var(--text-scale)); opacity: 0.8; }
+  .cal-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; font-size: calc(12.5px * var(--text-scale)); opacity: 0.85; }
+  .cal-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .day-detail { margin-top: 22px; padding: 16px 18px; min-height: 92px; }
+  .dd-title { font-size: calc(13.5px * var(--text-scale)); font-weight: 700; margin-bottom: 8px; }
+  .dd-row { display: flex; gap: 12px; align-items: center; padding: 5px 0; font-size: calc(13.5px * var(--text-scale)); }
+  .dd-step { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Barlow', 'DM Sans', sans-serif; font-weight: 700; font-size: calc(14px * var(--text-scale)); flex: 0 0 auto; }
+  .dd-empty { font-size: calc(13px * var(--text-scale)); opacity: 0.68; }
+  .calendar-empty-note { margin-top: 14px; font-size: calc(12.5px * var(--text-scale)); opacity: 0.68; }
+
+  /* Support */
+  .info-card { padding: 18px 20px; margin-bottom: 22px; }
+  .info-head { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; font-size: calc(14px * var(--text-scale)); font-weight: 700; }
+  .info-text { font-size: calc(13px * var(--text-scale)); opacity: 0.82; line-height: 1.65; }
+  .info-warn { font-size: calc(13px * var(--text-scale)); line-height: 1.65; margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(224, 130, 40, 0.12); border: 1px solid rgba(224, 130, 40, 0.35); }
+  .bug-report-hint { font-size: calc(13px * var(--text-scale)); opacity: 0.72; line-height: 1.5; margin-bottom: 10px; }
+  .bug-report-box { width: 100%; min-height: 110px; resize: vertical; background: rgba(245, 245, 240, 0.05); color: #f5f5f0; border: 1px solid rgba(245, 245, 240, 0.22); border-radius: 8px; padding: 11px 13px; font-family: inherit; font-size: calc(14px * var(--text-scale)); line-height: 1.5; box-sizing: border-box; }
+  .bug-report-box::placeholder { color: #8a8a80; }
+  .bug-report-row { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+  .bug-report-status { font-size: calc(13px * var(--text-scale)); min-height: 1.2em; }
+  .bug-report-status.success { color: #8fd88f; }
+  .bug-report-status.error { color: #e8a04a; }
+  .bug-report-status.pending { color: #b8b8ac; }
+  .bug-report-fallback { display: none; margin-top: 16px; padding: 14px 16px; border: 1px solid rgba(245, 245, 240, 0.14); border-radius: 12px; }
+  .bug-report-fallback .t { font-size: calc(13px * var(--text-scale)); margin-bottom: 10px; }
+  .bug-report-actions { display: flex; gap: 8px; }
+  button.text-btn { background: transparent; border: none; color: #999; font-size: calc(12px * var(--text-scale)); text-decoration: underline; cursor: pointer; font-family: inherit; }
+
+  @media (max-width: 760px) {
+    .settings-panel { flex-direction: column; }
+    .settings-side { width: auto; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid rgba(245, 245, 240, 0.1); padding: 10px; }
+    .settings-side-title, .settings-side .version-footer { display: none; }
+    .nav-row { width: auto; white-space: nowrap; }
+    .settings-main { padding: 20px 18px 60px; }
+    .preset-grid { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -704,6 +599,7 @@
       <div class="code" id="code"></div>
       <div class="rule" id="rule"></div>
       <div class="label" id="labelText"></div>
+      <div class="explain" id="explainText"></div>
     </div>
   </div>
   <div class="idle-line" id="idleLine"></div>
@@ -746,233 +642,156 @@
 </div>
 
 <div class="settings-panel" id="settingsPanel">
-  <button class="close-btn" onclick="closeSettings()">&times;</button>
-  <svg class="rings" viewBox="0 0 256 256">
-    <circle cx="128" cy="128" r="118" fill="none" stroke="#c21818" stroke-width="10"/>
-    <circle cx="128" cy="128" r="92" fill="none" stroke="#e08228" stroke-width="10"/>
-    <circle cx="128" cy="128" r="66" fill="none" stroke="#e8d842" stroke-width="10"/>
-    <circle cx="128" cy="128" r="40" fill="none" stroke="#a8e6e8" stroke-width="10"/>
-    <circle cx="128" cy="128" r="16" fill="none" stroke="#e8e6dc" stroke-width="10"/>
-    <circle cx="128" cy="128" r="6" fill="#f5f5f0"/>
-  </svg>
-  <h2 id="settingsTitle">Settings</h2>
+  <button class="settings-close" onclick="closeSettings()" aria-label="Close">&times;</button>
 
-  <!-- Location -->
-  <div class="acc-group">
-    <button type="button" class="acc-header" id="accLocation" onclick="toggleAccGroup('location')" aria-expanded="false">
-      <span class="acc-header-main">
-        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
-        <span class="acc-header-text">
-          <span class="acc-title" id="groupLocation">Location</span>
-          <span class="acc-summary" id="groupLocationSummary"></span>
-        </span>
-      </span>
-      <span class="acc-chevron" id="groupLocationChevron">▾</span>
-    </button>
-    <div class="acc-body" id="bodyLocation" style="display:none;">
-      <div class="settings-section">
-        <label id="currentLocLabel">Current location</label>
-        <div class="current-loc" id="currentLocValue"></div>
-      </div>
-      <div class="settings-section">
-        <label id="changeLocLabel">Change location</label>
-        <div class="search-wrap">
-          <input type="text" id="settingsCityInput" placeholder="e.g. Sapporo, Osaka, Naha" autocomplete="off">
-          <div class="candidates" id="settingsCandidates"></div>
+  <nav class="settings-side" aria-label="Settings">
+    <div class="settings-side-title" data-i18n="settingsTitle">Settings</div>
+    <button class="nav-row" data-page="location" onclick="showSettingsPage('location')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg><span data-i18n="groupLocation">Location</span></button>
+    <button class="nav-row" data-page="display" onclick="showSettingsPage('display')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg><span data-i18n="groupDisplay">Display</span></button>
+    <button class="nav-row" data-page="alerts" onclick="showSettingsPage('alerts')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span data-i18n="groupAlerts">Alerts</span></button>
+    <button class="nav-row" data-page="history" onclick="showSettingsPage('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span data-i18n="groupHistory">Recent Earthquakes</span></button>
+    <button class="nav-row" data-page="support" onclick="showSettingsPage('support')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 1 1 3.8 2.6c-.8.3-1 1-1 1.7v.3"/></svg><span data-i18n="groupSupport">Support</span></button>
+    <div class="version-footer" id="versionFooter">Shindo Screener: Beta</div>
+  </nav>
+
+  <div class="settings-main" id="settingsMain">
+
+    <!-- Location -->
+    <section class="settings-page" id="page-location">
+      <h2 data-i18n="groupLocation">Location</h2>
+      <p class="page-sub" data-i18n="locationSub">Readings are shown for this place.</p>
+      <div class="card loc-card">
+        <div class="loc-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f5f5f0" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+        <div>
+          <div class="loc-label" data-i18n="currentLocation">Current location</div>
+          <div class="current-loc" id="currentLocValue"></div>
         </div>
-        <button class="primary" id="settingsSaveBtn" onclick="saveSelected('settings')" disabled>Save</button>
-        <div class="error" id="settingsError"></div>
+      </div>
+      <div class="eyebrow" data-i18n="changeLocation">Change location</div>
+      <div class="search-wrap">
+        <input type="text" id="settingsCityInput" data-i18n-placeholder="inputPlaceholder" placeholder="e.g. Sapporo, Osaka, Naha" autocomplete="off">
+        <div class="candidates" id="settingsCandidates"></div>
+      </div>
+      <div class="loc-actions">
+        <button class="primary" id="settingsSaveBtn" onclick="saveSelected('settings')" disabled data-i18n="saveLocation">Save location</button>
         <div class="success" id="settingsSuccess"></div>
       </div>
-    </div>
-  </div>
+      <div class="error" id="settingsError"></div>
+    </section>
 
-  <!-- Display -->
-  <div class="acc-group">
-    <button type="button" class="acc-header" id="accDisplay" onclick="toggleAccGroup('display')" aria-expanded="false">
-      <span class="acc-header-main">
-        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>
-        <span class="acc-header-text">
-          <span class="acc-title" id="groupDisplay">Display</span>
-          <span class="acc-summary" id="groupDisplaySummary"></span>
-        </span>
-      </span>
-      <span class="acc-chevron" id="groupDisplayChevron">▾</span>
-    </button>
-    <div class="acc-body" id="bodyDisplay" style="display:none;">
-      <div class="settings-section">
-        <div class="row-inline">
-          <label id="languageLabel" style="margin:0;">Language</label>
-          <div class="lang-switch">
-            <button id="settingsLangEnBtn" onclick="setLanguage('en')">EN</button>
+    <!-- Display -->
+    <section class="settings-page" id="page-display">
+      <h2 data-i18n="groupDisplay">Display</h2>
+      <p class="page-sub" data-i18n="displaySub">Language, clock and text size. The preview at the bottom shows your choices together.</p>
+      <div class="card">
+        <div class="row-card">
+          <div><div class="row-title" data-i18n="language">Language</div><div class="row-desc" data-i18n="languageDesc">Everything in the app, including alerts.</div></div>
+          <div class="seg-group lang-switch">
+            <button id="settingsLangEnBtn" onclick="setLanguage('en')">English</button>
             <button id="settingsLangJaBtn" onclick="setLanguage('ja')">日本語</button>
           </div>
         </div>
-      </div>
-      <div class="settings-section">
-        <div class="row-inline">
-          <label id="timeFormatLabel" style="margin:0;">Time format</label>
-          <div class="format-switch">
-            <button id="format24Btn" onclick="setTimeFormat('24h')">24h</button>
-            <button id="format12Btn" onclick="setTimeFormat('12h')">12h</button>
+        <div class="row-card">
+          <div><div class="row-title" data-i18n="timeFormat">Time format</div><div class="row-desc" data-i18n="timeFormatDesc">How times appear on readings.</div></div>
+          <div class="seg-group format-switch">
+            <button id="format24Btn" onclick="setTimeFormat('24h')" data-i18n="time24">24-hour</button>
+            <button id="format12Btn" onclick="setTimeFormat('12h')" data-i18n="time12">12-hour</button>
+          </div>
+        </div>
+        <div class="row-card">
+          <div><div class="row-title" data-i18n="textSize">Text size</div><div class="row-desc" data-i18n="textSizeDesc">Larger text is easier to read at a glance.</div></div>
+          <div class="seg-group format-switch">
+            <button id="textSizeNormalBtn" onclick="setTextScale('normal')" style="font-size:13px;" aria-label="Normal">A</button>
+            <button id="textSizeLargeBtn" onclick="setTextScale('large')" style="font-size:17px;" aria-label="Large">A</button>
+            <button id="textSizeXLargeBtn" onclick="setTextScale('xlarge')" style="font-size:21px;" aria-label="Extra large">A</button>
           </div>
         </div>
       </div>
-      <div class="settings-section">
-        <div class="row-inline">
-          <label id="textSizeLabel" style="margin:0;">Text size</label>
-          <div class="format-switch">
-            <button id="textSizeNormalBtn" onclick="setTextScale('normal')" style="font-size:13px;">A</button>
-            <button id="textSizeLargeBtn" onclick="setTextScale('large')" style="font-size:17px;">A</button>
-            <button id="textSizeXLargeBtn" onclick="setTextScale('xlarge')" style="font-size:21px;">A</button>
+      <div class="eyebrow" style="margin-top:26px;" data-i18n="previewLabel">Preview</div>
+      <div class="display-preview">
+        <div class="dp-tile" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"><path d="M9 20H31"/></svg></div>
+        <div>
+          <div class="dp-label" id="dpLabel"></div>
+          <div class="dp-meta" id="dpMeta"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Alerts -->
+    <section class="settings-page" id="page-alerts">
+      <h2 data-i18n="groupAlerts">Alerts</h2>
+      <p class="page-sub" data-i18n="alertsSub">Pick the profile that sounds most like you. The preview shows what you will see.</p>
+      <div class="eyebrow" data-i18n="whichSounds">Your profile</div>
+      <div class="preset-grid" id="presetGrid"></div>
+      <div class="divider"></div>
+      <div class="preset-detail" id="presetDetail"></div>
+      <div class="eyebrow" data-i18n="whatYouSee">Preview</div>
+      <div class="alert-preview" id="alertPreview"></div>
+      <div class="chip-row" id="chipRow"></div>
+      <div class="chip-note" data-i18n="chipNote">Dimmed levels stay off screen with this choice. Shindo 0 is the resting state, never an alert. A bell marks levels that notify. Sample only: looking at a level here never opens the app by itself and never plays the alarm.</div>
+      <div class="eyebrow" data-i18n="yoursToSet">Notifications and sound</div>
+      <div class="card yours">
+        <div class="yours-col">
+          <div class="yours-title" data-i18n="notifyAt">Notify me at</div>
+          <div class="seg-group" id="notifyGroup"></div>
+          <div class="yours-help" data-i18n="notifyHelp">Opens the app and plays the chime.</div>
+          <div class="yours-help" id="notifyDisabledNote"></div>
+        </div>
+        <div class="yours-col">
+          <div class="yours-title" data-i18n="alertVolume">Alert volume</div>
+          <div class="seg-group" id="volumeGroup"></div>
+          <div class="yours-sep"></div>
+          <div class="test-row">
+            <button class="test-btn" id="testSoundBtn" onclick="playTestSound()" data-i18n="testSound">&#9654; Play at this volume</button>
+            <div class="yours-help" data-i18n="testSoundHelp">Plays once. The only place sound ever plays.</div>
           </div>
+          <div class="test-note" id="testSoundNote"></div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- Alerts -->
-  <div class="acc-group">
-    <button type="button" class="acc-header" id="accAlerts" onclick="toggleAccGroup('alerts')" aria-expanded="false">
-      <span class="acc-header-main">
-        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
-        <span class="acc-header-text">
-          <span class="acc-title" id="groupAlerts">Alerts</span>
-          <span class="acc-summary" id="groupAlertsSummary"></span>
-        </span>
-      </span>
-      <span class="acc-chevron" id="groupAlertsChevron">▾</span>
-    </button>
-    <div class="acc-body" id="bodyAlerts" style="display:none;">
-      <div class="settings-section">
-        <label id="alertThresholdLabel">Alert me at</label>
-        <div class="alert-threshold-hint" id="alertThresholdHint">Wakes the screen and plays a chime at this Shindo level or stronger.</div>
-        <div class="threshold-select-row">
-          <span class="threshold-swatch-dot" id="thresholdSwatchDot"></span>
-          <select class="threshold-select" id="thresholdSelect" onchange="setAlertMinStep(this.value)"></select>
-        </div>
+    <!-- Recent Earthquakes -->
+    <section class="settings-page" id="page-history">
+      <h2 data-i18n="groupHistory">Recent Earthquakes</h2>
+      <p class="page-sub" data-i18n="feltLogHint">A personal calendar of readings this app actually showed you, kept for 30 days and then cleared automatically.</p>
+      <div class="cal-nav">
+        <button class="ghost" onclick="shiftCalendarMonth(-1)" aria-label="Previous month">&lsaquo;</button>
+        <div class="calendar-month-label" id="calendarMonthLabel"></div>
+        <button class="ghost" onclick="shiftCalendarMonth(1)" aria-label="Next month">&rsaquo;</button>
       </div>
-      <div class="settings-section">
-        <label id="sensitivityLabel">Sensitivity</label>
-        <div class="alert-threshold-hint" id="sensitivityHint">How calmly this reacts to minor shaking: which readings get a brief, dimmed response instead of the full display, and how long that response takes.</div>
-        <select class="threshold-select" id="sensitivitySelect" onchange="setSensitivity(this.value)"></select>
-      </div>
-      <div class="settings-section">
-        <div class="row-inline">
-          <label id="alertWakeScreenLabel" style="margin:0;">Wake screen automatically</label>
-          <div class="format-switch">
-            <button id="wakeScreenOnBtn" onclick="setAlertWakeScreen('on')">On</button>
-            <button id="wakeScreenOffBtn" onclick="setAlertWakeScreen('off')">Off</button>
-          </div>
-        </div>
-      </div>
-      <div class="settings-section">
-        <div class="row-inline">
-          <label id="alertVolumeLabel" style="margin:0;">Chime volume</label>
-          <div class="format-switch">
-            <button id="volumeQuietBtn" onclick="setAlertVolume('quiet')">Quiet</button>
-            <button id="volumeNormalBtn" onclick="setAlertVolume('normal')">Normal</button>
-            <button id="volumeLoudBtn" onclick="setAlertVolume('loud')">Loud</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+      <div class="calendar-empty-note" id="calendarEmptyNote" style="display:none;"></div>
+      <div class="cal-legend" id="calendarLegend"></div>
+      <div class="card day-detail" id="dayDetail"></div>
+      <button class="ghost" id="historyDownloadBtn" onclick="downloadFeltLog()" style="margin-top:18px;" data-i18n="feltLogDownloadBtn">Download log (CSV)</button>
+    </section>
 
-  <!-- Recent Earthquakes (was "History") -->
-  <div class="acc-group">
-    <button type="button" class="acc-header" id="accHistory" onclick="toggleAccGroup('history')" aria-expanded="false">
-      <span class="acc-header-main">
-        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-        <span class="acc-header-text">
-          <span class="acc-title" id="groupHistory">Recent Earthquakes</span>
-          <span class="acc-summary" id="groupHistorySummary"></span>
-        </span>
-      </span>
-      <span class="acc-chevron" id="groupHistoryChevron">▾</span>
-    </button>
-    <div class="acc-body" id="bodyHistory" style="display:none;">
-      <div class="settings-section">
-        <label id="feltLogLabel">Earthquakes felt here</label>
-        <div class="bug-report-hint" id="feltLogHint">A personal calendar of readings this app actually showed you, kept for 30 days and then cleared automatically.</div>
-        <button class="text-btn" id="feltLogOpenBtn" onclick="openHistory()">View calendar</button>
+    <!-- Support -->
+    <section class="settings-page" id="page-support">
+      <h2 data-i18n="groupSupport">Support</h2>
+      <p class="page-sub" data-i18n="supportSub">Where the readings come from, and how to tell us when something is wrong.</p>
+      <div class="card info-card">
+        <div class="info-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8v.01"/></svg><span data-i18n="aboutData">About the data</span></div>
+        <div class="info-text" data-i18n="dataSourceShort">Every reading is the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報).</div>
+        <div class="info-warn" data-i18n="dataSourceWarn">Delivery may be delayed or incomplete, and a report can stop arriving partway through. For the most current information, also check the JMA website, TV or radio.</div>
       </div>
-    </div>
-  </div>
-
-  <!-- Testing -->
-  <div class="acc-group">
-    <button type="button" class="acc-header" id="accTesting" onclick="toggleAccGroup('testing')" aria-expanded="false">
-      <span class="acc-header-main">
-        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.5L4.5 18a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 8.5V2"/><path d="M8.5 2h7"/><path d="M7.5 14h9"/></svg>
-        <span class="acc-header-text">
-          <span class="acc-title" id="groupTesting">Testing</span>
-          <span class="acc-summary" id="groupTestingSummary"></span>
-        </span>
-      </span>
-      <span class="acc-chevron" id="groupTestingChevron">▾</span>
-    </button>
-    <div class="acc-body" id="bodyTesting" style="display:none;">
-      <div class="settings-section">
-        <label id="testEventLabel">Test event</label>
-        <button class="text-btn" id="testEventLink" onclick="showTestWarning()">Show a sample reading on the display</button>
-        <div class="test-warning" id="testWarning">
-          This puts a fake earthquake reading on your actual screen. If
-          anyone else can see this display, make sure they know it's a
-          test before you trigger it, a real-looking alert shown by
-          mistake is not a good surprise.
-        </div>
-        <div class="step-grid" id="stepGrid" style="display:none;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Support -->
-  <div class="acc-group">
-    <button type="button" class="acc-header" id="accSupport" onclick="toggleAccGroup('support')" aria-expanded="false">
-      <span class="acc-header-main">
-        <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 1 1 3.8 2.6c-.8.3-1 1-1 1.7v.3"/><circle cx="12" cy="17.2" r="0.1" fill="currentColor"/></svg>
-        <span class="acc-header-text">
-          <span class="acc-title" id="groupSupport">Support</span>
-          <span class="acc-summary" id="groupSupportSummary"></span>
-        </span>
-      </span>
-      <span class="acc-chevron" id="groupSupportChevron">▾</span>
-    </button>
-    <div class="acc-body" id="bodySupport" style="display:none;">
-      <div class="settings-section">
-        <div class="bug-report-hint" id="dataSourceHint">All readings shown here are the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報). Delivery isn't guaranteed to be instant or complete, a report could stop arriving partway through, including before JMA's final update. For the most current information, also check the JMA website or TV/radio broadcasts.</div>
-      </div>
-      <div class="settings-section">
-        <label id="bugReportLabel">Report a bug</label>
-        <div class="bug-report-hint" id="bugReportHint">Found something wrong? Send a quick report below (it already includes basic app info to help track down the issue).</div>
-        <textarea class="bug-report-box" id="bugReportBox"></textarea>
-        <button class="primary" id="bugReportSubmitBtn" onclick="submitBugReport()" style="width:100%;">Submit report</button>
+      <div class="row-title" id="bugReportLabel" data-i18n="bugReportLabel">Report a bug</div>
+      <div class="bug-report-hint" id="bugReportHint" style="margin-top:4px;"></div>
+      <textarea class="bug-report-box" id="bugReportBox"></textarea>
+      <div class="bug-report-row">
+        <button class="primary" id="bugReportSubmitBtn" onclick="submitBugReport()"></button>
         <div class="bug-report-status" id="bugReportStatus"></div>
-        <div class="bug-report-fallback-hint" id="bugReportFallbackHint">Report not going through?</div>
+      </div>
+      <div class="bug-report-fallback" id="bugReportFallback">
+        <div class="t" id="bugReportFallbackHint"></div>
         <div class="bug-report-actions">
-          <button class="text-btn" id="bugReportOpenBtn" onclick="openBugReportEmail()">Open email app</button>
-          <button class="text-btn" id="bugReportCopyBtn" onclick="copyBugReportText()">Copy text</button>
+          <button class="ghost" id="bugReportOpenBtn" onclick="openBugReportEmail()"></button>
+          <button class="ghost" id="bugReportCopyBtn" onclick="copyBugReportText()"></button>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="version-footer" id="versionFooter">Shindo Screener: Beta 0.1.8</div>
-</div>
-
-<div class="history-panel" id="historyPanel">
-  <button class="close-btn" onclick="closeHistory()">&times;</button>
-  <h2 id="historyTitle">Earthquakes felt here</h2>
-  <div class="calendar-nav">
-    <button onclick="shiftCalendarMonth(-1)" aria-label="Previous month">&lsaquo;</button>
-    <div class="calendar-month-label" id="calendarMonthLabel"></div>
-    <button onclick="shiftCalendarMonth(1)" aria-label="Next month">&rsaquo;</button>
   </div>
-  <div class="calendar-grid" id="calendarGrid"></div>
-  <div class="calendar-empty-note" id="calendarEmptyNote" style="display:none;"></div>
-  <div class="calendar-legend" id="calendarLegend"></div>
-  <button class="text-btn" id="historyDownloadBtn" onclick="downloadFeltLog()">Download log (CSV)</button>
 </div>
 
 <script>
@@ -1074,13 +893,6 @@ const QUIET_DIM = { bg: '#000000', fg: '#f5f5f0' };
 // rise in 250ms, faster than every other setting, including the
 // genuine Shindo 4+ alert screen) that this constant replaced.
 const SAFE_RISE_MS = 700;
-const SENSITIVITY_PROFILES = {
-  high:   { quietSteps: [],              holdMs: 1200, fadeMs: 2500 },
-  normal: { quietSteps: ["1", "2"],      holdMs: 600,  fadeMs: 1500 },
-  low:    { quietSteps: ["1", "2", "3"], holdMs: 300,  fadeMs: 900 },
-  off:    { quietSteps: ["1", "2", "3"], holdMs: 0,    fadeMs: 700, noFlash: true },
-};
-let currentSensitivity = 'normal';
 let quietFadeTimer = null;
 
 function clearQuietTimers() {
@@ -1327,7 +1139,152 @@ const STRINGS = {
   },
 };
 
-const APP_VERSION = "0.3.0";
+// New settings copy (sidebar + preset Alerts). The Japanese below is a
+// plain-language draft, not checked by a native speaker; have one read it
+// before release, same caveat as LABELS_JA above.
+const NEW_STRINGS = {
+  en: {
+    pillExplain: "Explains each level",
+    pillNoExplain: "No explanations",
+    feltLogHint: "Readings this app showed you. Kept for 30 days.",
+    locationSub: "Readings are for this place.",
+    saveLocation: "Save location",
+    saveOk: "Saved. Readings now follow {name}.",
+    displaySub: "Language, clock and text size.",
+    languageDesc: "Applies to the whole app.",
+    timeFormatDesc: "How times show on readings.",
+    time24: "24-hour",
+    time12: "12-hour",
+    textSizeDesc: "Larger text is easier to read.",
+    previewLabel: "Preview",
+    alertsSub: "Pick the profile that sounds most like you. The preview shows what you will see.",
+    whichSounds: "Your profile",
+    whatYouSee: "Preview",
+    chipNote: "Dim: stays off screen. Bell: sends a notification. Dashed 0: resting state. This is a sample. It never plays sound.",
+    yoursToSet: "Notifications and sound",
+    notifyAt: "Notify me at",
+    notifyHelp: "Opens the app and plays the chime.",
+    notifyDisabled: "Not available while Shindo {list} stays hidden.",
+    notifyOption: "{step} and up",
+    alertVolume: "Alert volume",
+    testSound: "▶ Play once",
+    testSoundHelp: "The only button that plays sound.",
+    testPlaying: "Playing the {vol} alarm once.",
+    supportSub: "Data sources and bug reports.",
+    aboutData: "About the data",
+    dataSourceShort: "All readings are from the Japan Meteorological Agency (JMA). Wolfx and P2P地震情報 relay them.",
+    dataSourceWarn: "Delivery can be late or incomplete. For current information, also check the JMA website, TV or radio.",
+    sampleData: "Sample data",
+    samplePlace: "Off test location",
+    testMessage: "This is a test message",
+    sampleDepth: "M 4.6 · Depth 40 km",
+    apNothing: "Nothing appears.",
+    apRestVisitor: "All quiet.",
+    apFull: "Always full screen",
+    apShows: "Shows on screen",
+    apOff: "Stays off screen",
+    apRest: "Resting state",
+    apNotify: "Notification + chime ({vol})",
+    pillFrom: "Shows from {step}",
+    legend1: "Shindo 1-2", legend2: "Shindo 3-4", legend3: "Shindo 5- to 5+", legend4: "Shindo 6-", legend5: "Shindo 6+ and 7",
+    dayPick: "Tap a day for details.",
+    dayNone: "No readings this day.",
+    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    preset_high_title: "New here or visiting", preset_high_sub: "Everything, explained",
+    preset_high_body: "Shows every level with a plain explanation.",
+    preset_high_fits: "Fits: hotel, rental, short stay",
+    preset_normal_title: "Settling in", preset_normal_sub: "Clear shaking, explained",
+    preset_normal_body: "Hides the faintest shaking. Explains what you clearly feel.",
+    preset_normal_fits: "Fits: house, apartment",
+    preset_low_title: "Used to it", preset_low_sub: "Notable shaking only",
+    preset_low_body: "Stays dark until shaking is worth looking up for.",
+    preset_low_fits: "Fits: apartment, high-rise",
+    preset_off_title: "Only the big ones", preset_off_sub: "Serious shaking only",
+    preset_off_body: "Shows Shindo 4 and up, always full screen.",
+    preset_off_fits: "Fits: anyone who wants less on screen",
+  },
+  ja: {
+    pillExplain: "各震度を説明",
+    pillNoExplain: "説明なし",
+    feltLogHint: "このアプリが表示した観測値です。30日間保存します。",
+    locationSub: "この地点の観測値を表示します。",
+    saveLocation: "地点を保存",
+    saveOk: "保存しました。{name}の観測値を表示します。",
+    displaySub: "言語、時刻、文字サイズ。",
+    languageDesc: "アプリ全体に適用します。",
+    timeFormatDesc: "観測値の時刻の形式です。",
+    time24: "24時間",
+    time12: "12時間",
+    textSizeDesc: "大きいほど読みやすくなります。",
+    previewLabel: "プレビュー",
+    alertsSub: "自分に近いプロファイルを選びます。プレビューで表示を確認できます。",
+    whichSounds: "プロファイル",
+    whatYouSee: "プレビュー",
+    chipNote: "薄い表示：画面に出ません。ベル：通知します。点線の0：待機状態。サンプルです。音は鳴りません。",
+    yoursToSet: "通知と音",
+    notifyAt: "通知する震度",
+    notifyHelp: "アプリを開き、チャイムを鳴らします。",
+    notifyDisabled: "震度{list}を表示しない間は選べません。",
+    notifyOption: "{step}以上",
+    alertVolume: "アラームの音量",
+    testSound: "▶ 1回再生",
+    testSoundHelp: "音が鳴るのはこのボタンだけです。",
+    testPlaying: "{vol}の音量で1回再生中です。",
+    supportSub: "データの提供元と不具合の報告です。",
+    aboutData: "データについて",
+    dataSourceShort: "観測値はすべて気象庁のものです。Wolfx、P2P地震情報が中継します。",
+    dataSourceWarn: "配信が遅れたり不完全になることがあります。最新の情報は気象庁のサイト、テレビ、ラジオでも確認してください。",
+    sampleData: "サンプル",
+    samplePlace: "テスト用の地点沖",
+    testMessage: "これはテスト表示です",
+    sampleDepth: "M4.6・深さ 40 km",
+    apNothing: "何も表示されません。",
+    apRestVisitor: "異常なし。",
+    apFull: "常に全画面で表示",
+    apShows: "画面に表示",
+    apOff: "画面には表示しない",
+    apRest: "待機状態",
+    apNotify: "通知＋チャイム（{vol}）",
+    pillFrom: "{step}から表示",
+    legend1: "震度1〜2", legend2: "震度3〜4", legend3: "震度5弱〜5強", legend4: "震度6弱", legend5: "震度6強〜7",
+    dayPick: "日付をタップすると詳細を表示します。",
+    dayNone: "この日の観測値はありません。",
+    weekdays: ["日", "月", "火", "水", "木", "金", "土"],
+    preset_high_title: "来たばかり・旅行中", preset_high_sub: "すべて説明つき",
+    preset_high_body: "すべての震度を、やさしい説明つきで表示します。",
+    preset_high_fits: "向いている方：ホテル、短期賃貸、短期滞在",
+    preset_normal_title: "慣れてきたところ", preset_normal_sub: "はっきりした揺れを説明",
+    preset_normal_body: "ごく弱い揺れは表示しません。はっきり感じる揺れを説明します。",
+    preset_normal_fits: "向いている方：一戸建て、アパート",
+    preset_low_title: "揺れに慣れている", preset_low_sub: "目立つ揺れだけ",
+    preset_low_body: "確認したい震度になるまで画面は暗いままです。",
+    preset_low_fits: "向いている方：マンション、高層階",
+    preset_off_title: "大きな揺れだけ", preset_off_sub: "深刻な揺れだけ",
+    preset_off_body: "震度4以上を、常に全画面で表示します。",
+    preset_off_fits: "向いている方：表示を減らしたい方",
+  },
+};
+Object.assign(STRINGS.en, NEW_STRINGS.en);
+Object.assign(STRINGS.ja, NEW_STRINGS.ja);
+
+// What a reading means in plain words, shown under the severity phrase
+// for presets that explain (see PRESETS below). Steps 1-3 only.
+const EXPLAIN_EN = {
+  "1": "Some people sitting still feel it. No action needed.",
+  "2": "Hanging lights may sway. Common in Japan. No action needed.",
+  "3": "Most people indoors feel it. Dishes may rattle. No action needed unless it grows.",
+};
+const EXPLAIN_JA = {
+  "1": "静かにしている人の一部が感じます。対応は不要です。",
+  "2": "吊り下げた照明が揺れることがあります。よくある揺れです。対応は不要です。",
+  "3": "屋内の多くの人が感じます。食器が鳴ることがあります。強まらなければ対応は不要です。",
+};
+
+function fmt(template, vars) {
+  return String(template).replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] != null ? vars[k] : m));
+}
+
+const APP_VERSION = "0.4.0";
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
 // BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
@@ -1360,6 +1317,7 @@ const els = {
   rule: document.getElementById('rule'),
   code: document.getElementById('code'),
   labelText: document.getElementById('labelText'),
+  explainText: document.getElementById('explainText'),
   metaText: document.getElementById('metaText'),
   lastFeltText: document.getElementById('lastFeltText'),
   idleLine: document.getElementById('idleLine'),
@@ -1373,65 +1331,22 @@ const els = {
   setupTitle: document.getElementById('setupTitle'),
   setupSubtitle: document.getElementById('setupSubtitle'),
   settingsPanel: document.getElementById('settingsPanel'),
-  settingsTitle: document.getElementById('settingsTitle'),
-  groupLocation: document.getElementById('groupLocation'),
-  groupDisplay: document.getElementById('groupDisplay'),
-  groupAlerts: document.getElementById('groupAlerts'),
-  dataSourceHint: document.getElementById('dataSourceHint'),
-  groupHistory: document.getElementById('groupHistory'),
-  feltLogLabel: document.getElementById('feltLogLabel'),
-  feltLogHint: document.getElementById('feltLogHint'),
-  feltLogOpenBtn: document.getElementById('feltLogOpenBtn'),
-  historyPanel: document.getElementById('historyPanel'),
-  historyTitle: document.getElementById('historyTitle'),
-  calendarMonthLabel: document.getElementById('calendarMonthLabel'),
-  calendarGrid: document.getElementById('calendarGrid'),
-  calendarEmptyNote: document.getElementById('calendarEmptyNote'),
-  calendarLegend: document.getElementById('calendarLegend'),
-  historyDownloadBtn: document.getElementById('historyDownloadBtn'),
-  groupTesting: document.getElementById('groupTesting'),
-  groupSupport: document.getElementById('groupSupport'),
-  groupLocationSummary: document.getElementById('groupLocationSummary'),
-  groupDisplaySummary: document.getElementById('groupDisplaySummary'),
-  groupAlertsSummary: document.getElementById('groupAlertsSummary'),
-  groupHistorySummary: document.getElementById('groupHistorySummary'),
-  groupTestingSummary: document.getElementById('groupTestingSummary'),
-  groupSupportSummary: document.getElementById('groupSupportSummary'),
-  currentLocLabel: document.getElementById('currentLocLabel'),
   currentLocValue: document.getElementById('currentLocValue'),
-  changeLocLabel: document.getElementById('changeLocLabel'),
   settingsCityInput: document.getElementById('settingsCityInput'),
   settingsError: document.getElementById('settingsError'),
   settingsSaveBtn: document.getElementById('settingsSaveBtn'),
   settingsSuccess: document.getElementById('settingsSuccess'),
   settingsCandidates: document.getElementById('settingsCandidates'),
-  languageLabel: document.getElementById('languageLabel'),
-  timeFormatLabel: document.getElementById('timeFormatLabel'),
-  textSizeLabel: document.getElementById('textSizeLabel'),
-  testEventLabel: document.getElementById('testEventLabel'),
-  testEventLink: document.getElementById('testEventLink'),
-  testWarning: document.getElementById('testWarning'),
-  stepGrid: document.getElementById('stepGrid'),
-  alertThresholdLabel: document.getElementById('alertThresholdLabel'),
-  alertThresholdHint: document.getElementById('alertThresholdHint'),
-  thresholdSwatchDot: document.getElementById('thresholdSwatchDot'),
-  thresholdSelect: document.getElementById('thresholdSelect'),
-  sensitivityLabel: document.getElementById('sensitivityLabel'),
-  sensitivityHint: document.getElementById('sensitivityHint'),
-  sensitivitySelect: document.getElementById('sensitivitySelect'),
-  alertWakeScreenLabel: document.getElementById('alertWakeScreenLabel'),
-  wakeScreenOnBtn: document.getElementById('wakeScreenOnBtn'),
-  wakeScreenOffBtn: document.getElementById('wakeScreenOffBtn'),
-  alertVolumeLabel: document.getElementById('alertVolumeLabel'),
-  volumeQuietBtn: document.getElementById('volumeQuietBtn'),
-  volumeNormalBtn: document.getElementById('volumeNormalBtn'),
-  volumeLoudBtn: document.getElementById('volumeLoudBtn'),
+  calendarMonthLabel: document.getElementById('calendarMonthLabel'),
+  calendarGrid: document.getElementById('calendarGrid'),
+  calendarEmptyNote: document.getElementById('calendarEmptyNote'),
+  calendarLegend: document.getElementById('calendarLegend'),
   versionFooter: document.getElementById('versionFooter'),
-  bugReportLabel: document.getElementById('bugReportLabel'),
   bugReportHint: document.getElementById('bugReportHint'),
   bugReportBox: document.getElementById('bugReportBox'),
   bugReportSubmitBtn: document.getElementById('bugReportSubmitBtn'),
   bugReportStatus: document.getElementById('bugReportStatus'),
+  bugReportFallback: document.getElementById('bugReportFallback'),
   bugReportFallbackHint: document.getElementById('bugReportFallbackHint'),
   bugReportOpenBtn: document.getElementById('bugReportOpenBtn'),
   bugReportCopyBtn: document.getElementById('bugReportCopyBtn'),
@@ -1442,51 +1357,11 @@ function applyLanguage() {
   els.setupTitle.textContent = s.appTitle;
   els.setupSubtitle.textContent = s.setupSubtitle;
   els.cityInput.placeholder = s.inputPlaceholder;
-  els.settingsTitle.textContent = s.settingsTitle;
-  els.groupLocation.textContent = s.groupLocation;
-  els.groupDisplay.textContent = s.groupDisplay;
-  els.groupAlerts.textContent = s.groupAlerts;
-  els.dataSourceHint.textContent = s.dataSourceHint;
-  els.groupHistory.textContent = s.groupHistory;
-  els.feltLogLabel.textContent = s.feltLogLabel;
-  els.feltLogHint.textContent = s.feltLogHint;
-  els.feltLogOpenBtn.textContent = s.feltLogOpenBtn;
-  els.historyTitle.textContent = s.groupHistory;
-  els.historyDownloadBtn.textContent = s.feltLogDownloadBtn;
-  if (els.historyPanel.style.display === 'flex') renderCalendar();
-  els.groupTesting.textContent = s.groupTesting;
-  els.groupSupport.textContent = s.groupSupport;
-  els.groupHistorySummary.textContent = s.groupHistorySummary;
-  els.groupTestingSummary.textContent = s.groupTestingSummary;
-  els.groupSupportSummary.textContent = s.groupSupportSummary;
-  els.currentLocLabel.textContent = s.currentLocation;
-  els.changeLocLabel.textContent = s.changeLocation;
-  els.settingsCityInput.placeholder = s.inputPlaceholder;
   els.setupSaveBtn.textContent = s.saveLabel;
-  els.settingsSaveBtn.textContent = s.saveLabel;
-  els.languageLabel.textContent = s.language;
-  els.timeFormatLabel.textContent = s.timeFormat;
-  els.textSizeLabel.textContent = s.textSize;
-  els.alertThresholdLabel.textContent = s.alertThreshold;
-  els.alertThresholdHint.textContent = s.alertThresholdHint;
-  els.sensitivityLabel.textContent = s.sensitivity;
-  els.sensitivityHint.textContent = s.sensitivityHint;
-  if (els.sensitivitySelect.children.length) buildSensitivitySelect();
   els.dismissBtn.title = s.dismissReadingTitle;
   els.dismissBtn.setAttribute('aria-label', s.dismissReadingTitle);
   els.dismissBtnLabel.textContent = s.dismissLabel;
-  els.alertWakeScreenLabel.textContent = s.alertWakeScreen;
-  els.wakeScreenOnBtn.textContent = s.onLabel;
-  els.wakeScreenOffBtn.textContent = s.offLabel;
-  els.alertVolumeLabel.textContent = s.alertVolume;
-  els.volumeQuietBtn.textContent = s.volumeQuiet;
-  els.volumeNormalBtn.textContent = s.volumeNormal;
-  els.volumeLoudBtn.textContent = s.volumeLoud;
-  els.testEventLabel.textContent = s.testEvent;
-  els.testEventLink.textContent = s.testEventLink;
-  els.testWarning.textContent = s.testWarningText;
   els.versionFooter.textContent = `${s.appTitle}: ${s.betaLabel} ${APP_VERSION}`;
-  els.bugReportLabel.textContent = s.bugReportLabel;
   els.bugReportHint.textContent = s.bugReportHint;
   els.bugReportSubmitBtn.textContent = s.bugReportSubmit;
   els.bugReportFallbackHint.textContent = s.bugReportFallbackHint;
@@ -1494,6 +1369,7 @@ function applyLanguage() {
   els.bugReportCopyBtn.textContent = s.bugReportCopy;
   setBugReportStatus('', null);
   els.bugReportBox.placeholder = s.bugReportIntro;
+  applyI18n();
   document.getElementById('langEnBtn').classList.toggle('active', currentLang === 'en');
   document.getElementById('langJaBtn').classList.toggle('active', currentLang === 'ja');
   document.getElementById('settingsLangEnBtn').classList.toggle('active', currentLang === 'en');
@@ -1507,12 +1383,7 @@ function applyLanguage() {
   if (lastActiveState) {
     renderActive(lastActiveState);
   }
-  // Same idea for the Testing step grid: its "idle" swatch and per-swatch
-  // tooltips are built once by buildStepGrid() and don't otherwise notice
-  // a language change. Rebuilding is cheap (10 small elements) and safe
-  // even before the grid has ever been shown.
-  buildStepGrid();
-  updateAccSummaries();
+  refreshSettingsPages();
 }
 
 function setLanguage(lang) {
@@ -1530,7 +1401,7 @@ window.applyLanguageOnly = applyLanguageOnly;
 function applyTimeFormatButtons() {
   document.getElementById('format24Btn').classList.toggle('active', currentTimeFormat === '24h');
   document.getElementById('format12Btn').classList.toggle('active', currentTimeFormat === '12h');
-  updateAccSummaries();
+  refreshSettingsPages();
 }
 
 function setTimeFormat(fmt) {
@@ -1572,120 +1443,394 @@ function applyTextScaleOnly(scale) {
 }
 window.applyTextScaleOnly = applyTextScaleOnly;
 
-// Same list as alert.py's SELECTABLE_ALERT_STEPS: below Shindo 3, a
-// wake-the-room alert is more noise than signal, so those steps aren't
-// offered as a threshold choice (the display still shows them normally).
-const SELECTABLE_ALERT_STEPS = ["3", "4", "5-", "5+", "6-", "6+", "7"];
-let currentAlertMinStep = '4';
+// ===== Alerts presets =====
+// The preset IS the whole display configuration. The saved value is still
+// the old `sensitivity` key (high / normal / low / off), so nobody's saved
+// settings need migrating: each old level is now one preset.
+//   high   -> New here or visiting   (shows 1+, explained)
+//   normal -> Settling in            (hides 1; shows 2+, explained)
+//   low    -> Used to it             (hides 1-2; shows 3+)
+//   off    -> Only the big ones      (hides 1-3; Shindo 4+ only)
+// `hidden` only ever applies to readings JMA measured at the user's own
+// station or area. A warning for the user's area, a tsunami warning and
+// every step from 4 up are never hidden (see shouldHideReading).
+const PRESET_ORDER = ['high', 'normal', 'low', 'off'];
+const PRESETS = {
+  high:   { hidden: [],                 explain: true,  showFrom: '1', resting: true,
+            d: ['M5 8h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z', 'M9 8V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2', 'M4 13h16'] },
+  normal: { hidden: ['1'],              explain: true,  showFrom: '2', resting: false,
+            d: ['M3 11l9-7 9 7', 'M5 10v9h14v-9', 'M10 19v-5h4v5'] },
+  low:    { hidden: ['1', '2'],         explain: false, showFrom: '3', resting: false,
+            d: ['M7 21V8l5-5 5 5v13', 'M3 21h18', 'M10 11h4M10 15h4'] },
+  off:    { hidden: ['1', '2', '3'],    explain: false, showFrom: '4', resting: false,
+            d: ['M12 3l10 18H2L12 3z', 'M12 10v5', 'M12 18v.01'] },
+};
+const NOTIFY_STEPS = ['3', '4', '5-'];
+const VOLUME_ORDER = ['quiet', 'normal', 'loud'];
+let currentSettingsPage = 'alerts';
+let previewLevel = '2';
 
-function buildThresholdSelect() {
-  els.thresholdSelect.innerHTML = '';
-  SELECTABLE_ALERT_STEPS.forEach((step) => {
-    const option = document.createElement('option');
-    option.value = step;
-    option.textContent = step;
-    els.thresholdSelect.appendChild(option);
-  });
-  applyThresholdSelection();
+function currentPresetKey() { return PRESETS[currentSensitivity] ? currentSensitivity : 'normal'; }
+function stepWord(step) { return currentLang === 'ja' ? `震度${jaStep(step)}` : `Shindo ${step}`; }
+function stepShort(step) { return currentLang === 'ja' ? jaStep(step) : step; }
+function volumeWord(v) { return STRINGS[currentLang]['volume' + v.charAt(0).toUpperCase() + v.slice(1)]; }
+function sampleTime(withSeconds) {
+  if (currentTimeFormat === '12h') return withSeconds ? '3:42:07 PM' : '3:42 PM';
+  return withSeconds ? '15:42:07' : '15:42';
 }
 
-function applyThresholdSelection() {
-  els.thresholdSelect.value = currentAlertMinStep;
-  const band = BANDS[currentAlertMinStep];
-  if (band) {
-    els.thresholdSwatchDot.style.background = band.bg;
-    els.thresholdSwatchDot.style.borderColor = band.bg;
+// A measured reading below this preset's start level never reaches the
+// screen. Never hidden: step 0 (so "little or no shaking here" still
+// answers a quake someone just felt), 4+, an early warning for the user's
+// area, a tsunami warning, or a test reading.
+function shouldHideReading(state, preset) {
+  const src = state.display_source;
+  if (src !== 'station' && src !== 'area') return false;
+  if (state.tsunami_warning) return false;
+  return preset.hidden.includes(state.display_step);
+}
+
+function applyI18n() {
+  const s = STRINGS[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const v = s[el.dataset.i18n];
+    if (typeof v === 'string') el.textContent = v;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    const v = s[el.dataset.i18nPlaceholder];
+    if (typeof v === 'string') el.placeholder = v;
+  });
+}
+
+function presetSvg(d) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d[0]}"/><path d="${d[1]}"/><path d="${d[2]}"/></svg>`;
+}
+
+function renderAlertsPage() {
+  const grid = document.getElementById('presetGrid');
+  if (!grid) return;
+  const s = STRINGS[currentLang];
+  const key = currentPresetKey();
+  const p = PRESETS[key];
+  const fromRank = jma_rank(p.showFrom);
+
+  // 1. Four equal preset cards (2 x 2 at the largest text size)
+  grid.style.gridTemplateColumns = `repeat(${(TEXT_SCALE_VALUES[currentTextScale] || 1) >= 1.5 ? 2 : 4}, 1fr)`;
+  grid.innerHTML = PRESET_ORDER.map((k) => (
+    `<button class="preset-card${k === key ? ' active' : ''}" aria-pressed="${k === key}" onclick="setSensitivity('${k}')">` +
+    presetSvg(PRESETS[k].d) +
+    `<div class="preset-title">${s['preset_' + k + '_title']}</div>` +
+    `<div class="preset-sub">${s['preset_' + k + '_sub']}</div></button>`
+  )).join('');
+
+  // 2. Detail for the selected card only
+  document.getElementById('presetDetail').innerHTML =
+    `<div class="pd-icon">${presetSvg(p.d)}</div><div class="pd-main">` +
+    `<div class="pd-title">${s['preset_' + key + '_title']}</div>` +
+    `<div class="pd-body">${s['preset_' + key + '_body']}</div>` +
+    `<div class="pd-fits">${s['preset_' + key + '_fits']}</div>` +
+    `<div class="pd-pills"><span class="pd-pill key">${fmt2(s.pillFrom, { step: stepWord(p.showFrom) })}</span>` +
+    `<span class="pd-pill">${p.explain ? s.pillExplain : s.pillNoExplain}</span></div></div>`;
+
+  // 3. Big preview of the chosen level under this preset
+  const L = previewLevel;
+  const band = BANDS[L];
+  const labels = currentLang === 'ja' ? LABELS_JA : LABELS_EN;
+  const explain = currentLang === 'ja' ? EXPLAIN_JA : EXPLAIN_EN;
+  const isAmbient = AMBIENT_STEPS.includes(L);
+  const hidden = p.hidden.includes(L);
+  const rest = L === '0';
+  const willNotify = !rest && jma_rank(L) >= jma_rank(currentAlertMinStep);
+  let bg, fg, inner, note, showMeta = true;
+  if (!isAmbient) {
+    bg = band.bg; fg = band.fg;
+    inner = `<div class="ap-big">${stepShort(L)}</div><div class="ap-label">${labels[L]}</div>`;
+    note = s.apFull;
+  } else if (rest || hidden) {
+    bg = '#000'; fg = '#f5f5f0'; showMeta = false;
+    const restText = rest && p.resting;
+    inner = `<div class="ap-blank${restText ? ' rest' : ''}">${restText ? s.apRestVisitor : s.apNothing}</div>`;
+    note = rest ? s.apRest : s.apOff;
+  } else {
+    bg = '#0b0a08'; fg = '#f5f5f0';
+    inner = `<div class="ap-tile" style="background:${band.bg};color:${band.fg};">${stepShort(L)}</div>` +
+      `<div class="ap-label">${labels[L]}</div>` +
+      (p.explain && explain[L] ? `<div class="ap-explain">${explain[L]}</div>` : '');
+    note = s.apShows;
   }
-  updateAccSummaries();
+  const meta = showMeta
+    ? `<div class="ap-meta"><div class="k">${s.sampleData}</div><div class="v1">${s.samplePlace}</div>` +
+      `<div class="v2">${sampleTime(true)} JST</div><div class="v2">${s.sampleDepth}</div></div>`
+    : '';
+  const chips = `<div class="ap-chips"><span>${note}</span>` +
+    (willNotify ? `<span>${fmt2(s.apNotify, { vol: volumeWord(currentAlertVolume) })}</span>` : '') + `</div>`;
+  const prev = document.getElementById('alertPreview');
+  prev.style.background = bg;
+  prev.style.color = fg;
+  const centered = isAmbient && (rest || hidden);
+  prev.innerHTML = meta + `<div class="ap-body${centered ? ' center' : ''}">${inner}</div>` + chips;
+
+  // 4. Level chips: dim = stays off screen, bell = notifies
+  const bell = '<svg class="bell" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>';
+  document.getElementById('chipRow').innerHTML = JMA_STEP_ORDER.map((id) => {
+    const cls = ['chip'];
+    if (id === previewLevel) cls.push('sel');
+    if (id === '0') cls.push('rest');
+    else if (p.hidden.includes(id)) cls.push('dim');
+    if (id !== '0' && jma_rank(id) >= jma_rank(currentAlertMinStep)) cls.push('bells');
+    return `<button class="${cls.join(' ')}" style="background:${BANDS[id].bg};color:${BANDS[id].fg};" aria-label="${stepWord(id)}" onclick="pickPreviewLevel('${id}')">${stepShort(id)}${bell}</button>`;
+  }).join('');
+
+  // 5. Personal settings: notify level (options under the preset's start
+  // level are off) and volume
+  const off = NOTIFY_STEPS.filter((st) => jma_rank(st) < fromRank);
+  document.getElementById('notifyGroup').innerHTML = NOTIFY_STEPS.map((st) => {
+    const dis = off.includes(st);
+    return `<button class="seg${st === currentAlertMinStep ? ' active' : ''}${dis ? ' disabled' : ''}"${dis ? ' disabled' : ''} onclick="setAlertMinStep('${st}')">${fmt2(s.notifyOption, { step: stepWord(st) })}</button>`;
+  }).join('');
+  document.getElementById('notifyDisabledNote').textContent =
+    off.length ? fmt2(s.notifyDisabled, { list: off.map(stepShort).join(', ') }) : '';
+  document.getElementById('volumeGroup').innerHTML = VOLUME_ORDER.map((v) => (
+    `<button class="seg${v === currentAlertVolume ? ' active' : ''}" onclick="setAlertVolume('${v}')">${volumeWord(v)}</button>`
+  )).join('');
+}
+
+function fmt2(template, vars) { return fmt(template, vars); }
+
+function pickPreviewLevel(id) {
+  previewLevel = id;
+  renderAlertsPage();
+}
+window.pickPreviewLevel = pickPreviewLevel;
+
+// Same list as alert.py's SELECTABLE_ALERT_STEPS. JMA's own phone warnings
+// start around Shindo 5-, so offering anything higher would only make this
+// app quieter than a phone, never more useful.
+let currentAlertMinStep = '4';
+
+function normalizeNotifyStep(step) {
+  if (NOTIFY_STEPS.includes(step)) return step;
+  return jma_rank(step) >= jma_rank('5-') ? '5-' : '4';
 }
 
 function setAlertMinStep(step) {
-  currentAlertMinStep = step;
-  applyThresholdSelection();
-  if (window.pywebview) window.pywebview.api.set_alert_min_step(step);
+  currentAlertMinStep = normalizeNotifyStep(step);
+  if (window.pywebview) window.pywebview.api.set_alert_min_step(currentAlertMinStep);
+  renderAlertsPage();
 }
+window.setAlertMinStep = setAlertMinStep;
 
 function applyAlertMinStepOnly(step) {
-  currentAlertMinStep = step;
-  if (els.thresholdSelect.children.length) applyThresholdSelection();
+  currentAlertMinStep = normalizeNotifyStep(step);
+  renderAlertsPage();
 }
 window.applyAlertMinStepOnly = applyAlertMinStepOnly;
 
-// The sensitivity choices are just SENSITIVITY_PROFILES' own keys, so
-// this never needs its own list to stay in sync by hand.
-const SENSITIVITY_ORDER = ['high', 'normal', 'low', 'off'];
-
-function buildSensitivitySelect() {
-  els.sensitivitySelect.innerHTML = '';
-  SENSITIVITY_ORDER.forEach((level) => {
-    const option = document.createElement('option');
-    option.value = level;
-    option.textContent = STRINGS[currentLang]['sensitivity_' + level];
-    els.sensitivitySelect.appendChild(option);
-  });
-  applySensitivitySelection();
-}
-
-function applySensitivitySelection() {
-  els.sensitivitySelect.value = currentSensitivity;
-  updateAccSummaries();
-}
+let currentSensitivity = 'normal';
 
 function setSensitivity(level) {
-  currentSensitivity = level;
-  applySensitivitySelection();
-  if (window.pywebview) window.pywebview.api.set_sensitivity(level);
+  currentSensitivity = PRESETS[level] ? level : 'normal';
+  // A notify level below what this preset shows would pull up a screen the
+  // preset says should stay dark, so raise it to the preset's start level.
+  const showFrom = PRESETS[currentSensitivity].showFrom;
+  if (jma_rank(currentAlertMinStep) < jma_rank(showFrom)) setAlertMinStep(showFrom);
+  if (window.pywebview) window.pywebview.api.set_sensitivity(currentSensitivity);
+  renderAlertsPage();
 }
+window.setSensitivity = setSensitivity;
 
 function applySensitivityOnly(level) {
-  currentSensitivity = level || 'normal';
-  if (els.sensitivitySelect.children.length) applySensitivitySelection();
+  currentSensitivity = PRESETS[level] ? level : 'normal';
+  renderAlertsPage();
 }
 window.applySensitivityOnly = applySensitivityOnly;
 
-let currentAlertWakeScreen = 'on';
-
-function applyWakeScreenButtons() {
-  els.wakeScreenOnBtn.classList.toggle('active', currentAlertWakeScreen === 'on');
-  els.wakeScreenOffBtn.classList.toggle('active', currentAlertWakeScreen === 'off');
-}
-
-function setAlertWakeScreen(value) {
-  currentAlertWakeScreen = value;
-  applyWakeScreenButtons();
-  if (window.pywebview) window.pywebview.api.set_alert_wake_screen(value);
-}
-
-function applyAlertWakeScreenOnly(value) {
-  currentAlertWakeScreen = value;
-  applyWakeScreenButtons();
-}
-window.applyAlertWakeScreenOnly = applyAlertWakeScreenOnly;
-
 let currentAlertVolume = 'normal';
 
-function applyVolumeButtons() {
-  els.volumeQuietBtn.classList.toggle('active', currentAlertVolume === 'quiet');
-  els.volumeNormalBtn.classList.toggle('active', currentAlertVolume === 'normal');
-  els.volumeLoudBtn.classList.toggle('active', currentAlertVolume === 'loud');
-}
-
+// Choosing a volume only saves it. Sound plays from the Test button and
+// nowhere else, so a click on Quiet/Normal/Loud never blasts anyone awake.
 function setAlertVolume(value) {
   currentAlertVolume = value;
-  applyVolumeButtons();
-  if (window.pywebview) {
-    window.pywebview.api.set_alert_volume(value);
-    // One-off playback at the chosen level, separate from a real alert:
-    // no screen wake, no foreground, just "here's how loud this is."
-    window.pywebview.api.preview_alert_sound(value);
-  }
+  document.getElementById('testSoundNote').textContent = '';
+  if (window.pywebview) window.pywebview.api.set_alert_volume(value);
+  renderAlertsPage();
 }
+window.setAlertVolume = setAlertVolume;
 
 function applyAlertVolumeOnly(value) {
   currentAlertVolume = value;
-  applyVolumeButtons();
+  renderAlertsPage();
 }
 window.applyAlertVolumeOnly = applyAlertVolumeOnly;
+
+function playTestSound() {
+  if (window.pywebview) window.pywebview.api.preview_alert_sound(currentAlertVolume);
+  document.getElementById('testSoundNote').textContent =
+    fmt2(STRINGS[currentLang].testPlaying, { vol: volumeWord(currentAlertVolume) });
+}
+window.playTestSound = playTestSound;
+
+// ===== Display page preview =====
+function renderDisplayPreview() {
+  const lbl = document.getElementById('dpLabel');
+  if (!lbl) return;
+  const s = STRINGS[currentLang];
+  lbl.textContent = s.testMessage;
+  document.getElementById('dpMeta').textContent = `${sampleTime(false)} · ${s.samplePlace}`;
+}
+
+function refreshSettingsPages() {
+  renderAlertsPage();
+  renderDisplayPreview();
+  if (currentSettingsPage === 'history') renderCalendar();
+}
+
+// ===== Navigation =====
+function showSettingsPage(id) {
+  currentSettingsPage = id;
+  document.querySelectorAll('.settings-page').forEach((el) => el.classList.toggle('active', el.id === 'page-' + id));
+  document.querySelectorAll('.nav-row[data-page]').forEach((el) => {
+    const on = el.dataset.page === id;
+    el.classList.toggle('active', on);
+    if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+  });
+  if (id === 'alerts') renderAlertsPage();
+  if (id === 'display') renderDisplayPreview();
+  if (id === 'history') loadHistory();
+  document.getElementById('settingsMain').scrollTop = 0;
+}
+window.showSettingsPage = showSettingsPage;
+
+function openSettings() {
+  els.settingsCityInput.value = '';
+  els.settingsError.textContent = '';
+  els.settingsSuccess.textContent = '';
+  els.settingsCandidates.innerHTML = '';
+  searchState.settings.selected = null;
+  els.settingsSaveBtn.disabled = true;
+  setBugReportStatus('', null);
+  els.bugReportBox.value = '';
+  els.bugReportFallback.style.display = 'none';
+  document.getElementById('testSoundNote').textContent = '';
+  els.settingsPanel.style.display = 'flex';
+  showSettingsPage(currentSettingsPage);
+}
+
+// ===== Recent Earthquakes: calendar with a per-day detail panel =====
+// (See app.py's FELT_LOG_PATH / get_felt_log. A test reading never lands
+// in that log.) currentCalendarMonth is always the 1st of some month, in
+// local time, since calendar display is inherently a local-time concept.
+let feltLogEntries = [];
+let currentCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let selectedCalDay = null;
+
+function localDateKey(isoString) {
+  const d = new Date(isoString);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+async function loadHistory() {
+  if (window.pywebview && window.pywebview.api) {
+    try {
+      const res = await window.pywebview.api.get_felt_log();
+      feltLogEntries = (res && res.entries) || [];
+    } catch (e) {
+      console.error('get_felt_log call failed:', e);
+    }
+  }
+  const now = new Date();
+  currentCalendarMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const latest = feltLogEntries.filter((e) => e.felt_at).sort((a, b) => (a.felt_at < b.felt_at ? 1 : -1))[0];
+  selectedCalDay = latest ? localDateKey(latest.felt_at) : localDateKey(now.toISOString());
+  if (latest) {
+    const d = new Date(latest.felt_at);
+    currentCalendarMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+  }
+  renderCalendar();
+}
+
+function shiftCalendarMonth(delta) {
+  currentCalendarMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + delta, 1);
+  selectedCalDay = null;
+  renderCalendar();
+}
+window.shiftCalendarMonth = shiftCalendarMonth;
+
+function selectCalDay(key) {
+  selectedCalDay = key;
+  renderCalendar();
+}
+window.selectCalDay = selectCalDay;
+
+function entryTime(iso) {
+  const d = new Date(iso);
+  return currentTimeFormat === '12h'
+    ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function renderCalendar() {
+  const s = STRINGS[currentLang];
+  const year = currentCalendarMonth.getFullYear();
+  const month = currentCalendarMonth.getMonth();
+  els.calendarMonthLabel.textContent = currentCalendarMonth.toLocaleDateString(
+    currentLang === 'ja' ? 'ja-JP' : 'en-US', { year: 'numeric', month: 'long' }
+  );
+
+  // Every entry grouped by local day, and the strongest step per day.
+  const byDay = {};
+  feltLogEntries.forEach((e) => {
+    if (!e.felt_at || !e.display_step) return;
+    (byDay[localDateKey(e.felt_at)] = byDay[localDateKey(e.felt_at)] || []).push(e);
+  });
+  const topStep = (key) => (byDay[key] || []).reduce((m, e) => (m && jma_rank(m) >= jma_rank(e.display_step) ? m : e.display_step), null);
+
+  let html = s.weekdays.map((w) => `<div class="calendar-weekday">${w}</div>`).join('');
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  for (let i = 0; i < firstWeekday; i++) html += '<button class="day-btn empty" tabindex="-1" aria-hidden="true"></button>';
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+  let anyFelt = false;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const key = `${year}-${month}-${day}`;
+    const step = topStep(key);
+    const cls = ['day-btn'];
+    let style = '';
+    if (step) { cls.push('felt'); anyFelt = true; style = `background:${BANDS[step].bg};color:${BANDS[step].fg};`; }
+    if (key === todayKey) cls.push('today');
+    if (key === selectedCalDay) cls.push('sel');
+    html += `<button class="${cls.join(' ')}" style="${style}" onclick="selectCalDay('${key}')"><span>${day}</span>` +
+      (step ? `<span class="day-step">${stepShort(step)}</span>` : '') + '</button>';
+  }
+  els.calendarGrid.innerHTML = html;
+  els.calendarEmptyNote.style.display = anyFelt ? 'none' : 'block';
+  els.calendarEmptyNote.textContent = s.feltLogEmpty;
+
+  const swatches = [['#e8e6dc', s.legend1], ['#a8e6e8', s.legend2], ['#e8d842', s.legend3], ['#e08228', s.legend4], ['#c21818', s.legend5]];
+  els.calendarLegend.innerHTML = swatches.map(([c, t]) => `<div><i style="background:${c}"></i>${t}</div>`).join('');
+
+  // Detail for the selected day
+  const detail = document.getElementById('dayDetail');
+  if (!selectedCalDay) { detail.innerHTML = `<div class="dd-empty">${s.dayPick}</div>`; return; }
+  const p = selectedCalDay.split('-').map(Number);
+  const dayDate = new Date(p[0], p[1], p[2]);
+  const title = dayDate.toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : 'en-US', { month: 'long', day: 'numeric', weekday: 'short' });
+  const rows = (byDay[selectedCalDay] || []).slice().sort((a, b) => (a.felt_at < b.felt_at ? -1 : 1)).map((e) => {
+    const mag = e.magnitude != null ? (currentLang === 'ja' ? `M${Number(e.magnitude).toFixed(1)}` : `M ${Number(e.magnitude).toFixed(1)}`) : '';
+    const text = [entryTime(e.felt_at), stepWord(e.display_step), e.hypocenter || '', mag].filter(Boolean).join('  ·  ');
+    return `<div class="dd-row"><span class="dd-step" style="background:${BANDS[e.display_step].bg};color:${BANDS[e.display_step].fg};">${stepShort(e.display_step)}</span><span></span></div>`.replace('<span></span>', `<span>${escapeHtml(text)}</span>`);
+  }).join('');
+  detail.innerHTML = `<div class="dd-title">${title}</div>` + (rows || `<div class="dd-empty">${s.dayNone}</div>`);
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// The wake-screen setting no longer has a control (it stays on unless a
+// saved value says otherwise); app.py still restores it, so accept the call.
+window.applyAlertWakeScreenOnly = function () {};
 
 // Motion-effects setting is preserved for a future room/indoor-motion
 // visualization pass; it currently has nothing to animate, and its
@@ -1722,6 +1867,7 @@ function renderIdle() {
   els.rule.style.background = 'currentColor';
   els.idleLine.style.background = '#f5f5f0';
   els.labelText.textContent = '';
+  els.explainText.textContent = '';
   els.metaText.textContent = '';
   els.lastFeltText.textContent = '';
 }
@@ -1747,6 +1893,12 @@ function jaStep(step) { return String(step).replace('-', '弱').replace('+', '�
 // Every number here is JMA's own value, relayed as-is (see jma_sources.py).
 // The app never shows an intensity it computed itself.
 function renderActive(state) {
+  const preset = PRESETS[currentSensitivity] || PRESETS.normal;
+  if (shouldHideReading(state, preset)) {
+    // This preset keeps this level off screen entirely (see PRESETS).
+    renderIdle();
+    return;
+  }
   lastActiveState = state;
   const ja = currentLang === 'ja';
   const src = state.display_source;
@@ -1754,38 +1906,16 @@ function renderActive(state) {
   const band = BANDS[step] || BANDS["0"];
 
   clearQuietTimers();
-  const sensitivityProfile = SENSITIVITY_PROFILES[currentSensitivity] || SENSITIVITY_PROFILES.normal;
-  const isQuietStep = sensitivityProfile.quietSteps.includes(step);
   const isAmbient = AMBIENT_STEPS.includes(step);
 
   if (isAmbient) {
     // Screen itself never leaves its constant calm tone for 0-3; only
-    // the number's own card does. "Sensitivity" still controls how
-    // much the card lights up and for how long, same profiles as
-    // before, just retargeted from the whole screen to this one
-    // element (see applyTileColors above).
+    // the number's own card lights. Whether a level shows at all is the
+    // preset's job (shouldHideReading above); once it shows, it stays lit
+    // at its band color. Same safe rise speed as always.
     applyScreenColors(AMBIENT_SCREEN.bg, AMBIENT_SCREEN.fg, 500, 'ease');
     els.readout.classList.add('datum-tile');
-    // A system-level "reduce motion" preference is this user telling
-    // their OS they don't want this category of visual change at all,
-    // which overrides whatever sensitivity level is selected: skip the
-    // flash entirely, same as "off" does, rather than just slowing it
-    // down.
-    const skipFlash = sensitivityProfile.noFlash || prefersReducedMotion();
-    if (isQuietStep && skipFlash) {
-      applyTileColors(AMBIENT_SCREEN.bg, AMBIENT_SCREEN.fg, sensitivityProfile.fadeMs, 'ease');
-    } else if (isQuietStep) {
-      applyTileColors(band.bg, band.fg, SAFE_RISE_MS, 'ease');
-      quietFadeTimer = setTimeout(() => {
-        applyTileColors(AMBIENT_SCREEN.bg, AMBIENT_SCREEN.fg, sensitivityProfile.fadeMs, 'ease');
-      }, sensitivityProfile.holdMs);
-    } else {
-      // High/normal sensitivity, not a quiet step: card stays lit at
-      // the band color rather than fading, since "I do want to know
-      // what this is" (unchanged from the old full-screen behavior,
-      // just contained to the card now). Same safe rise speed either way.
-      applyTileColors(band.bg, band.fg, SAFE_RISE_MS, 'ease');
-    }
+    applyTileColors(band.bg, band.fg, SAFE_RISE_MS, 'ease');
   } else {
     // Shindo 4+: genuinely alert-worthy, so the full-screen flash is
     // unchanged and earned here. No card, no containment.
@@ -1854,13 +1984,13 @@ function renderActive(state) {
   } else if (src === 'none') {
     label = ja ? 'お住まいの地域は警報の対象外です。観測値が届き次第、表示します。'
                : 'Your area is not under warning. Measured values will appear here when JMA reports them.';
-  } else if (isQuietStep && (currentSensitivity === 'low' || currentSensitivity === 'off')) {
-    // Sensitivity affects more than timing: at "low"/"off" a muted step
-    // also gets a calmer description instead of the regular one.
-    const quiet = ja ? LABEL_QUIET_JA : LABEL_QUIET_EN;
-    label = quiet[step] || quiet["1"];
   }
   els.labelText.textContent = label;
+  // Plain "what this means" line, only for presets that explain, only for
+  // a measured reading at 1-3 (not a warning, not a below-1 report).
+  const explainMap = ja ? EXPLAIN_JA : EXPLAIN_EN;
+  els.explainText.textContent = (preset.explain && isAmbient && (src === 'station' || src === 'area' || src === 'test'))
+    ? (explainMap[step] || '') : '';
 
   // Bottom line: distance to the epicenter (plain geometry) and nearby context.
   // Worded per JMA's guidance to make clear this is a distance to JMA's own
@@ -1937,12 +2067,12 @@ function wireLiveSearch(context) {
     saveBtn.disabled = true;
     const city = input.value.trim();
     if (!isSetup) els.settingsSuccess.textContent = '';
-    if (city.length < 2) {
+    if (city.length < 1 || (city.length < 2 && /^[\x00-\x7f]*$/.test(city))) {
       candidatesEl.innerHTML = '';
       errorEl.textContent = '';
       return;
     }
-    state.timer = setTimeout(() => runSearch(context, city), 450);
+    state.timer = setTimeout(() => runSearch(context, city), 120);
   });
 }
 
@@ -2002,14 +2132,13 @@ async function saveSelected(context) {
       currentHomeName = result.name;
       els.currentLocValue.textContent = result.name;
       els.locationLabel.textContent = `${STRINGS[currentLang].monitoring}: ${result.name}`;
-      updateAccSummaries();
       if (isSetup) {
         showMainScreen(result.name);
       } else {
         els.settingsCityInput.value = '';
         state.selected = null;
-        els.settingsSuccess.textContent = STRINGS[currentLang].saved;
-        setTimeout(() => { closeSettings(); els.settingsSuccess.textContent = ''; }, 1100);
+        els.settingsSuccess.textContent = fmt2(STRINGS[currentLang].saveOk, { name: result.name });
+        setTimeout(() => { els.settingsSuccess.textContent = ''; }, 5000);
       }
     }
   } catch (e) {
@@ -2019,179 +2148,6 @@ async function saveSelected(context) {
   }
 }
 window.saveSelected = saveSelected;
-
-// Settings accordion: the six topics (Location, Display, Alerts, Recent
-// Earthquakes, Testing, Support) each collapse to a single icon+title(+
-// summary) row, and only one can be open at a time. Clicking the open
-// one closes it back down; clicking a different one swaps which is
-// open. This keeps whatever you're not reading out of the way instead
-// of listing every field for every topic at once.
-const ACC_GROUPS = ['location', 'display', 'alerts', 'history', 'testing', 'support'];
-let openSettingsGroup = null;
-
-function accGroupIds(id) {
-  const cap = id.charAt(0).toUpperCase() + id.slice(1);
-  return {
-    header: document.getElementById('acc' + cap),
-    body: document.getElementById('body' + cap),
-    chevron: document.getElementById('group' + cap + 'Chevron'),
-  };
-}
-
-function applyAccGroupState() {
-  ACC_GROUPS.forEach((id) => {
-    const { header, body, chevron } = accGroupIds(id);
-    const isOpen = openSettingsGroup === id;
-    if (body) body.style.display = isOpen ? 'flex' : 'none';
-    if (chevron) chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
-    if (header) header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  });
-}
-
-function toggleAccGroup(id) {
-  openSettingsGroup = openSettingsGroup === id ? null : id;
-  applyAccGroupState();
-}
-window.toggleAccGroup = toggleAccGroup;
-
-// Short, language-aware labels for the one-line summaries — deliberately
-// not the long descriptive sensitivity_* strings (those are written for
-// a dropdown, not a condensed row), so this keeps its own tiny map.
-const SENSITIVITY_SHORT_LABEL = {
-  en: { high: 'High', normal: 'Normal', low: 'Low', off: 'Off' },
-  ja: { high: '高い', normal: '普通', low: '低い', off: 'オフ' },
-};
-
-function updateAccSummaries() {
-  if (!els.groupLocationSummary) return;
-  els.groupLocationSummary.textContent = currentHomeName || '';
-
-  const langLabel = currentLang === 'en' ? 'EN' : '日本語';
-  const fmtLabel = currentTimeFormat === '12h' ? '12h' : '24h';
-  els.groupDisplaySummary.textContent = `${langLabel} · ${fmtLabel}`;
-
-  const stepText = currentLang === 'ja' ? `震度${currentAlertMinStep}以上` : `Shindo ${currentAlertMinStep}+`;
-  const sensLabel = (SENSITIVITY_SHORT_LABEL[currentLang] || SENSITIVITY_SHORT_LABEL.en)[currentSensitivity] || '';
-  els.groupAlertsSummary.textContent = sensLabel ? `${stepText} · ${sensLabel}` : stepText;
-}
-
-function openSettings() {
-  els.settingsCityInput.value = '';
-  els.settingsError.textContent = '';
-  els.settingsSuccess.textContent = '';
-  els.settingsCandidates.innerHTML = '';
-  searchState.settings.selected = null;
-  els.settingsSaveBtn.disabled = true;
-  els.testWarning.style.display = 'none';
-  els.stepGrid.style.display = 'none';
-  setBugReportStatus('', null);
-  els.bugReportBox.value = '';
-  openSettingsGroup = null;
-  applyAccGroupState();
-  updateAccSummaries();
-  els.settingsPanel.style.display = 'flex';
-}
-
-// History panel: a calendar of felt earthquakes (see app.py's
-// FELT_LOG_PATH / get_felt_log — a Shindo Screener test never lands in
-// that log, so nothing shown here ever came from "Show a sample
-// reading"). currentCalendarMonth is always the 1st of some month, in
-// local time, since calendar display is inherently a local-time concept.
-let feltLogEntries = [];
-let currentCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
-async function openHistory() {
-  if (window.pywebview) {
-    const res = await window.pywebview.api.get_felt_log();
-    feltLogEntries = (res && res.entries) || [];
-  }
-  currentCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-  els.historyPanel.style.display = 'flex';
-  renderCalendar();
-}
-window.openHistory = openHistory;
-
-function closeHistory() {
-  els.historyPanel.style.display = 'none';
-}
-window.closeHistory = closeHistory;
-
-function shiftCalendarMonth(delta) {
-  currentCalendarMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + delta, 1);
-  renderCalendar();
-}
-window.shiftCalendarMonth = shiftCalendarMonth;
-
-// Local calendar date (not UTC) for each entry's felt_at timestamp, so
-// "today" lines up with the device's own clock the way a calendar should.
-function localDateKey(isoString) {
-  const d = new Date(isoString);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-
-function renderCalendar() {
-  const s = STRINGS[currentLang];
-  const year = currentCalendarMonth.getFullYear();
-  const month = currentCalendarMonth.getMonth();
-  els.calendarMonthLabel.textContent = currentCalendarMonth.toLocaleDateString(
-    currentLang === 'ja' ? 'ja-JP' : 'en-US', { year: 'numeric', month: 'long' }
-  );
-
-  // The strongest step felt on each date this month, by local date key.
-  const byDate = {};
-  feltLogEntries.forEach((e) => {
-    if (!e.felt_at || !e.display_step) return;
-    const d = new Date(e.felt_at);
-    if (d.getFullYear() !== year || d.getMonth() !== month) return;
-    const key = localDateKey(e.felt_at);
-    if (!byDate[key] || jma_rank(e.display_step) > jma_rank(byDate[key])) byDate[key] = e.display_step;
-  });
-
-  els.calendarGrid.innerHTML = '';
-  const weekdayNames = currentLang === 'ja' ? ['日', '月', '火', '水', '木', '金', '土'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-  weekdayNames.forEach((w) => {
-    const el = document.createElement('div');
-    el.className = 'calendar-weekday';
-    el.textContent = w;
-    els.calendarGrid.appendChild(el);
-  });
-
-  const firstWeekday = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  for (let i = 0; i < firstWeekday; i++) {
-    const el = document.createElement('div');
-    el.className = 'calendar-day empty';
-    els.calendarGrid.appendChild(el);
-  }
-  let anyFelt = false;
-  for (let day = 1; day <= daysInMonth; day++) {
-    const key = `${year}-${month}-${day}`;
-    const step = byDate[key];
-    const el = document.createElement('div');
-    el.className = 'calendar-day' + (step ? ' felt' : '');
-    if (step) {
-      anyFelt = true;
-      const band = BANDS[step] || BANDS['0'];
-      el.style.background = band.bg;
-      el.style.color = band.fg;
-    }
-    const numEl = document.createElement('div');
-    numEl.className = 'day-num';
-    numEl.textContent = day;
-    el.appendChild(numEl);
-    if (step) {
-      const stepEl = document.createElement('div');
-      stepEl.className = 'day-step';
-      stepEl.textContent = currentLang === 'ja' ? jaStep(step) : step;
-      el.appendChild(stepEl);
-    }
-    els.calendarGrid.appendChild(el);
-  }
-
-  els.calendarEmptyNote.style.display = anyFelt ? 'none' : 'block';
-  els.calendarEmptyNote.textContent = s.feltLogEmpty;
-  els.calendarLegend.textContent = s.calendarLegendText;
-}
 
 // A tiny local copy of jma_sources.rank's ordering, just enough to pick
 // the strongest of same-day entries for the calendar cell.
@@ -2280,6 +2236,7 @@ async function submitBugReport() {
   const s = STRINGS[currentLang];
   if (!BUG_REPORT_ENDPOINT || !BUG_REPORT_ENDPOINT.startsWith('http')) {
     setBugReportStatus(s.bugReportFailed, 'error');
+    els.bugReportFallback.style.display = 'block';
     return;
   }
   const btn = els.bugReportSubmitBtn;
@@ -2309,8 +2266,10 @@ async function submitBugReport() {
     });
     if (!res.ok) throw new Error('bad status ' + res.status);
     setBugReportStatus(s.bugReportSent, 'success');
+    els.bugReportFallback.style.display = 'none';
   } catch (err) {
     setBugReportStatus(s.bugReportFailed, 'error');
+    els.bugReportFallback.style.display = 'block';
   } finally {
     btn.disabled = false;
     btn.textContent = original;
@@ -2323,40 +2282,6 @@ function closeSettings() {
   els.settingsPanel.style.display = 'none';
 }
 window.closeSettings = closeSettings;
-
-function buildStepGrid() {
-  els.stepGrid.innerHTML = '';
-  const steps = ["0", "1", "2", "3", "4", "5-", "5+", "6-", "6+", "7"];
-  steps.forEach((step) => {
-    const band = BANDS[step];
-    const swatch = document.createElement('div');
-    swatch.className = 'step-swatch';
-    swatch.style.background = band.bg;
-    swatch.style.color = band.fg;
-    swatch.textContent = step === '0' ? STRINGS[currentLang].idleLabel : step;
-    swatch.title = currentLang === 'ja' ? `震度${step}をテスト表示` : `Test Shindo ${step}`;
-    swatch.onclick = () => runTestEventForStep(step);
-    els.stepGrid.appendChild(swatch);
-  });
-}
-
-function showTestWarning() {
-  els.testWarning.style.display = 'block';
-  buildStepGrid();
-  els.stepGrid.style.display = 'grid';
-}
-window.showTestWarning = showTestWarning;
-
-async function runTestEventForStep(step) {
-  if (!bridgeReady) return;
-  try {
-    await window.pywebview.api.trigger_test_event(step, currentLang);
-    closeSettings();
-  } catch (e) {
-    console.error('trigger_test_event call failed:', e);
-  }
-}
-window.runTestEventForStep = runTestEventForStep;
 
 wireLiveSearch('setup');
 wireLiveSearch('settings');
@@ -2384,10 +2309,6 @@ function updateClock() {
 applyLanguage();
 applyTimeFormatButtons();
 applyTextScaleButtons();
-buildThresholdSelect();
-buildSensitivitySelect();
-applyWakeScreenButtons();
-applyVolumeButtons();
 renderIdle();
 updateClock();
 setInterval(updateClock, 1000);

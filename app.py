@@ -41,6 +41,7 @@ import jma_sources
 WOLFX_JMA_EEW_URL = "wss://ws-api.wolfx.jp/jma_eew"
 P2P_WS_URL = "wss://api.p2pquake.net/v2/ws"
 STATIONS_JSON_RELATIVE_PATH = "stations_jp.json"
+PLACES_JSON_RELATIVE_PATH = "places_jp.json"
 IDLE_STATE = {"status": "idle", "updated_at": None}
 EEW_IDLE_MINUTES = 5          # an early warning stays up this long if no measured report follows
 MEASURED_IDLE_MINUTES = 10    # a measured reading stays up this long, then the screen goes quiet
@@ -246,6 +247,93 @@ def search_locations(city_name, lang="en"):
     return candidates
 
 
+# ---- Offline place search -------------------------------------------------
+# Typing in the location box used to wait for Nominatim (5 to 10 seconds, and
+# it only matches whole words, so "kum" never found Kumamoto). Search now
+# runs on a bundled list of every Japanese municipality (places_jp.json) and
+# matches the start of the name as the person types, in English letters,
+# kana or kanji. Nominatim stays as a fallback for anything not on the list.
+
+_places_cache = None
+_last_online_lookup = 0.0
+_online_lock = threading.Lock()
+
+
+def _load_places():
+    global _places_cache
+    if _places_cache is None:
+        try:
+            with open(resource_path(PLACES_JSON_RELATIVE_PATH), "r", encoding="utf-8") as f:
+                _places_cache = json.load(f).get("places", [])
+        except Exception:
+            traceback.print_exc()
+            _places_cache = []
+    return _places_cache
+
+
+def _norm_romaji(text):
+    """Fold spelling variants so 'Osaka', 'Oosaka' and 'Ohsaka' (and the
+    Kunrei-style 'si', 'ti', 'tu') all compare equal, and so a half-typed
+    word such as 'kagosh' still matches the start of 'kagoshima'."""
+    t = text.lower()
+    for a, b in (("\u014d", "o"), ("\u016b", "u"), ("\u0101", "a"), ("\u012b", "i"), ("\u0113", "e")):
+        t = t.replace(a, b)
+    t = "".join(ch for ch in t if ch.isalnum())
+    t = t.replace("oh", "o").replace("ou", "o").replace("oo", "o").replace("uu", "u")
+    t = t.replace("sh", "s").replace("ch", "t").replace("ts", "t").replace("j", "z").replace("fu", "hu")
+    return t
+
+
+def _to_hiragana(text):
+    return "".join(chr(ord(ch) - 0x60) if "\u30a1" <= ch <= "\u30f6" else ch for ch in text)
+
+
+def search_local_places(query, lang="en", limit=8):
+    q = query.strip()
+    if not q:
+        return []
+    places = _load_places()
+    ascii_query = all(ord(ch) < 128 for ch in q)
+    scored = []
+    if ascii_query:
+        nq = _norm_romaji(q)
+        if not nq:
+            return []
+        for p in places:
+            key = _norm_romaji(p["k"])
+            if key.startswith(nq):
+                score = 0
+            elif any(_norm_romaji(w).startswith(nq) for w in p["k"].split()[1:]):
+                score = 1
+            elif _norm_romaji(p["e"].split(", ")[-1].replace(" Prefecture", "")).startswith(nq):
+                score = 2
+            elif nq in key and len(nq) >= 3:
+                score = 3
+            else:
+                continue
+            scored.append((score, "cwm".index(p["t"]), len(key), p))
+    else:
+        qh = _to_hiragana(q)
+        for p in places:
+            full = p["p"] + p["j"]
+            if p["j"].startswith(q) or (p["h"] and p["h"].startswith(qh)):
+                score = 0
+            elif full.startswith(q) or p["p"].startswith(q):
+                score = 2
+            elif q in p["j"]:
+                score = 3
+            else:
+                continue
+            scored.append((score, "cwm".index(p["t"]), len(p["j"]), p))
+    scored.sort(key=lambda s: s[:3])
+    out = []
+    for _, _, _, p in scored[:limit]:
+        name = (p.get("n") or (p["p"] + p["j"])) if lang == "ja" else p["e"]
+        out.append({"name": name, "lat": p["a"], "lon": p["o"]})
+    return out
+
+
+
 class Api:
     """Exposed to JavaScript as `pywebview.api.<method>()`."""
 
@@ -258,10 +346,19 @@ class Api:
         city_name = (city_name or "").strip()
         if not city_name:
             return {"ok": False, "error": "Type a city or town name first.", "candidates": []}
-        try:
-            candidates = search_locations(city_name, lang)
-        except Exception as e:
-            return {"ok": False, "error": f"Lookup failed: {e}", "candidates": []}
+        candidates = search_local_places(city_name, lang)
+        if not candidates and len(city_name) >= 3:
+            # Not on the bundled list: ask Nominatim, at most once per second.
+            global _last_online_lookup
+            try:
+                with _online_lock:
+                    wait = 1.1 - (time.time() - _last_online_lookup)
+                    if wait > 0:
+                        time.sleep(wait)
+                    _last_online_lookup = time.time()
+                    candidates = search_locations(city_name, lang)
+            except Exception as e:
+                return {"ok": False, "error": f"Lookup failed: {e}", "candidates": []}
         if not candidates:
             return {"ok": False, "error": f"Couldn't find \"{city_name}\" as a real town or city. Check the spelling, or try a nearby larger place.", "candidates": []}
         return {"ok": True, "candidates": candidates}
@@ -402,8 +499,12 @@ class Api:
         every step's screen can be checked directly. It uses the user's
         real nearest JMA station, so the test looks exactly like a real
         reading would. The frontend shows a professionalism warning
-        before calling this. Each test gets its own event key, so the
-        alert chime fires every time (useful for checking volume).
+        before calling this. This is a visual sample only: Listener.push()
+        recognizes display_source == "test" and never wakes the screen,
+        jumps to the foreground, or plays the alarm chime for it, no matter
+        what the alert threshold is set to. To hear how loud a level
+        sounds, use the dedicated volume preview (preview_alert_sound)
+        instead, which is sound-only and fires from an explicit choice.
         """
         if step not in self.VALID_TEST_STEPS:
             return {"ok": False, "error": f"Not a real Shindo step: {step}"}
@@ -516,7 +617,17 @@ class Listener:
         except Exception:
             pass  # window may be closing, not fatal
         key = state.get("event_key")
-        if key and key not in self.alerted and alert.should_alert(state, min_step=self.alert_min_step):
+        # A test/sample reading (trigger_test_event) is only ever a preview of
+        # what a level looks like on screen — it must never wake the display,
+        # steal foreground, or play the alarm chime the way a real JMA-sourced
+        # reading does, no matter what alert_min_step is set to. The only
+        # place sound is allowed to play for a sample is the explicit volume
+        # preview button (preview_alert_sound), which a person triggers on
+        # purpose to hear how loud a level is, not as a side effect of just
+        # looking at a sample.
+        is_test = state.get("display_source") == "test"
+        if (not is_test and key and key not in self.alerted
+                and alert.should_alert(state, min_step=self.alert_min_step)):
             self.alerted.add(key)
             alert.trigger(
                 self.window, resource_path,
@@ -778,7 +889,7 @@ def main():
         home = {"name": settings["name"], "lat": settings["lat"], "lon": settings["lon"]}
         listener = Listener(
             window_holder["window"], home,
-            alert_min_step=settings.get("alert_min_step", alert.DEFAULT_ALERT_MIN_STEP),
+            alert_min_step=alert.normalize_alert_min_step(settings.get("alert_min_step", alert.DEFAULT_ALERT_MIN_STEP)),
             alert_wake_screen=settings.get("alert_wake_screen", "on") == "on",
             alert_volume=settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME),
             sensitivity=settings.get("sensitivity", "normal"),
@@ -807,7 +918,7 @@ def main():
             time_fmt = settings.get("time_format", "24h")
             text_scale = settings.get("text_scale", "normal")
             motion = settings.get("motion_effects", "on")
-            alert_min_step = settings.get("alert_min_step", alert.DEFAULT_ALERT_MIN_STEP)
+            alert_min_step = alert.normalize_alert_min_step(settings.get("alert_min_step", alert.DEFAULT_ALERT_MIN_STEP))
             alert_wake_screen = settings.get("alert_wake_screen", "on")
             alert_volume = settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME)
             sensitivity = settings.get("sensitivity", "normal")

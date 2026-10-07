@@ -32,11 +32,21 @@ DEFAULT_ALERT_MIN_STEP = "4"
 JMA_STEP_ORDER = ["0", "1", "2", "3", "4", "5-", "5+", "6-", "6+", "7"]
 STEP_RANK = {step: i for i, step in enumerate(JMA_STEP_ORDER)}
 
-# Alert thresholds a person can actually choose from in Settings. Below
-# Shindo 3, alerting is more noise than signal for a wake-the-room
-# feature, so 0/1/2 aren't offered as choices (the app still displays
-# them normally, they just never trigger the wake/sound alert).
-SELECTABLE_ALERT_STEPS = ["3", "4", "5-", "5+", "6-", "6+", "7"]
+# Alert thresholds a person can choose from in Settings. Below Shindo 3
+# alerting is more noise than signal, and above 5- would miss quakes JMA
+# itself warns about, so only 3, 4 and 5- are offered. The app still
+# displays every level normally.
+SELECTABLE_ALERT_STEPS = ["3", "4", "5-"]
+
+
+def normalize_alert_min_step(step):
+    """Map any saved threshold onto a selectable one. Older versions
+    allowed 5+ and above; those are clamped to 5-."""
+    if step in SELECTABLE_ALERT_STEPS:
+        return step
+    if step in STEP_RANK and STEP_RANK[step] >= STEP_RANK["5-"]:
+        return "5-"
+    return DEFAULT_ALERT_MIN_STEP
 DEFAULT_ALERT_WAKE_SCREEN = True
 DEFAULT_ALERT_VOLUME = "normal"
 
@@ -62,6 +72,9 @@ ES_SYSTEM_REQUIRED = 0x00000001
 ES_DISPLAY_REQUIRED = 0x00000002
 SW_RESTORE = 9
 MOUSEEVENTF_MOVE = 0x0001
+# IsIconic (checked below) reports whether a window is minimized, so
+# _bring_to_front can tell "actually needs restoring" apart from
+# "already sitting right there on screen".
 
 IS_WINDOWS = sys.platform == "win32"
 
@@ -151,12 +164,43 @@ def _release_keep_awake():
 
 
 def _bring_to_front(window):
+    """
+    Only actually moves the window if it genuinely isn't already the
+    thing on screen (minimized, or some other window is in front of
+    it) — this is the common "always-on wall display" case this
+    module's docstring describes, where the window is already sitting
+    there visible every single time an alert fires. Calling
+    window.restore() / ShowWindow(SW_RESTORE) / SetForegroundWindow()
+    unconditionally, even when none of them change anything, still
+    makes WebView2 repaint the window, and on Windows that repaint can
+    show a brief blank/white frame before the already-rendered page
+    content reappears on top of it — a flash with nothing to do with
+    this app's own HTML/CSS, which never sets the screen to white.
+    Skipping the no-op case removes that flash without touching the
+    genuine "window was minimized or behind something" recovery path.
+    """
+    try:
+        hwnd = window.native.Handle.ToInt32()
+    except Exception:
+        hwnd = None
+
+    if hwnd is not None:
+        try:
+            user32 = ctypes.windll.user32
+            is_minimized = bool(user32.IsIconic(hwnd))
+            is_foreground = user32.GetForegroundWindow() == hwnd
+            if not is_minimized and is_foreground:
+                return  # already exactly where it needs to be; nothing to do
+        except Exception:
+            pass  # if we can't tell, fall through and restore as before
+
     try:
         window.restore()
     except Exception:
         pass
     try:
-        hwnd = window.native.Handle.ToInt32()
+        if hwnd is None:
+            hwnd = window.native.Handle.ToInt32()
         ctypes.windll.user32.ShowWindow(hwnd, SW_RESTORE)
         ctypes.windll.user32.SetForegroundWindow(hwnd)
     except Exception:
