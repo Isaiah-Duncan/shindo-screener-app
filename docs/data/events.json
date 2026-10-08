@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-08T01:12:04Z",
- "count": 133,
+ "updated_at": "2026-10-08T07:22:59Z",
+ "count": 136,
  "events": [
+  {
+   "id": "20261008133018",
+   "time": "2026-10-08T13:30:00+09:00",
+   "location_ja": "根室半島南東沖",
+   "lat": 43.0,
+   "lon": 145.8,
+   "depth_km": 30.0,
+   "magnitude": 3.8,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261008132305",
+   "time": "2026-10-08T13:23:00+09:00",
+   "location_ja": "熊本県熊本地方",
+   "lat": 32.5,
+   "lon": 130.6,
+   "depth_km": 10.0,
+   "magnitude": 3.0,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261008114320",
+   "time": "2026-10-08T11:43:00+09:00",
+   "location_ja": "トカラ列島近海",
+   "lat": 30.0,
+   "lon": 130.4,
+   "depth_km": 40.0,
+   "magnitude": 3.7,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261008071415",
    "time": "2026-10-08T07:14:00+09:00",
