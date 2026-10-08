@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-08T07:22:59Z",
- "count": 136,
+ "updated_at": "2026-10-08T14:44:12Z",
+ "count": 139,
  "events": [
+  {
+   "id": "20261008212235",
+   "time": "2026-10-08T21:22:00+09:00",
+   "location_ja": "熊本県熊本地方",
+   "lat": 32.6,
+   "lon": 130.7,
+   "depth_km": 10.0,
+   "magnitude": 2.1,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261008203527",
+   "time": "2026-10-08T20:35:00+09:00",
+   "location_ja": "長野県南部",
+   "lat": 35.9,
+   "lon": 137.6,
+   "depth_km": 0.0,
+   "magnitude": 2.8,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261008181418",
+   "time": "2026-10-08T18:14:00+09:00",
+   "location_ja": "岩手県沖",
+   "lat": 39.9,
+   "lon": 142.4,
+   "depth_km": 40.0,
+   "magnitude": 3.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261008133018",
    "time": "2026-10-08T13:30:00+09:00",
