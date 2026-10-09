@@ -1,8 +1,56 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-09T06:24:42Z",
- "count": 143,
+ "updated_at": "2026-10-09T18:59:37Z",
+ "count": 147,
  "events": [
+  {
+   "id": "20261010032649",
+   "time": "2026-10-10T03:26:00+09:00",
+   "location_ja": "和歌山県北部",
+   "lat": 33.9,
+   "lon": 135.1,
+   "depth_km": 10.0,
+   "magnitude": 3.0,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261010030429",
+   "time": "2026-10-10T03:04:00+09:00",
+   "location_ja": "宮城県沖",
+   "lat": 38.3,
+   "lon": 141.6,
+   "depth_km": 60.0,
+   "magnitude": 3.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261010025608",
+   "time": "2026-10-10T02:56:00+09:00",
+   "location_ja": "中米",
+   "lat": 7.5,
+   "lon": -80.8,
+   "depth_km": 0.0,
+   "magnitude": 7.6,
+   "max_shindo": null,
+   "report_type": "遠地地震に関する情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261010014626",
+   "time": "2026-10-10T01:46:00+09:00",
+   "location_ja": "根室半島南東沖",
+   "lat": 43.2,
+   "lon": 145.7,
+   "depth_km": 60.0,
+   "magnitude": 3.7,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261009111210",
    "time": "2026-10-09T11:12:00+09:00",
