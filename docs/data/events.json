@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-09T23:05:35Z",
- "count": 150,
+ "updated_at": "2026-10-10T02:17:58Z",
+ "count": 151,
  "events": [
+  {
+   "id": "20261010102013",
+   "time": "2026-10-10T10:20:00+09:00",
+   "location_ja": "石川県西方沖",
+   "lat": 37.0,
+   "lon": 136.4,
+   "depth_km": 10.0,
+   "magnitude": 3.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261010074306",
    "time": "2026-10-10T07:43:00+09:00",
