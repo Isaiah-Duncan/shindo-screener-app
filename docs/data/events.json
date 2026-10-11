@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-11T18:41:28Z",
- "count": 157,
+ "updated_at": "2026-10-11T22:28:07Z",
+ "count": 158,
  "events": [
+  {
+   "id": "20261012050528",
+   "time": "2026-10-12T05:05:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.3,
+   "lon": 130.5,
+   "depth_km": 10.0,
+   "magnitude": 1.9,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261012012430",
    "time": "2026-10-12T01:24:00+09:00",
