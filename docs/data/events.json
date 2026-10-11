@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-11T07:08:34Z",
- "count": 156,
+ "updated_at": "2026-10-11T18:41:28Z",
+ "count": 157,
  "events": [
+  {
+   "id": "20261012012430",
+   "time": "2026-10-12T01:24:00+09:00",
+   "location_ja": "千葉県東方沖",
+   "lat": 35.6,
+   "lon": 140.7,
+   "depth_km": 50.0,
+   "magnitude": 4.3,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261011154917",
    "time": "2026-10-11T15:49:00+09:00",
