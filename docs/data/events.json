@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-13T03:52:20Z",
- "count": 164,
+ "updated_at": "2026-10-13T18:24:20Z",
+ "count": 167,
  "events": [
+  {
+   "id": "20261013220530",
+   "time": "2026-10-13T22:05:00+09:00",
+   "location_ja": "宮城県沖",
+   "lat": 38.5,
+   "lon": 141.7,
+   "depth_km": 60.0,
+   "magnitude": 3.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261013205314",
+   "time": "2026-10-13T20:53:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.5,
+   "lon": 130.5,
+   "depth_km": 10.0,
+   "magnitude": 2.7,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261013204422",
+   "time": "2026-10-13T20:44:00+09:00",
+   "location_ja": "紀伊水道",
+   "lat": 33.8,
+   "lon": 134.7,
+   "depth_km": 40.0,
+   "magnitude": 3.8,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261013112730",
    "time": "2026-10-13T11:27:00+09:00",
