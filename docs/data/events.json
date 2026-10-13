@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-13T18:24:20Z",
- "count": 167,
+ "updated_at": "2026-10-13T22:58:18Z",
+ "count": 168,
  "events": [
+  {
+   "id": "20261014043336",
+   "time": "2026-10-14T04:33:00+09:00",
+   "location_ja": "天草灘",
+   "lat": 32.0,
+   "lon": 130.1,
+   "depth_km": 10.0,
+   "magnitude": 2.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261013220530",
    "time": "2026-10-13T22:05:00+09:00",
