@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-14T12:23:10Z",
- "count": 170,
+ "updated_at": "2026-10-14T17:24:27Z",
+ "count": 173,
  "events": [
+  {
+   "id": "20261015020254",
+   "time": "2026-10-15T02:02:00+09:00",
+   "location_ja": "宮崎県南部山沿い",
+   "lat": 32.1,
+   "lon": 131.0,
+   "depth_km": 0.0,
+   "magnitude": 2.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261015015135",
+   "time": "2026-10-15T01:51:00+09:00",
+   "location_ja": "トカラ列島近海",
+   "lat": 29.5,
+   "lon": 129.9,
+   "depth_km": 10.0,
+   "magnitude": 3.1,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261014221915",
+   "time": "2026-10-14T22:19:00+09:00",
+   "location_ja": "宮城県沖",
+   "lat": 38.6,
+   "lon": 141.9,
+   "depth_km": 50.0,
+   "magnitude": 4.1,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261014160731",
    "time": "2026-10-14T16:07:00+09:00",
