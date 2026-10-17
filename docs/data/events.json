@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-17T12:24:45Z",
- "count": 182,
+ "updated_at": "2026-10-17T15:46:15Z",
+ "count": 183,
  "events": [
+  {
+   "id": "20261017234801",
+   "time": "2026-10-17T23:47:00+09:00",
+   "location_ja": "長野県北部",
+   "lat": 36.6,
+   "lon": 137.9,
+   "depth_km": 10.0,
+   "magnitude": 2.4,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261017174203",
    "time": "2026-10-17T17:42:00+09:00",
