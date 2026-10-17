@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-16T11:16:49Z",
- "count": 180,
+ "updated_at": "2026-10-17T04:19:30Z",
+ "count": 181,
  "events": [
+  {
+   "id": "20261017115417",
+   "time": "2026-10-17T11:54:00+09:00",
+   "location_ja": "紀伊水道",
+   "lat": 34.1,
+   "lon": 135.1,
+   "depth_km": 10.0,
+   "magnitude": 2.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261016181738",
    "time": "2026-10-16T18:17:00+09:00",
