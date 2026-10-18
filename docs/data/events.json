@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-18T09:14:25Z",
- "count": 185,
+ "updated_at": "2026-10-18T13:18:54Z",
+ "count": 188,
  "events": [
+  {
+   "id": "20261018215804",
+   "time": "2026-10-18T21:57:00+09:00",
+   "location_ja": "福島県中通り",
+   "lat": 37.2,
+   "lon": 140.6,
+   "depth_km": 80.0,
+   "magnitude": 3.3,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261018211808",
+   "time": "2026-10-18T21:18:00+09:00",
+   "location_ja": "トカラ列島近海",
+   "lat": 30.0,
+   "lon": 130.0,
+   "depth_km": 10.0,
+   "magnitude": 2.0,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261018205359",
+   "time": "2026-10-18T20:53:00+09:00",
+   "location_ja": "日向灘",
+   "lat": 32.3,
+   "lon": 131.9,
+   "depth_km": 30.0,
+   "magnitude": 3.1,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261018163729",
    "time": "2026-10-18T16:37:00+09:00",
