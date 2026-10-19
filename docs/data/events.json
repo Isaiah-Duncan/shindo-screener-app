@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-19T13:08:41Z",
- "count": 194,
+ "updated_at": "2026-10-19T19:18:10Z",
+ "count": 195,
  "events": [
+  {
+   "id": "20261019224143",
+   "time": "2026-10-19T22:41:00+09:00",
+   "location_ja": "沖縄本島近海",
+   "lat": 27.3,
+   "lon": 128.4,
+   "depth_km": 50.0,
+   "magnitude": 3.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261019155414",
    "time": "2026-10-19T15:54:00+09:00",
