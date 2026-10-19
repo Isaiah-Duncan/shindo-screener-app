@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-19T19:18:10Z",
- "count": 195,
+ "updated_at": "2026-10-19T22:57:55Z",
+ "count": 196,
  "events": [
+  {
+   "id": "20261020055029",
+   "time": "2026-10-20T05:50:00+09:00",
+   "location_ja": "釧路沖",
+   "lat": 42.4,
+   "lon": 144.7,
+   "depth_km": 30.0,
+   "magnitude": 4.0,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261019224143",
    "time": "2026-10-19T22:41:00+09:00",
