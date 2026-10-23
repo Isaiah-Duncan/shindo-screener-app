@@ -26,6 +26,7 @@ a new one.
 
 import json
 import math
+import re
 from datetime import datetime, timedelta, timezone
 
 JST = timezone(timedelta(hours=9))
@@ -88,6 +89,20 @@ def locate_home(home, stations, radius_km=NEARBY_RADIUS_KM, limit=NEARBY_LIMIT):
     return {"area": ranked[0]["area"], "stations": near}
 
 
+# Prefecture maximum shown beside the user's area (a plain "highest of the
+# values JMA itself listed for areas in the same prefecture", never a new
+# forecast). Set to False to turn it off, for example if JMA says this kind of
+# aggregation needs a licence.
+PREFECTURE_MAX_ENABLED = True
+_PREF_RE = re.compile(r"^(北海道|東京都|京都府|大阪府|.{2,3}県)")
+
+
+def prefecture_of(area_name):
+    """'青森県三八上北' -> '青森県'; None when the name has no recognisable prefecture."""
+    m = _PREF_RE.match(_area_key(area_name))
+    return m.group(1) if m else None
+
+
 def _area_key(name):
     """Area names appear with and without 地方 (熊本県熊本地方 vs 熊本県熊本); compare without it."""
     return (name or "").replace("地方", "").strip()
@@ -125,6 +140,23 @@ def parse_eew(payload, home_area):
                 }
             break
 
+    # Highest value JMA itself listed for any warned area in the user's
+    # prefecture (WarnArea lists only the areas JMA warns; an unlisted area
+    # simply is not included). None when none of them are in this prefecture.
+    pref = None
+    pref_name = prefecture_of(home_area) if PREFECTURE_MAX_ENABLED else None
+    if pref_name:
+        best = None
+        for w in payload.get("WarnArea") or []:
+            if prefecture_of(w.get("Chiiki")) != pref_name:
+                continue
+            for v in (w.get("Shindo1"), w.get("Shindo2")):
+                st = normalize_shindo(v)
+                if st and (best is None or rank(st) > rank(best)):
+                    best = st
+        if best:
+            pref = {"name": pref_name, "max": best}
+
     try:
         mag = float(payload.get("Magnitude", payload.get("Magunitude")))
     except (TypeError, ValueError):
@@ -149,6 +181,8 @@ def parse_eew(payload, home_area):
         "is_warning": bool(payload.get("isWarn")),
         "is_final": bool(payload.get("isFinal")),
         "area_forecast": area_forecast,
+        "pref": pref,
+        "warn_areas": len(payload.get("WarnArea") or []),
         "accuracy": (payload.get("Accuracy") or {}).get("Epicenter") if isinstance(payload.get("Accuracy"), dict) else None,
     }
 

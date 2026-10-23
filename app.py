@@ -42,9 +42,11 @@ WOLFX_JMA_EEW_URL = "wss://ws-api.wolfx.jp/jma_eew"
 P2P_WS_URL = "wss://api.p2pquake.net/v2/ws"
 STATIONS_JSON_RELATIVE_PATH = "stations_jp.json"
 PLACES_JSON_RELATIVE_PATH = "places_jp.json"
+MUNICIPALITIES_JSON_RELATIVE_PATH = "municipalities_jp.json"
 IDLE_STATE = {"status": "idle", "updated_at": None}
 EEW_IDLE_MINUTES = 5          # an early warning stays up this long if no measured report follows
 MEASURED_IDLE_MINUTES = 10    # a measured reading stays up this long, then the screen goes quiet
+CANCEL_NOTICE_MINUTES = 2      # the "JMA cancelled this warning" notice stays this long, then the screen goes idle
 QUIET_IDLE_MINUTES = 1        # Shindo 0-2 readings (see QUIET_STEPS) clear after this instead,
                                # since they're the dark/dim display tier, not worth holding for 10
                                # minutes (e.g. overnight: see no reason to keep a room lit for a
@@ -145,6 +147,53 @@ def save_felt_log(entries):
         json.dump(entries, f)
 
 
+# Local diagnostic record of the early-warning messages this app received
+# and what it did with each one. Stays on this PC (never sent anywhere), is
+# trimmed to DIAG_RETENTION_DAYS and DIAG_MAX_BYTES, and holds no monitored
+# location: only fields from JMA's own message plus the app's decision. It
+# exists so a surprising alert can be reconstructed afterwards.
+DIAG_LOG_PATH = os.path.join(settings_dir(), "eew_diagnostics.jsonl")
+DIAG_RETENTION_DAYS = 30
+DIAG_MAX_BYTES = 1_000_000
+_diag_pruned = False
+
+
+def _prune_diag_log():
+    cutoff = datetime.now(timezone.utc) - timedelta(days=DIAG_RETENTION_DAYS)
+    try:
+        with open(DIAG_LOG_PATH, "r", encoding="utf-8") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return
+    kept = []
+    for line in lines:
+        try:
+            if datetime.fromisoformat(json.loads(line)["t"]) >= cutoff:
+                kept.append(line)
+        except (KeyError, TypeError, ValueError):
+            continue
+    while kept and sum(len(x) + 1 for x in kept) > DIAG_MAX_BYTES:
+        kept = kept[len(kept) // 2:]
+    with open(DIAG_LOG_PATH, "w", encoding="utf-8") as f:
+        f.write("".join(x + "\n" for x in kept))
+
+
+def diag_log(kind, **fields):
+    """Appends one JSON line. Never raises: diagnostics must not be able
+    to break the live display."""
+    global _diag_pruned
+    try:
+        if not _diag_pruned or (os.path.exists(DIAG_LOG_PATH) and os.path.getsize(DIAG_LOG_PATH) > DIAG_MAX_BYTES):
+            _prune_diag_log()
+            _diag_pruned = True
+        entry = {"t": datetime.now(timezone.utc).isoformat(), "kind": kind}
+        entry.update(fields)
+        with open(DIAG_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
 # Every setting besides name/lat/lon, with its default for a settings.json
 # saved before that setting existed (an older install upgrading in place,
 # for example, never had alert_volume written yet).
@@ -156,6 +205,8 @@ SETTINGS_DEFAULTS = {
     "alert_min_step": alert.DEFAULT_ALERT_MIN_STEP,
     "alert_wake_screen": "on",
     "alert_volume": alert.DEFAULT_ALERT_VOLUME,
+    "quiet_hours": alert.DEFAULT_QUIET_HOURS,
+    "alert_voice": alert.DEFAULT_ALERT_VOICE,
     "sensitivity": "normal",
 }
 
@@ -271,6 +322,36 @@ def _load_places():
     return _places_cache
 
 
+# ---- Town outlines for the map -------------------------------------------
+# municipalities_jp.json holds the outline of every town, grouped by prefecture
+# (MLIT National Land Numerical Information, simplified). Only the saved
+# prefecture is sent to the screen. A drawing aid only: it never changes a JMA value.
+
+_geo_cache = None
+
+
+def _load_geo():
+    global _geo_cache
+    if _geo_cache is None:
+        try:
+            with open(resource_path(MUNICIPALITIES_JSON_RELATIVE_PATH), "r", encoding="utf-8") as f:
+                _geo_cache = json.load(f).get("prefs", {})
+        except Exception:
+            traceback.print_exc()
+            _geo_cache = {}
+    return _geo_cache
+
+
+def home_town_codes(name):
+    """Town codes for the saved location name (English or Japanese form), or []."""
+    if not name:
+        return []
+    for p in _load_places():
+        if name in (p.get("e"), p.get("n"), p["p"] + p["j"]):
+            return list(p.get("c") or [])
+    return []
+
+
 def _norm_romaji(text):
     """Fold spelling variants so 'Osaka', 'Oosaka' and 'Ohsaka' (and the
     Kunrei-style 'si', 'ti', 'tu') all compare equal, and so a half-typed
@@ -362,6 +443,20 @@ class Api:
         if not candidates:
             return {"ok": False, "error": f"Couldn't find \"{city_name}\" as a real town or city. Check the spelling, or try a nearby larger place.", "candidates": []}
         return {"ok": True, "candidates": candidates}
+
+    def get_map(self):
+        """Outlines of the towns in the saved prefecture, plus which ones are 'home'.
+        Returns {"ok": False} when the saved place has no town code (the screen then
+        simply shows no map)."""
+        listener = self._get_listener()
+        home = (listener.home if listener is not None else None) or {}
+        codes = home_town_codes(home.get("name"))
+        if not codes:
+            return {"ok": False}
+        towns = _load_geo().get(codes[0][:2])
+        if not towns:
+            return {"ok": False}
+        return {"ok": True, "home": codes, "towns": towns}
 
     def confirm_location(self, name, lat, lon):
         """
@@ -464,6 +559,27 @@ class Api:
             listener.alert_volume = value
         return {"ok": True}
 
+    def set_quiet_hours(self, value):
+        value = "on" if value == "on" else "off"
+        existing = load_settings()
+        if existing:
+            save_settings(merged_settings(existing, quiet_hours=value))
+        listener = self._get_listener()
+        if listener is not None:
+            listener.quiet_hours = value == "on"
+        return {"ok": True}
+
+    def set_alert_voice(self, value):
+        if value not in alert.VALID_ALERT_VOICE:
+            return {"ok": False, "error": f"Not a voice setting: {value}"}
+        existing = load_settings()
+        if existing:
+            save_settings(merged_settings(existing, alert_voice=value))
+        listener = self._get_listener()
+        if listener is not None:
+            listener.alert_voice = value
+        return {"ok": True}
+
     def preview_alert_sound(self, volume):
         """Plays the chosen volume preset once, sound only, so a person
         can hear how loud Quiet/Normal/Loud is before picking one. No
@@ -549,7 +665,7 @@ class Listener:
 
     def __init__(self, window, home, alert_min_step=alert.DEFAULT_ALERT_MIN_STEP,
                  alert_wake_screen=True, alert_volume=alert.DEFAULT_ALERT_VOLUME,
-                 sensitivity="normal"):
+                 sensitivity="normal", quiet_hours=True, alert_voice=alert.DEFAULT_ALERT_VOICE):
         self.window = window
         self.stations = jma_sources.load_stations(resource_path(STATIONS_JSON_RELATIVE_PATH))
         self._home = None
@@ -574,6 +690,8 @@ class Listener:
         self.alert_wake_screen = alert_wake_screen
         self.alert_volume = alert_volume
         self.sensitivity = sensitivity
+        self.quiet_hours = quiet_hours
+        self.alert_voice = alert_voice
 
     @property
     def home(self):
@@ -632,11 +750,20 @@ class Listener:
             alert.trigger(
                 self.window, resource_path,
                 wake_screen=self.alert_wake_screen, volume=self.alert_volume,
+                state=state, quiet_hours=self.quiet_hours, voice=self.alert_voice,
+                lang=(load_settings() or {}).get("language", "en"),
             )
 
     def go_idle(self):
         self.event = None
         self.push(dict(IDLE_STATE, updated_at=self.now_iso()))
+
+    def show_cancelled(self):
+        """JMA withdrew the warning on screen: say so for a short while
+        (frontend: renderCancelled) instead of just going blank. Carries no
+        event_key, so it can never trigger the alert chime."""
+        self.event = None
+        self.push({"status": "cancelled", "updated_at": self.now_iso()})
 
     def now_iso(self):
         return datetime.now(timezone.utc).isoformat()
@@ -650,6 +777,10 @@ class Listener:
     def check_idle_timeout(self):
         with self.lock:
             st = self.current_state
+            if st.get("status") == "cancelled":
+                if self.minutes_since(st.get("updated_at")) > CANCEL_NOTICE_MINUTES:
+                    self.go_idle()
+                return
             if st.get("status") != "active":
                 return
             if st.get("phase") == "eew":
@@ -686,6 +817,11 @@ class Listener:
             "serial": ev.get("serial"),
             "maturity": ev.get("maturity"),
             "accuracy": ev.get("accuracy"),
+            "first_magnitude": ev.get("first_magnitude"),
+            "first_seen_at": ev.get("first_seen_at"),
+            "is_warning": bool(ev.get("is_warning")),
+            "pref_name": (ev.get("pref") or {}).get("name"),
+            "pref_max": (ev.get("pref") or {}).get("max"),
             "home_area": self.home_info.get("area"),
             "display_step": None,
             "display_source": "none",
@@ -731,7 +867,14 @@ class Listener:
 
     def handle_eew(self, payload):
         info = jma_sources.parse_eew(payload, self.home_info.get("area"))
+        seen = {
+            "event_id": str(payload.get("EventID") or ""), "serial": payload.get("Serial"),
+            "cancel": bool(payload.get("isCancel")), "training": bool(payload.get("isTraining")),
+            "magnitude": payload.get("Magnitude", payload.get("Magunitude")),
+            "hypocenter": payload.get("Hypocenter"),
+        }
         if not info:
+            diag_log("eew_ignored", reason="training, wrong type, or no EventID", **seen)
             return
         if info["kind"] == "eew":
             # Cached before the relevance check below, on purpose: a
@@ -742,8 +885,14 @@ class Listener:
             self._last_eew_received_at = datetime.now(timezone.utc)
         with self.lock:
             if info["kind"] == "eew_cancel":
-                if self.event and self.event.get("eew_id") == info["event_id"]:
-                    self.go_idle()
+                on_screen = bool(self.event and self.event.get("eew_id") == info["event_id"])
+                if on_screen and self.event.get("phase") != "measured":
+                    diag_log("eew_cancel_applied", **seen)
+                    self.show_cancelled()
+                else:
+                    # Either another quake is on screen, nothing is, or measured
+                    # values already replaced the warning (those stay).
+                    diag_log("eew_cancel_not_applied", on_screen=on_screen, **seen)
                 return
             dist = self.epicenter_km(info["lat"], info["lon"])
             relevant = info["area_forecast"] is not None or (dist is not None and dist <= EEW_NOTICE_RADIUS_KM)
@@ -751,9 +900,11 @@ class Listener:
                                    or jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"]))
             if not same:
                 if not relevant:
+                    diag_log("eew_not_relevant", dist_km=dist, **seen)
                     return
                 self.event = {"key": info["event_id"], "origin_time": info["origin_time"]}
             if self.event.get("phase") == "measured":
+                diag_log("eew_ignored_measured_shown", **seen)
                 return  # measured values already on screen; a late warning update must not replace them
             self.event.update(
                 eew_id=info["event_id"], phase="eew", serial=info["serial"],
@@ -762,7 +913,20 @@ class Listener:
                 lat=info["lat"], lon=info["lon"], accuracy=info["accuracy"],
                 jma_max=info["jma_max_forecast"], jma_max_kind="forecast",
                 area_forecast=info["area_forecast"] or self.event.get("area_forecast"),
+                pref=info["pref"] or self.event.get("pref"),
+                is_warning=bool(info.get("is_warning")) or bool(self.event.get("is_warning")),
             )
+            # First magnitude and first-seen time, kept for the "revised since the
+            # first report" and "no measured values yet" notes (see screener_app.html).
+            if self.event.get("first_magnitude") is None and info["magnitude"] is not None:
+                self.event["first_magnitude"] = info["magnitude"]
+            self.event.setdefault("first_seen_at", self.now_iso())
+            af = self.event.get("area_forecast")
+            # Counts and levels only: the prefecture NAME is left out so this file
+            # still holds no monitored location (see docs/privacy.html).
+            diag_log("eew_shown", dist_km=dist, area_from=(af or {}).get("from"), area_to=(af or {}).get("to"),
+                     jma_max=info["jma_max_forecast"], pref_max=(info["pref"] or {}).get("max"),
+                     warn_areas=info["warn_areas"], **seen)
             self.push(self.build_state())
 
     # ------------------------------------------------------------ measured (P2P地震情報)
@@ -828,17 +992,22 @@ class Listener:
         if not step:
             return
         now = self.now_iso()
+        # The saved location name at the time of the reading, so the history can
+        # be told apart when the user changes location (older entries have none).
+        location = (self._home or {}).get("name")
         entries = load_felt_log()
         for e in entries:
             if e.get("event_key") == ev["key"]:
                 e.update(display_step=step, magnitude=ev.get("magnitude"), hypocenter=ev.get("hypocenter"),
-                         station=reading.get("station"), station_km=reading.get("station_km"), updated_at=now)
+                         station=reading.get("station"), station_km=reading.get("station_km"),
+                         location=location, updated_at=now)
                 break
         else:
             entries.append({
                 "event_key": ev["key"], "felt_at": now, "updated_at": now,
                 "display_step": step, "magnitude": ev.get("magnitude"), "hypocenter": ev.get("hypocenter"),
                 "station": reading.get("station"), "station_km": reading.get("station_km"),
+                "location": location,
             })
         save_felt_log(prune_felt_log(entries))
 
@@ -893,6 +1062,8 @@ def main():
             alert_wake_screen=settings.get("alert_wake_screen", "on") == "on",
             alert_volume=settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME),
             sensitivity=settings.get("sensitivity", "normal"),
+            quiet_hours=settings.get("quiet_hours", alert.DEFAULT_QUIET_HOURS) == "on",
+            alert_voice=settings.get("alert_voice", alert.DEFAULT_ALERT_VOICE),
         )
         listener_holder["instance"] = listener
         threading.Thread(target=listener.run, daemon=True).start()
@@ -922,6 +1093,8 @@ def main():
             alert_wake_screen = settings.get("alert_wake_screen", "on")
             alert_volume = settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME)
             sensitivity = settings.get("sensitivity", "normal")
+            quiet_hours = settings.get("quiet_hours", alert.DEFAULT_QUIET_HOURS)
+            alert_voice = settings.get("alert_voice", alert.DEFAULT_ALERT_VOICE)
             window.evaluate_js(f"window.applyLanguageOnly({json.dumps(lang)})")
             window.evaluate_js(f"window.applyTimeFormatOnly({json.dumps(time_fmt)})")
             window.evaluate_js(f"window.applyTextScaleOnly({json.dumps(text_scale)})")
@@ -930,6 +1103,8 @@ def main():
             window.evaluate_js(f"window.applyAlertWakeScreenOnly({json.dumps(alert_wake_screen)})")
             window.evaluate_js(f"window.applyAlertVolumeOnly({json.dumps(alert_volume)})")
             window.evaluate_js(f"window.applySensitivityOnly({json.dumps(sensitivity)})")
+            window.evaluate_js(f"window.applyQuietHoursOnly({json.dumps(quiet_hours)})")
+            window.evaluate_js(f"window.applyAlertVoiceOnly({json.dumps(alert_voice)})")
             window.evaluate_js(f"window.showMainScreen({json.dumps(settings['name'])})")
             start_listener(settings)
         else:

@@ -53,6 +53,7 @@
 
     <h2>お使いのPCに保存される情報</h2>
     <p>監視地点（地名と緯度・経度）、言語、時刻表示、文字サイズ、アラートの設定は、お使いのPC内の設定ファイル（<code>%APPDATA%\ShindoScreener\settings.json</code>）にのみ保存されます。これらが開発者に送信されることはありません。</p>
+    <p>アプリは、PC内に次の2つの記録も保存します（どちらも開発者には送信されません）：実際に体感した地震の履歴（felt_log.json、30日間保存。各記録には、そのとき設定していた地点名も含まれます）と、受信した緊急地震速報の診断記録（eew_diagnostics.jsonl、30日間保存）。診断記録には、気象庁の発表内容（規模、震源名など）とアプリの処理結果が含まれ、監視地点の情報は含まれません。</p>
 
     <h2>外部サービスとの通信</h2>
     <ul>
@@ -83,6 +84,7 @@
 
     <h2>Information stored on your PC</h2>
     <p>Your monitored location (place name, latitude, and longitude), language, time format, text size, and alert settings are saved only in a settings file on your PC (<code>%APPDATA%\ShindoScreener\settings.json</code>). They are never sent to the developer.</p>
+    <p>The app also keeps two records on your PC, and neither is sent to the developer: a history of earthquakes you actually felt (<code>felt_log.json</code>, kept 30 days; each entry includes the name of the location you had saved at the time) and a diagnostic record of the early warnings it received (<code>eew_diagnostics.jsonl</code>, kept 30 days). The diagnostic record holds what JMA's message said (magnitude, epicenter name, and so on) and what the app did with it. It does not include your monitored location.</p>
 
     <h2>Connections to outside services</h2>
     <ul>
