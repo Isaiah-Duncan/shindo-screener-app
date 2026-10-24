@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-24T03:58:55Z",
- "count": 214,
+ "updated_at": "2026-10-24T12:55:39Z",
+ "count": 215,
  "events": [
+  {
+   "id": "20261024210818",
+   "time": "2026-10-24T21:08:00+09:00",
+   "location_ja": "薩摩半島西方沖",
+   "lat": 31.2,
+   "lon": 129.9,
+   "depth_km": 0.0,
+   "magnitude": 3.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261024124440",
    "time": "2026-10-24T12:44:00+09:00",
