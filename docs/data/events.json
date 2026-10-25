@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-25T01:26:13Z",
- "count": 217,
+ "updated_at": "2026-10-25T06:28:22Z",
+ "count": 220,
  "events": [
+  {
+   "id": "20261025150429",
+   "time": "2026-10-25T15:04:00+09:00",
+   "location_ja": "福島県沖",
+   "lat": 37.8,
+   "lon": 141.8,
+   "depth_km": 40.0,
+   "magnitude": 4.2,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261025122323",
+   "time": "2026-10-25T12:23:00+09:00",
+   "location_ja": "苫小牧沖",
+   "lat": 41.9,
+   "lon": 141.7,
+   "depth_km": 90.0,
+   "magnitude": 3.7,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261025111028",
+   "time": "2026-10-25T11:09:00+09:00",
+   "location_ja": "小笠原諸島西方沖",
+   "lat": 28.0,
+   "lon": 139.9,
+   "depth_km": 470.0,
+   "magnitude": 7.0,
+   "max_shindo": "3",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261025085944",
    "time": "2026-10-25T08:59:00+09:00",
