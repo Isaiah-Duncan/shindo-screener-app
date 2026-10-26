@@ -626,7 +626,7 @@
       <div class="readout-note" id="readoutNote"></div>
     </div>
   </div>
-  <div class="map-wrap" id="mapWrap" aria-hidden="true"><svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><g id="mapG"></g><g id="mapEpi"></g></svg></div>
+  <div class="map-wrap" id="mapWrap" aria-hidden="true"><svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><g id="mapG"></g></svg></div>
   <div class="idle-line" id="idleLine"></div>
   <div class="bottom-row">
     <button class="gear-btn" id="gearBtn" onclick="openSettings()" title="Settings" aria-label="Settings">
@@ -1043,7 +1043,7 @@ window.openPostQuakeBadge = openPostQuakeBadge;
 // draws JMA's numbers on a map. No map is shown if the saved place has no town code.
 const MAP_NS = 'http://www.w3.org/2000/svg';
 let geo = null, geoKey = null, geoPending = false;
-let mapView = null, mapAnimId = 0, mapZoomedKey = null, mapEpi = null;
+let mapView = null, mapAnimId = 0, mapZoomedKey = null;
 
 function mapProject(c, k) { return [c[0] * k, -c[1]]; }
 function prepGeo(res) {
@@ -1097,45 +1097,6 @@ function mapSetView(v) {
   document.getElementById('mapSvg').setAttribute('viewBox', v.join(' '));
   const sc = v[2] / 100;
   geo.towns.forEach((t) => t.el.setAttribute('stroke-width', ((t.home ? 2.2 : 0.9) * sc * 0.6).toFixed(5)));
-  drawEpi();
-}
-// Epicenter marker: a dot when the epicenter is inside the current view, otherwise an arrow
-// on the edge of the map pointing toward it, with the distance from the saved place.
-function drawEpi() {
-  const g = document.getElementById('mapEpi');
-  if (!g) return;
-  g.innerHTML = '';
-  if (!mapEpi || !mapView) return;
-  const v = mapView, sc = v[2] / 100, k = Math.cos(40 * Math.PI / 180);
-  const px = mapEpi.lon * k, py = -mapEpi.lat;
-  const cx = v[0] + v[2] / 2, cy = v[1] + v[3] / 2;
-  const m = 5 * sc, ink = '#f5f5f0';
-  const mk = (tag, attrs) => { const e = document.createElementNS(MAP_NS, tag); for (const a in attrs) e.setAttribute(a, attrs[a]); g.appendChild(e); return e; };
-  const label = (x, y, anchor) => {
-    if (mapEpi.km == null) return;
-    const t = mk('text', { x: x.toFixed(4), y: y.toFixed(4), 'text-anchor': anchor, 'font-size': (3.4 * sc).toFixed(4), 'font-weight': '700', fill: ink, stroke: 'rgba(0,0,0,0.75)', 'stroke-width': (0.9 * sc).toFixed(4), 'paint-order': 'stroke', 'font-family': 'DM Sans, sans-serif' });
-    t.textContent = mapEpi.ja ? `震源 約${mapEpi.km} km` : `Epicenter ~${mapEpi.km} km`;
-  };
-  const inside = px > v[0] + m && px < v[0] + v[2] - m && py > v[1] + m && py < v[1] + v[3] - m;
-  if (inside) {
-    mk('circle', { cx: px.toFixed(4), cy: py.toFixed(4), r: (2.2 * sc).toFixed(4), fill: 'none', stroke: ink, 'stroke-width': (0.7 * sc).toFixed(4) });
-    mk('circle', { cx: px.toFixed(4), cy: py.toFixed(4), r: (0.8 * sc).toFixed(4), fill: ink });
-    label(px, py - 3.4 * sc, 'middle');
-    return;
-  }
-  let dx = px - cx, dy = py - cy;
-  const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
-  const hx = v[2] / 2 - m, hy = v[3] / 2 - m;
-  const t = Math.min(Math.abs(dx) > 1e-9 ? hx / Math.abs(dx) : 1e9, Math.abs(dy) > 1e-9 ? hy / Math.abs(dy) : 1e9);
-  const qx = cx + dx * t, qy = cy + dy * t, a = 2.6 * sc;
-  const tip = [qx + dx * a, qy + dy * a], l = [qx - dx * a * 0.6 - dy * a * 0.8, qy - dy * a * 0.6 + dx * a * 0.8], r = [qx - dx * a * 0.6 + dy * a * 0.8, qy - dy * a * 0.6 - dx * a * 0.8];
-  mk('polygon', { points: [tip, l, r].map((p) => p[0].toFixed(4) + ',' + p[1].toFixed(4)).join(' '), fill: ink });
-  if (Math.abs(dx) >= Math.abs(dy) * 0.5) {
-    // mostly sideways: text beside the arrow, on the map side of it
-    label(qx - Math.sign(dx) * a * 1.7, qy + 1.2 * sc, dx > 0 ? 'end' : 'start');
-  } else {
-    label(Math.min(v[0] + v[2] - 14 * sc, Math.max(v[0] + 14 * sc, qx)), qy - Math.sign(dy) * a * 1.7 + (dy > 0 ? 0 : 3.4 * sc), 'middle');
-  }
 }
 function mapAnimate(to, ms) {
   const from = mapView, id = ++mapAnimId, t0 = performance.now();
@@ -1150,8 +1111,7 @@ function mapAnimate(to, ms) {
 }
 function hideMap() {
   els.screen.classList.remove('has-map');
-  mapAnimId++; mapView = null; mapZoomedKey = null; mapEpi = null;
-  const eg = document.getElementById('mapEpi'); if (eg) eg.innerHTML = '';
+  mapAnimId++; mapView = null; mapZoomedKey = null;
 }
 function renderMap(state) {
   const src = state.display_source;
@@ -1163,8 +1123,6 @@ function renderMap(state) {
   if (!geo) { hideMap(); return; }
   const fc = state.area_forecast;
   const prefStep = state.pref_max || (fc && (fc.to || fc.from)) || state.alert_step;
-  mapEpi = (state.epi_lat != null && state.epi_lon != null)
-    ? { lat: state.epi_lat, lon: state.epi_lon, km: state.epicenter_km, ja: currentLang === 'ja' } : null;
   if (!mapBuilt) mapBuild();
   els.screen.classList.add('has-map');
   const fullView = mapFit(geo.bb, 0.06, 100, 100 * (document.getElementById('mapWrap').clientHeight || 1) / (document.getElementById('mapWrap').clientWidth || 1));

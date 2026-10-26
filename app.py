@@ -811,8 +811,6 @@ class Listener:
             "depth_km": ev.get("depth_km"),
             "hypocenter": ev.get("hypocenter"),
             "epicenter_km": self.epicenter_km(ev.get("lat"), ev.get("lon")),
-            "epi_lat": ev.get("lat"),
-            "epi_lon": ev.get("lon"),
             "jma_max": ev.get("jma_max"),
             "jma_max_kind": ev.get("jma_max_kind"),
             "tsunami_warning": ev.get("tsunami"),
