@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-26T13:32:54Z",
- "count": 227,
+ "updated_at": "2026-10-26T19:33:25Z",
+ "count": 230,
  "events": [
+  {
+   "id": "20261027021559",
+   "time": "2026-10-27T02:15:00+09:00",
+   "location_ja": "広島県南西部",
+   "lat": 34.4,
+   "lon": 132.5,
+   "depth_km": 20.0,
+   "magnitude": 2.7,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261026233416",
+   "time": "2026-10-26T23:34:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.2,
+   "lon": 130.4,
+   "depth_km": 0.0,
+   "magnitude": 2.6,
+   "max_shindo": "3",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261026231138",
+   "time": "2026-10-26T23:11:00+09:00",
+   "location_ja": "山口県東部",
+   "lat": 34.3,
+   "lon": 132.1,
+   "depth_km": 20.0,
+   "magnitude": 3.2,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261026184744",
    "time": "2026-10-26T18:47:00+09:00",
