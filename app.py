@@ -1264,6 +1264,14 @@ class Listener:
         (today's own event, if it's already been logged). None if this
         would be the first felt earthquake on record."""
         entries = [e for e in load_felt_log() if e.get("event_key") != exclude_key]
+        # "Last felt here" is about the place on screen. While following a quake or viewing
+        # another city, only entries logged for that same place count (the saved place's own
+        # history would otherwise show up under the wrong name).
+        here = (self._home or {}).get("name")
+        if self.base_home is not None:
+            entries = [e for e in entries if e.get("location") == here]
+        elif here:
+            entries = [e for e in entries if e.get("location") in (None, here)]
         if not entries:
             return None
         return max(entries, key=lambda e: e.get("felt_at") or "").get("felt_at")
