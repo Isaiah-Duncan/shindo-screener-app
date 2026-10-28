@@ -1,8 +1,80 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-28T14:42:06Z",
- "count": 241,
+ "updated_at": "2026-10-28T19:52:31Z",
+ "count": 247,
  "events": [
+  {
+   "id": "20261029033230",
+   "time": "2026-10-29T03:32:00+09:00",
+   "location_ja": "千葉県北東部",
+   "lat": 35.7,
+   "lon": 140.7,
+   "depth_km": 50.0,
+   "magnitude": 4.4,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261029024518",
+   "time": "2026-10-29T02:45:00+09:00",
+   "location_ja": "茨城県北部",
+   "lat": 36.8,
+   "lon": 140.5,
+   "depth_km": 10.0,
+   "magnitude": 3.1,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261029010430",
+   "time": "2026-10-29T01:04:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.3,
+   "lon": 130.5,
+   "depth_km": 10.0,
+   "magnitude": 2.4,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261029005006",
+   "time": "2026-10-29T00:50:00+09:00",
+   "location_ja": "紀伊水道",
+   "lat": 34.1,
+   "lon": 135.1,
+   "depth_km": 10.0,
+   "magnitude": 2.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261029000759",
+   "time": "2026-10-29T00:07:00+09:00",
+   "location_ja": "千葉県北東部",
+   "lat": 35.7,
+   "lon": 140.7,
+   "depth_km": 50.0,
+   "magnitude": 5.5,
+   "max_shindo": "5-",
+   "report_type": "顕著な地震の震源要素更新のお知らせ",
+   "info_ja": null
+  },
+  {
+   "id": "20261028235446",
+   "time": "2026-10-28T23:54:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.6,
+   "lon": 130.6,
+   "depth_km": 10.0,
+   "magnitude": 3.0,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261028171732",
    "time": "2026-10-28T17:17:00+09:00",
