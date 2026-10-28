@@ -208,6 +208,7 @@ SETTINGS_DEFAULTS = {
     "quiet_hours": alert.DEFAULT_QUIET_HOURS,
     "alert_voice": alert.DEFAULT_ALERT_VOICE,
     "sensitivity": "normal",
+    "follow_quake": "off",   # beta: switch the monitored place to the one nearest each quake's epicenter
 }
 
 
@@ -580,6 +581,20 @@ class Api:
             listener.alert_voice = value
         return {"ok": True}
 
+    def set_follow_quake(self, value):
+        """Beta. "on": for each new quake the app shows the place nearest its epicenter instead of
+        the saved place, then returns to the saved place when the quake leaves the screen. Never
+        changes the saved location."""
+        if value not in ("on", "off"):
+            return {"ok": False, "error": f"Not a follow setting: {value}"}
+        existing = load_settings()
+        if existing:
+            save_settings(merged_settings(existing, follow_quake=value))
+        listener = self._get_listener()
+        if listener is not None:
+            listener.set_follow(value == "on")
+        return {"ok": True}
+
     def preview_alert_sound(self, volume):
         """Plays the chosen volume preset once, sound only, so a person
         can hear how loud Quiet/Normal/Loud is before picking one. No
@@ -665,7 +680,8 @@ class Listener:
 
     def __init__(self, window, home, alert_min_step=alert.DEFAULT_ALERT_MIN_STEP,
                  alert_wake_screen=True, alert_volume=alert.DEFAULT_ALERT_VOLUME,
-                 sensitivity="normal", quiet_hours=True, alert_voice=alert.DEFAULT_ALERT_VOICE):
+                 sensitivity="normal", quiet_hours=True, alert_voice=alert.DEFAULT_ALERT_VOICE,
+                 follow_quake=False):
         self.window = window
         self.stations = jma_sources.load_stations(resource_path(STATIONS_JSON_RELATIVE_PATH))
         self._home = None
@@ -682,6 +698,9 @@ class Listener:
         self.current_state = dict(IDLE_STATE)
         self.event = None        # the quake currently on screen
         self.alerted = set()     # event keys that already chimed
+        self.follow_quake = follow_quake   # beta mode, see set_follow
+        self.base_home = None    # the saved place, while a followed place is shown
+        self.beta_ticked = set() # event keys that already played the beta wood tick
         self.lock = threading.Lock()
         # Mutated directly by the Api set_alert_* methods when the user
         # changes a setting, so a change takes effect on the very next
@@ -726,9 +745,54 @@ class Listener:
                 and (now - self._last_measured_received_at).total_seconds() <= HOME_CHANGE_REPLAY_MINUTES * 60):
             self.handle_measured(self._last_measured_msg)
 
+    # ------------------------------------------------------------ beta: follow the quake
+
+    def set_follow(self, on):
+        self.follow_quake = bool(on)
+        if not on:
+            self.restore_home()
+            if self.current_state.get("status") == "active":
+                self.push(self.build_state()) if self.event else self.go_idle()
+
+    def nearest_place(self, lat, lon):
+        """The place in places_jp.json closest to a point, as a home dict, or None."""
+        best, best_d = None, None
+        for p in _load_places():
+            d = jma_sources.haversine_km(lat, lon, p["a"], p["o"])
+            if best_d is None or d < best_d:
+                best, best_d = p, d
+        if best is None:
+            return None
+        lang = (load_settings() or {}).get("language", "en")
+        name = best["e"] if lang != "ja" else best["p"] + best["j"]
+        return {"name": name, "lat": best["a"], "lon": best["o"]}
+
+    def follow_epicenter(self, lat, lon):
+        """Show the place nearest the epicenter. Does not touch the saved location and does not
+        replay old messages (the caller re-parses the message it is handling)."""
+        if lat is None or lon is None:
+            return False
+        place = self.nearest_place(lat, lon)
+        if place is None:
+            return False
+        if self.base_home is None:
+            self.base_home = self._home
+        self._home = place
+        self.home_info = jma_sources.locate_home(place, self.stations)
+        diag_log("follow_quake_switched")
+        return True
+
+    def restore_home(self):
+        if self.base_home is not None:
+            self._home = self.base_home
+            self.home_info = jma_sources.locate_home(self._home, self.stations)
+            self.base_home = None
+
     # ------------------------------------------------------------ output
 
     def push(self, state):
+        # Which place the screen is showing, so the screen can follow a switch (beta).
+        state = dict(state, monitoring=(self._home or {}).get("name"), following=self.base_home is not None)
         self.current_state = state
         try:
             self.window.evaluate_js(f"window.applyState({json.dumps(state, ensure_ascii=False)})")
@@ -753,9 +817,15 @@ class Listener:
                 state=state, quiet_hours=self.quiet_hours, voice=self.alert_voice,
                 lang=(load_settings() or {}).get("language", "en"),
             )
+            self.beta_ticked.add(key)
+        elif (self.follow_quake and not is_test and key and key not in self.beta_ticked
+                and state.get("status") == "active"):
+            self.beta_ticked.add(key)
+            alert.trigger_beta(self.window, resource_path, wake_screen=self.alert_wake_screen)
 
     def go_idle(self):
         self.event = None
+        self.restore_home()
         self.push(dict(IDLE_STATE, updated_at=self.now_iso()))
 
     def show_cancelled(self):
@@ -763,6 +833,7 @@ class Listener:
         (frontend: renderCancelled) instead of just going blank. Carries no
         event_key, so it can never trigger the alert chime."""
         self.event = None
+        self.restore_home()
         self.push({"status": "cancelled", "updated_at": self.now_iso()})
 
     def now_iso(self):
@@ -894,6 +965,11 @@ class Listener:
                     # values already replaced the warning (those stay).
                     diag_log("eew_cancel_not_applied", on_screen=on_screen, **seen)
                 return
+            if self.follow_quake and info["lat"] is not None and not (
+                    self.event and (self.event.get("eew_id") == info["event_id"]
+                                    or jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"]))):
+                if self.follow_epicenter(info["lat"], info["lon"]):
+                    info = jma_sources.parse_eew(payload, self.home_info.get("area")) or info
             dist = self.epicenter_km(info["lat"], info["lon"])
             relevant = info["area_forecast"] is not None or (dist is not None and dist <= EEW_NOTICE_RADIUS_KM)
             same = self.event and (self.event.get("eew_id") == info["event_id"]
@@ -943,6 +1019,9 @@ class Listener:
         self._last_measured_received_at = datetime.now(timezone.utc)
         with self.lock:
             same = self.event and jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"])
+            if not same and self.follow_quake and info.get("lat") is not None:
+                if self.follow_epicenter(info["lat"], info["lon"]):
+                    info = jma_sources.parse_p2p_quake(msg, self.home_info) or info
             if not same:
                 if not info["felt_near_user"]:
                     return  # not felt at the user's nearest station: stay quiet
@@ -1007,7 +1086,7 @@ class Listener:
                 "event_key": ev["key"], "felt_at": now, "updated_at": now,
                 "display_step": step, "magnitude": ev.get("magnitude"), "hypocenter": ev.get("hypocenter"),
                 "station": reading.get("station"), "station_km": reading.get("station_km"),
-                "location": location,
+                "location": location, "beta_follow": self.base_home is not None or None,
             })
         save_felt_log(prune_felt_log(entries))
 
@@ -1064,6 +1143,7 @@ def main():
             sensitivity=settings.get("sensitivity", "normal"),
             quiet_hours=settings.get("quiet_hours", alert.DEFAULT_QUIET_HOURS) == "on",
             alert_voice=settings.get("alert_voice", alert.DEFAULT_ALERT_VOICE),
+            follow_quake=settings.get("follow_quake", "off") == "on",
         )
         listener_holder["instance"] = listener
         threading.Thread(target=listener.run, daemon=True).start()
@@ -1105,6 +1185,7 @@ def main():
             window.evaluate_js(f"window.applySensitivityOnly({json.dumps(sensitivity)})")
             window.evaluate_js(f"window.applyQuietHoursOnly({json.dumps(quiet_hours)})")
             window.evaluate_js(f"window.applyAlertVoiceOnly({json.dumps(alert_voice)})")
+            window.evaluate_js(f"window.applyFollowQuakeOnly({json.dumps(settings.get('follow_quake', 'off'))})")
             window.evaluate_js(f"window.showMainScreen({json.dumps(settings['name'])})")
             start_listener(settings)
         else:

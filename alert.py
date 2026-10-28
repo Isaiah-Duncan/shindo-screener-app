@@ -58,6 +58,7 @@ QUIET_START_HOUR = 22
 QUIET_END_HOUR = 7
 STRONG_STEP = "5-"
 SOFT_SOUND_FILE = "alert_soft.wav"
+BETA_SOUND_FILE = "alert_beta.wav"   # wood tick, used by the beta "follow the quake" mode
 
 # Spoken lines. A recorded clip at voices/<lang>/<key>.wav is used when present
 # (see voices/SCRIPT.md); otherwise a voice installed in Windows reads the text,
@@ -180,6 +181,16 @@ def trigger(window, resource_path_fn, wake_screen=DEFAULT_ALERT_WAKE_SCREEN, vol
     threading.Thread(
         target=_run, args=(window, resource_path_fn, p, lang), daemon=True
     ).start()
+
+
+def trigger_beta(window, resource_path_fn, wake_screen=DEFAULT_ALERT_WAKE_SCREEN):
+    """Beta "follow the quake" mode: one wood tick when the screen starts showing a quake for
+    the followed location. Fire-and-forget like trigger(). Not held back by quiet hours, because
+    the point of the beta is to be heard while testing."""
+    if not IS_WINDOWS:
+        return
+    p = {"tier": "beta", "sound": "beta", "voice_key": None, "voice_first": False, "wake": wake_screen}
+    threading.Thread(target=_run, args=(window, resource_path_fn, p, "en"), daemon=True).start()
 
 
 def _run(window, resource_path_fn, p, lang):
@@ -320,7 +331,9 @@ def _speak(resource_path_fn, key, lang, cut_chime=False):
 def _play_sound(resource_path_fn, volume):
     try:
         import winsound
-        if volume == "soft":
+        if volume == "beta":
+            relative_path = BETA_SOUND_FILE
+        elif volume == "soft":
             relative_path = SOFT_SOUND_FILE
         else:
             relative_path = ALERT_SOUND_FILES.get(volume, ALERT_SOUND_FILES[DEFAULT_ALERT_VOLUME])

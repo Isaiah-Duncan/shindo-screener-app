@@ -779,6 +779,10 @@
           <div class="yours-title" data-i18n="alertVoice">Spoken message</div>
           <div class="seg-group" id="voiceGroup"></div>
           <div class="yours-help" data-i18n="voiceHelp">A short spoken line after the chime. Warnings only is the default.</div>
+          <div class="yours-sep"></div>
+          <div class="yours-title" data-i18n="followTitle">Follow the quake (beta)</div>
+          <div class="seg-group" id="followGroup"></div>
+          <div class="yours-help" data-i18n="followHelp">For testing. When a quake happens, the screen shows the place nearest its epicenter instead of your saved place, with a wood tick, then returns. Your saved place does not change.</div>
         </div>
       </div>
     </section>
@@ -1341,6 +1345,8 @@ const NEW_STRINGS = {
     alertVoice: "Spoken message",
     voiceHelp: "A short spoken line after the chime. Warnings only is the default. This app does not replace your phone's warning.",
     voiceWarning: "Warnings only", voiceAll: "All alerts", voiceOff: "Off",
+    followTitle: "Follow the quake (beta)", followOn: "On", followOff: "Off", followTag: "following the quake",
+    followHelp: "For testing. When a quake happens, the screen shows the place nearest its epicenter instead of your saved place, with a wood tick, then returns. Your saved place does not change.",
     testPlaying: "Playing the {vol} alarm once.",
     supportSub: "Data sources and bug reports.",
     aboutData: "About the data",
@@ -1407,6 +1413,8 @@ const NEW_STRINGS = {
     alertVoice: "音声メッセージ",
     voiceHelp: "チャイムのあとに短い音声で知らせます。初期設定は「警報のみ」です。このアプリは携帯電話の警報の代わりにはなりません。",
     voiceWarning: "警報のみ", voiceAll: "すべての通知", voiceOff: "オフ",
+    followTitle: "地震を追う(ベータ)", followOn: "オン", followOff: "オフ", followTag: "震源に最も近い地点",
+    followHelp: "テスト用です。地震が起きると、登録した地点ではなく震源に最も近い地点を表示し、木の音で知らせたあと元に戻ります。登録した地点は変わりません。",
     testPlaying: "{vol}の音量で1回再生中です。",
     supportSub: "データの提供元と不具合の報告です。",
     aboutData: "データについて",
@@ -1777,6 +1785,9 @@ function renderAlertsPage() {
   document.getElementById('quietGroup').innerHTML = ['on', 'off'].map((v) => (
     `<button class="seg${v === currentQuietHours ? ' active' : ''}" onclick="setQuietHours('${v}')">${s['quiet' + (v === 'on' ? 'On' : 'Off')]}</button>`
   )).join('');
+  document.getElementById('followGroup').innerHTML = ['on', 'off'].map((v) => (
+    `<button class="seg${v === currentFollowQuake ? ' active' : ''}" onclick="setFollowQuake('${v}')">${s['follow' + (v === 'on' ? 'On' : 'Off')]}</button>`
+  )).join('');
   document.getElementById('voiceGroup').innerHTML = ['warning', 'all', 'off'].map((v) => (
     `<button class="seg${v === currentAlertVoice ? ' active' : ''}" onclick="setAlertVoice('${v}')">${s['voice' + v.charAt(0).toUpperCase() + v.slice(1)]}</button>`
   )).join('');
@@ -1835,6 +1846,10 @@ window.applySensitivityOnly = applySensitivityOnly;
 let currentAlertVolume = 'normal';
 let currentQuietHours = 'on';
 let currentAlertVoice = 'warning';
+let currentFollowQuake = 'off';
+function setFollowQuake(v) { currentFollowQuake = v; if (window.pywebview) window.pywebview.api.set_follow_quake(v); renderAlertsPage(); }
+window.setFollowQuake = setFollowQuake;
+window.applyFollowQuakeOnly = function (v) { currentFollowQuake = v === 'on' ? 'on' : 'off'; renderAlertsPage(); };
 function setQuietHours(v) { currentQuietHours = v; if (window.pywebview) window.pywebview.api.set_quiet_hours(v); renderAlertsPage(); }
 function setAlertVoice(v) { currentAlertVoice = v; if (window.pywebview) window.pywebview.api.set_alert_voice(v); renderAlertsPage(); }
 window.setQuietHours = setQuietHours; window.setAlertVoice = setAlertVoice;
@@ -2343,7 +2358,18 @@ function renderActive(state) {
     : '';
 }
 
+function followLabel(following) {
+  const s = STRINGS[currentLang];
+  els.locationLabel.textContent = `${s.monitoring}: ${currentHomeName}` + (following ? ` (${s.followTag})` : '');
+}
+
 function applyState(state) {
+  // Beta "follow the quake": the app may be showing a different place than the saved one.
+  if (state.monitoring && state.monitoring !== currentHomeName) {
+    currentHomeName = state.monitoring;
+    geo = null; geoKey = null; mapBuilt = false;
+  }
+  if (state.monitoring) followLabel(!!state.following);
   if (state.status === 'active') {
     renderActive(state);
   } else if (state.status === 'cancelled') {
