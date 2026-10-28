@@ -103,12 +103,12 @@
   .screen:not(.details-open) #metaText { display: none; }
   /* Map: the saved prefecture while a warning is up, then a zoom to the saved town once
      JMA reports a measured value. Drawing only; every value on it is JMA's. */
-  .map-wrap { position: absolute; left: 54vw; right: 3vw; top: 13vh; bottom: 15vh; display: none; pointer-events: none; z-index: 1; }
+  .map-wrap { position: absolute; left: 54vw; right: 3vw; top: 19vh; bottom: 17vh; display: none; pointer-events: none; z-index: 1; }
   .screen.has-map .map-wrap { display: block; }
   .map-wrap svg { width: 100%; height: 100%; overflow: hidden; }
   /* A dark panel behind the map keeps every band color readable, including when the shaded color equals the screen color. */
   .map-wrap { background: rgba(0,0,0,0.34); border-radius: 2vh; overflow: hidden; }
-  .screen.has-map .readout, .screen.has-map .readout-note { max-width: 50vw; }
+  .screen.has-map .readout, .screen.has-map .readout-note { max-width: 46vw; }
   .details-btn { align-self: flex-start; text-align: left; display: none; background: none; border: none; color: inherit; font: inherit; font-size: var(--tier4-size); font-weight: 600; text-decoration: underline; opacity: 0.7; padding: 0.3em 0; cursor: pointer; margin-top: 0.4vh; }
   .details-btn:hover, .details-btn:focus-visible { opacity: 1; }
   .dismiss-btn #dismissBtnLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -228,6 +228,30 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
+  .cities-btn { margin-top: 0.6vh; }
+  .cities-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; padding: 3vh 4vw; }
+  .cities-card { background: #141412; color: #f5f5f0; border-radius: 16px; width: min(760px, 100%); max-height: 100%; overflow: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px; font-family: inherit; }
+  .cities-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .cities-title { font-size: 22px; font-weight: 700; }
+  .cities-sub { font-size: 15px; opacity: 0.7; margin-top: 4px; }
+  .cities-list { display: flex; flex-direction: column; gap: 6px; }
+  .city-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; background: #1f1f1c; border: 1px solid transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .city-row:hover, .city-row:focus-visible { border-color: #f5f5f0; }
+  .city-row.disabled { cursor: default; opacity: 0.6; }
+  .city-row.disabled:hover { border-color: transparent; }
+  .city-name { font-size: 18px; font-weight: 700; }
+  .city-meta { font-size: 13px; opacity: 0.65; margin-top: 2px; }
+  .city-chip { min-width: 64px; text-align: center; padding: 6px 12px; border-radius: 8px; font-size: 20px; font-weight: 700; }
+  .city-chip.none { background: #2a2a27; color: #f5f5f0; font-size: 14px; font-weight: 600; }
+  .cities-note { font-size: 13px; opacity: 0.65; line-height: 1.45; }
+  .cities-tabs { display: flex; gap: 8px; }
+  .after-row { display: grid; grid-template-columns: 74px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 10px; background: #1f1f1c; }
+  .after-time { font-size: 15px; opacity: 0.75; }
+  .after-main { font-size: 17px; font-weight: 700; }
+  .after-felt { font-size: 13px; opacity: 0.7; margin-top: 2px; }
+  .cities-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .cities-status { font-size: 14px; min-height: 1.2em; opacity: 0.85; }
+  .location-label .follow-tag { display: block; font-size: var(--tier4-size); font-weight: 600; opacity: 0.7; letter-spacing: 0.05em; }
 
   /* The gear button lives in normal document flow alongside the
      bottom-left text block (.meta) and the location label, as three
@@ -243,9 +267,7 @@
     min-width: 0;
   }
   .bottom-row .meta-wrap .meta {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
   /* "Last felt here: ..." line (see renderActive): plain context, not
      a warning, so it sits visually subordinate to .meta above it. */
@@ -608,6 +630,7 @@
       <div id="jmaMaxLine" class="meta-line-2"></div>
       <div id="maturityLine" class="meta-line-3"></div>
       <button type="button" class="details-btn" id="detailsBtn" onclick="toggleDetails()" aria-expanded="false"></button>
+      <button type="button" class="details-btn cities-btn" id="citiesBtn" onclick="openCities()"></button>
     </div>
     <div class="datetime">
       <span class="date" id="dateEl"></span>
@@ -640,6 +663,31 @@
       <div class="meta meta-sub" id="lastFeltText"></div>
     </div>
     <div class="location-label" id="locationLabel"></div>
+  </div>
+</div>
+
+<div class="cities-overlay" id="citiesOverlay" style="display:none;" onclick="if(event.target===this)closeCities()">
+  <div class="cities-card" role="dialog" aria-modal="true" aria-labelledby="citiesTitle">
+    <div class="cities-head">
+      <div>
+        <div class="cities-title" id="citiesTitle"></div>
+        <div class="cities-sub" id="citiesSub"></div>
+      </div>
+      <button type="button" class="ghost" onclick="closeCities()" id="citiesClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="cities-tabs" id="citiesTabs">
+      <button type="button" class="seg active" id="tabCities" onclick="setCitiesTab('cities')"></button>
+      <button type="button" class="seg" id="tabAfter" onclick="setCitiesTab('after')"></button>
+    </div>
+    <div class="cities-list" id="citiesList"></div>
+    <div class="cities-note" id="citiesNote"></div>
+    <div class="cities-actions">
+      <button type="button" class="ghost" id="citiesBack" onclick="citiesBack()" style="display:none;"></button>
+      <button type="button" class="ghost" id="citiesCopyJa" onclick="citiesCopyText('ja')">Copy post (日本語)</button>
+      <button type="button" class="ghost" id="citiesCopyEn" onclick="citiesCopyText('en')">Copy post (English)</button>
+      <button type="button" class="ghost" id="citiesSave" onclick="citiesSaveImage()"></button>
+    </div>
+    <div class="cities-status" id="citiesStatus"></div>
   </div>
 </div>
 
@@ -1067,7 +1115,7 @@ function prepGeo(res) {
   return { towns, bb, hb };
 }
 function ensureGeo() {
-  if (geo && geoKey === currentHomeName) return;
+  if (geoKey === currentHomeName) return;   // also when the last try found no outline: do not ask again in a loop
   if (geoPending || !window.pywebview || !window.pywebview.api.get_map) return;
   geoPending = true;
   const key = currentHomeName;
@@ -1345,6 +1393,8 @@ const NEW_STRINGS = {
     alertVoice: "Spoken message",
     voiceHelp: "A short spoken line after the chime. Warnings only is the default. This app does not replace your phone's warning.",
     voiceWarning: "Warnings only", voiceAll: "All alerts", voiceOff: "Off",
+    citiesBtn: "Cities", citiesTitle: "Nearest big cities", citiesNone: "No measured report yet. JMA usually sends one within a few minutes of the quake.", citiesOld: "The latest quake is too old to list.",
+    citiesBelow: "Below 1", citiesNoReport: "No report", citiesBack: "Back to my location", citiesCopy: "Copy post text", citiesSave: "Save images (日本語 + English)", citiesTabCities: "Cities", citiesTabAfter: "Aftershocks", afterNone: "No aftershocks reported yet near this quake.", afterNoMain: "No strong quake in the last 3 days.", afterNote: "Quakes JMA reported within 80 km of the strongest recent quake, after it. Cities show JMA's measured value at their nearest station.", afterNoCity: "no big city reported", citiesCopied: "Copied. Paste it into your post.", citiesSaved: "Image saved to", citiesFail: "Could not do that.", citiesNote: "Each value is JMA's measured intensity at the city's nearest station. \"Below 1\" means JMA listed no Shindo 1 or more there. Tap a city to show it on the main screen.", viewTag: "viewing this city", citiesKm: "km from epicenter",
     followTitle: "Follow the quake (beta)", followOn: "On", followOff: "Off", followTag: "following the quake",
     followHelp: "For testing. When a quake happens, the screen shows the place nearest its epicenter instead of your saved place, with a wood tick, then returns. Your saved place does not change.",
     testPlaying: "Playing the {vol} alarm once.",
@@ -1413,6 +1463,8 @@ const NEW_STRINGS = {
     alertVoice: "音声メッセージ",
     voiceHelp: "チャイムのあとに短い音声で知らせます。初期設定は「警報のみ」です。このアプリは携帯電話の警報の代わりにはなりません。",
     voiceWarning: "警報のみ", voiceAll: "すべての通知", voiceOff: "オフ",
+    citiesBtn: "都市", citiesTitle: "震源に近い大都市", citiesNone: "観測した震度の発表はまだありません。通常、地震の数分後に届きます。", citiesOld: "最新の地震が古いため表示できません。",
+    citiesBelow: "震度1未満", citiesNoReport: "発表なし", citiesBack: "登録地点に戻る", citiesCopy: "投稿文をコピー", citiesSave: "画像を保存(日本語 + English)", citiesTabCities: "都市", citiesTabAfter: "余震", afterNone: "この地震の近くで、報告された余震はまだありません。", afterNoMain: "直近3日間に強い地震はありません。", afterNote: "直近で最も強い地震の後、80km以内で気象庁が発表した地震です。都市は最寄りの観測点で気象庁が観測した震度です。", afterNoCity: "大都市の発表なし", citiesCopied: "コピーしました。投稿に貼り付けてください。", citiesSaved: "画像を保存しました:", citiesFail: "できませんでした。", citiesNote: "各値は、その都市に最も近い観測点で気象庁が観測した震度です。「震度1未満」は、気象庁が震度1以上を発表していないことを表します。都市をタップすると、メイン画面にその都市を表示します。", viewTag: "この都市を表示中", citiesKm: "km(震源から)",
     followTitle: "地震を追う(ベータ)", followOn: "オン", followOff: "オフ", followTag: "震源に最も近い地点",
     followHelp: "テスト用です。地震が起きると、登録した地点ではなく震源に最も近い地点を表示し、木の音で知らせたあと元に戻ります。登録した地点は変わりません。",
     testPlaying: "{vol}の音量で1回再生中です。",
@@ -1499,6 +1551,7 @@ const els = {
   readoutSub: document.getElementById('readoutSub'),
   readoutNote: document.getElementById('readoutNote'),
   detailsBtn: document.getElementById('detailsBtn'),
+  citiesBtn: document.getElementById('citiesBtn'),
   dateEl: document.getElementById('dateEl'),
   timeEl: document.getElementById('timeEl'),
   mid: document.getElementById('mid'),
@@ -2358,9 +2411,236 @@ function renderActive(state) {
     : '';
 }
 
-function followLabel(following) {
+let citiesViewing = false, citiesData = null, afterData = null, citiesTab = 'cities';
+
+function chipFor(step) { return BANDS[step] || null; }
+function stepIn(step, lang) { return lang === 'ja' ? jaStep(step) : step; }
+function valueWord(c, lang) {
+  const ja = lang === 'ja';
+  return c.step ? stepIn(c.step, lang) : (c.source === 'station_below_1' || c.src === 'station_below_1' ? (ja ? '1未満' : '<1') : (ja ? '発表なし' : 'no report'));
+}
+function nameIn(c, lang) { return lang === 'ja' ? c.ja : c.en; }
+
+function openCities() {
+  document.getElementById('citiesOverlay').style.display = 'flex';
+  document.getElementById('citiesStatus').textContent = '';
+  refreshCities(true);
+}
+function closeCities() { document.getElementById('citiesOverlay').style.display = 'none'; }
+function setCitiesTab(t) { citiesTab = t; renderCitiesTab(); }
+
+function refreshCities(pickTab) {
   const s = STRINGS[currentLang];
-  els.locationLabel.textContent = `${s.monitoring}: ${currentHomeName}` + (following ? ` (${s.followTag})` : '');
+  document.getElementById('citiesTitle').textContent = s.citiesTitle;
+  document.getElementById('tabCities').textContent = s.citiesTabCities;
+  document.getElementById('tabAfter').textContent = s.citiesTabAfter;
+  document.getElementById('citiesBack').textContent = s.citiesBack;
+  document.getElementById('citiesSave').textContent = s.citiesSave;
+  if (!window.pywebview) { document.getElementById('citiesList').textContent = s.citiesNone; return; }
+  Promise.all([
+    window.pywebview.api.get_cities(currentLang).catch(() => null),
+    window.pywebview.api.get_aftershocks(currentLang).catch(() => null),
+  ]).then(([c, a]) => {
+    citiesData = c; afterData = a;
+    if (pickTab) citiesTab = (c && c.ok) ? 'cities' : ((a && a.ok) ? 'after' : 'cities');
+    renderCitiesTab();
+  });
+}
+
+function renderCitiesTab() {
+  const s = STRINGS[currentLang], ja = currentLang === 'ja';
+  const list = document.getElementById('citiesList');
+  document.getElementById('tabCities').classList.toggle('active', citiesTab === 'cities');
+  document.getElementById('tabAfter').classList.toggle('active', citiesTab === 'after');
+  document.getElementById('citiesBack').style.display = (citiesData && citiesData.viewing && citiesTab === 'cities') ? 'inline-block' : 'none';
+  list.innerHTML = '';
+  document.getElementById('citiesTitle').textContent = citiesTab === 'after' ? s.citiesTabAfter : s.citiesTitle;
+  if (citiesTab === 'after') {
+    document.getElementById('citiesNote').textContent = s.afterNote;
+    const d = afterData;
+    if (!d || !d.ok) { document.getElementById('citiesSub').textContent = ''; list.textContent = s.afterNoMain; return; }
+    document.getElementById('citiesSub').textContent =
+      `M${d.main.magnitude != null ? d.main.magnitude : '?'} ${d.main.hypocenter || ''} · ${d.main.time} JST · ${ja ? '最大震度' : 'max'} ${stepShort(d.main.max_step || '0')}`;
+    if (!d.rows.length) { list.textContent = s.afterNone; return; }
+    d.rows.forEach((r) => {
+      const row = document.createElement('div'); row.className = 'after-row';
+      const t = document.createElement('div'); t.className = 'after-time'; t.textContent = r.time;
+      const mid = document.createElement('div');
+      const m = document.createElement('div'); m.className = 'after-main'; m.textContent = `M${r.magnitude != null ? r.magnitude : '?'} ${r.hypocenter || ''}`;
+      const f = document.createElement('div'); f.className = 'after-felt';
+      f.textContent = r.cities.length ? r.cities.map((c) => `${nameIn(c, currentLang)} ${stepShort(c.step)}`).join(ja ? '、' : ' · ') : s.afterNoCity;
+      mid.appendChild(m); mid.appendChild(f);
+      const chip = document.createElement('div');
+      const bd = chipFor(r.max_step);
+      chip.className = 'city-chip'; if (bd) { chip.style.background = bd.bg; chip.style.color = bd.fg; } chip.textContent = r.max_step ? stepShort(r.max_step) : '-';
+      row.appendChild(t); row.appendChild(mid); row.appendChild(chip); list.appendChild(row);
+    });
+    return;
+  }
+  document.getElementById('citiesNote').textContent = s.citiesNote;
+  const d = citiesData;
+  if (!d || !d.ok) {
+    document.getElementById('citiesSub').textContent = '';
+    list.textContent = d && d.reason === 'old' ? s.citiesOld : s.citiesNone;
+    return;
+  }
+  document.getElementById('citiesSub').textContent =
+    `M${d.magnitude != null ? d.magnitude : '?'} ${d.hypocenter || ''}` + (d.time ? ` · ${d.time} JST` : '') +
+    (d.jma_max ? ` · ${ja ? '最大震度' : 'JMA max'} ${stepShort(d.jma_max)}` : '');
+  d.cities.forEach((c) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'city-row' + (c.viewable ? '' : ' disabled');
+    const left = document.createElement('div');
+    const nm = document.createElement('div'); nm.className = 'city-name'; nm.textContent = nameIn(c, currentLang);
+    const mt = document.createElement('div'); mt.className = 'city-meta';
+    mt.textContent = `${c.distance_km} ${s.citiesKm}` + (c.station ? ` · ${c.station}` : '');
+    left.appendChild(nm); left.appendChild(mt);
+    const chip = document.createElement('div');
+    const band = c.step ? chipFor(c.step) : null;
+    if (band) { chip.className = 'city-chip'; chip.style.background = band.bg; chip.style.color = band.fg; chip.textContent = stepShort(c.step); }
+    else { chip.className = 'city-chip none'; chip.textContent = c.source === 'station_below_1' ? s.citiesBelow : s.citiesNoReport; }
+    b.appendChild(left); b.appendChild(chip);
+    if (c.viewable) b.onclick = () => { window.pywebview.api.view_city(c.en).then(() => closeCities()); };
+    else b.disabled = true;
+    list.appendChild(b);
+  });
+}
+function citiesBack() { window.pywebview.api.view_back().then(() => closeCities()); }
+
+// Cities worth showing in a post: Shindo 2 or more, strongest first (nearest first among equals), at most six.
+// If none felt that much, the three nearest with their values.
+function citiesForPost(d) {
+  const felt = d.cities.filter((c) => c.step && jma_rank(c.step) >= jma_rank('2'));
+  felt.sort((x, y) => (jma_rank(y.step) - jma_rank(x.step)) || (x.distance_km - y.distance_km));
+  return felt.length ? felt.slice(0, 6) : d.cities.slice(0, 3);
+}
+
+function postTextCities(lang) {
+  const d = citiesData; if (!d || !d.ok) return '';
+  const ja = lang === 'ja', mp = d.max_place;
+  const top = mp ? mp.step : d.jma_max;
+  const rows = citiesForPost(d).map((c) => `${nameIn(c, lang)} ${valueWord(c, lang)}`).join(ja ? '、' : ' · ');
+  if (ja) {
+    return `【最大震度${stepIn(top, 'ja')}】${d.hypocenter || ''} M${d.magnitude}\n` + (mp ? `最大: ${mp.pref || ''}${mp.station}\n` : '') +
+      `\n近くの大都市の震度: ${rows}\n\n数値はすべて気象庁の発表です。\nshindoscreener.com`;
+  }
+  return `Max Shindo ${top}, M${d.magnitude} ${d.hypocenter || ''} (${d.time} JST)\n` + (mp ? `Strongest: ${mp.pref || ''} ${mp.station}\n` : '') +
+    `\nBig cities near the epicenter: ${rows}\n\nAll values relayed from JMA.\nshindoscreener.com`;
+}
+function postTextAfter(lang) {
+  const d = afterData; if (!d || !d.ok) return '';
+  const ja = lang === 'ja';
+  const lines = d.rows.map((r) => {
+    const felt = r.cities.length ? ` (${r.cities.map((c) => `${nameIn(c, lang)} ${stepIn(c.step, lang)}`).join(ja ? '、' : ', ')})` : '';
+    return `${r.time.slice(6)} M${r.magnitude} ${r.hypocenter || ''} ${ja ? '最大震度' : 'max'} ${r.max_step ? stepIn(r.max_step, lang) : '-'}${felt}`;
+  });
+  const head = ja ? `M${d.main.magnitude} ${d.main.hypocenter}(${d.main.time} JST)の余震(気象庁発表)${d.rows.length ? '' : ': まだありません'}`
+                  : `Aftershocks of the M${d.main.magnitude} ${d.main.hypocenter} quake (${d.main.time} JST), as reported by JMA${d.rows.length ? '' : ': none yet'}`;
+  return head + (lines.length ? '\n\n' + lines.join('\n') : '') + (ja ? '\n\n数値はすべて気象庁の発表です。\nshindoscreener.com' : '\n\nAll values relayed from JMA.\nshindoscreener.com');
+}
+function citiesPostText(lang) { return citiesTab === 'after' ? postTextAfter(lang) : postTextCities(lang); }
+
+function citiesCopyText(lang) {
+  const st = document.getElementById('citiesStatus'); const s = STRINGS[currentLang];
+  const t = citiesPostText(lang);
+  if (!t) { st.textContent = s.citiesFail; return; }
+  const done = () => { st.textContent = s.citiesCopied; };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(() => { st.textContent = s.citiesFail; });
+  else { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { st.textContent = s.citiesFail; } ta.remove(); }
+}
+
+const IMG_FONT = "'DM Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif";
+function imgBase() {
+  const W = 1200, H = 675, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'); g.fillStyle = '#0a0a09'; g.fillRect(0, 0, W, H); return { W, H, cv, g };
+}
+function imgFooter(g, W, H, lang) {
+  g.fillStyle = '#f5f5f0'; g.globalAlpha = 0.65; g.font = `500 21px ${IMG_FONT}`; g.textAlign = 'left';
+  g.fillText(lang === 'ja' ? '数値はすべて気象庁の発表(P2P地震情報経由)  ·  shindoscreener.com' : 'All values relayed from JMA via P2P地震情報  ·  shindoscreener.com', 48, H - 22);
+  g.globalAlpha = 1;
+}
+function drawStepBlock(g, x, y, w, h, step, caption, lang) {
+  const band = chipFor(step) || { bg: '#e8e6dc', fg: '#0e0e0c' };
+  g.fillStyle = band.bg; g.beginPath(); g.roundRect(x, y, w, h, 20); g.fill();
+  g.fillStyle = band.fg; g.textAlign = 'center';
+  g.font = `600 26px ${IMG_FONT}`; g.fillText(caption, x + w / 2, y + 44);
+  const word = stepIn(step, lang);
+  g.font = `800 ${word.length > 1 ? 118 : 140}px ${IMG_FONT}`; g.fillText(word, x + w / 2, y + h - 28);
+  g.textAlign = 'left';
+}
+function drawCitiesImage(lang) {
+  const d = citiesData, ja = lang === 'ja';
+  const { W, H, cv, g } = imgBase();
+  const top = d.max_place ? d.max_place.step : d.jma_max;
+  drawStepBlock(g, 48, 40, 330, 230, top, ja ? '最大震度' : 'MAX SHINDO', lang);
+  g.fillStyle = '#f5f5f0'; g.font = `700 46px ${IMG_FONT}`; g.fillText(`M${d.magnitude}  ${d.hypocenter || ''}`, 412, 98);
+  g.font = `500 28px ${IMG_FONT}`; g.globalAlpha = 0.75; g.fillText(d.time ? `${d.time} JST` : '', 412, 140); g.globalAlpha = 1;
+  if (d.max_place) {
+    g.font = `600 24px ${IMG_FONT}`; g.globalAlpha = 0.65; g.fillText(ja ? '最も強く観測した地点' : 'Strongest reading', 412, 204); g.globalAlpha = 1;
+    g.font = `700 38px ${IMG_FONT}`; g.fillText(`${d.max_place.pref || ''} ${d.max_place.station}`.trim(), 412, 252);
+  }
+  g.font = `600 26px ${IMG_FONT}`; g.globalAlpha = 0.7; g.fillText(ja ? '震源に近い大都市の震度' : 'Big cities near the epicenter', 48, 322); g.globalAlpha = 1;
+  const list = citiesForPost(d), cols = 3, tw = 352, th = 118, gx = 24, gy = 20;
+  list.forEach((c, i) => {
+    const x = 48 + (i % cols) * (tw + gx), y = 346 + Math.floor(i / cols) * (th + gy);
+    g.fillStyle = '#1b1b19'; g.beginPath(); g.roundRect(x, y, tw, th, 16); g.fill();
+    const bd = c.step ? chipFor(c.step) : null;
+    g.fillStyle = bd ? bd.bg : '#2a2a27'; g.beginPath(); g.roundRect(x + 14, y + 14, 90, th - 28, 12); g.fill();
+    g.fillStyle = bd ? bd.fg : '#f5f5f0'; g.textAlign = 'center';
+    const w = valueWord(c, lang); g.font = `800 ${w.length > 2 ? 24 : 54}px ${IMG_FONT}`; g.fillText(w, x + 59, y + th / 2 + (w.length > 2 ? 9 : 19)); g.textAlign = 'left';
+    g.fillStyle = '#f5f5f0'; g.font = `700 36px ${IMG_FONT}`; g.fillText(nameIn(c, lang), x + 122, y + 58);
+    g.font = `500 20px ${IMG_FONT}`; g.globalAlpha = 0.6; g.fillText(ja ? `震源から${c.distance_km} km` : `${c.distance_km} km from epicenter`, x + 122, y + 90); g.globalAlpha = 1;
+  });
+  imgFooter(g, W, H, lang);
+  return cv.toDataURL('image/png');
+}
+function drawAfterImage(lang) {
+  const d = afterData, ja = lang === 'ja';
+  const { W, H, cv, g } = imgBase();
+  g.fillStyle = '#f5f5f0'; g.font = `800 54px ${IMG_FONT}`; g.fillText(ja ? '余震' : 'AFTERSHOCKS', 48, 84);
+  g.font = `600 28px ${IMG_FONT}`; g.globalAlpha = 0.75;
+  g.fillText(`M${d.main.magnitude} ${d.main.hypocenter || ''}  ·  ${d.main.time} JST  ·  ${ja ? '最大震度' : 'max'} ${stepIn(d.main.max_step || '0', lang)}`, 48, 128); g.globalAlpha = 1;
+  const rows = d.rows.slice(0, 6), rh = 72, y0 = 160;
+  if (!rows.length) { g.font = `600 40px ${IMG_FONT}`; g.fillText(ja ? '報告された余震はまだありません' : 'No aftershocks reported yet', 48, 300); }
+  rows.forEach((r, i) => {
+    const y = y0 + i * (rh + 10);
+    g.fillStyle = '#1b1b19'; g.beginPath(); g.roundRect(48, y, W - 96, rh, 14); g.fill();
+    const bd = chipFor(r.max_step) || { bg: '#2a2a27', fg: '#f5f5f0' };
+    g.fillStyle = bd.bg; g.beginPath(); g.roundRect(60, y + 10, 78, rh - 20, 10); g.fill();
+    g.fillStyle = bd.fg; g.textAlign = 'center'; g.font = `800 ${r.max_step && stepIn(r.max_step, lang).length > 1 ? 30 : 38}px ${IMG_FONT}`;
+    g.fillText(r.max_step ? stepIn(r.max_step, lang) : '-', 99, y + rh / 2 + 13); g.textAlign = 'left';
+    g.fillStyle = '#f5f5f0'; g.font = `500 24px ${IMG_FONT}`; g.globalAlpha = 0.75; g.fillText(r.time.slice(6), 158, y + 44); g.globalAlpha = 1;
+    g.font = `700 28px ${IMG_FONT}`; g.fillText(`M${r.magnitude} ${r.hypocenter || ''}`, 268, y + 33);
+    g.font = `500 21px ${IMG_FONT}`; g.globalAlpha = 0.7;
+    g.fillText(r.cities.length ? r.cities.map((c) => `${nameIn(c, lang)} ${stepIn(c.step, lang)}`).join(ja ? '、' : ' · ') : (ja ? '大都市の発表なし' : 'no big city reported'), 268, y + 60); g.globalAlpha = 1;
+  });
+  imgFooter(g, W, H, lang);
+  return cv.toDataURL('image/png');
+}
+function citiesSaveImage() {
+  const st = document.getElementById('citiesStatus'); const s = STRINGS[currentLang];
+  const d = citiesTab === 'after' ? afterData : citiesData;
+  if (!d || !d.ok || !window.pywebview) { st.textContent = s.citiesFail; return; }
+  const when = ((citiesTab === 'after' ? d.main.time : d.time) || 'quake').replace(/[^0-9]/g, '');
+  const kind = citiesTab === 'after' ? 'aftershocks' : 'cities';
+  const draw = citiesTab === 'after' ? drawAfterImage : drawCitiesImage;
+  Promise.all(['ja', 'en'].map((lang) => window.pywebview.api.save_share_image(draw(lang), `shindo-screener-${kind}-${when}-${lang}`)))
+    .then((rs) => { st.textContent = rs.every((r) => r && r.ok) ? `${s.citiesSaved} ${rs[0].path.replace(/[^\\/]+$/, '')}` : s.citiesFail; })
+    .catch(() => { st.textContent = s.citiesFail; });
+}
+window.openCities = openCities; window.closeCities = closeCities; window.citiesBack = citiesBack; window.setCitiesTab = setCitiesTab;
+window.citiesCopyText = citiesCopyText; window.citiesSaveImage = citiesSaveImage;
+
+function followLabel(following, viewing) {
+  const s = STRINGS[currentLang];
+  els.locationLabel.textContent = `${s.monitoring}: ${currentHomeName}`;
+  if (following || viewing) {
+    const tag = document.createElement('span');
+    tag.className = 'follow-tag';
+    tag.textContent = `(${viewing ? s.viewTag : s.followTag})`;
+    els.locationLabel.appendChild(tag);
+  }
 }
 
 function applyState(state) {
@@ -2369,7 +2649,9 @@ function applyState(state) {
     currentHomeName = state.monitoring;
     geo = null; geoKey = null; mapBuilt = false;
   }
-  if (state.monitoring) followLabel(!!state.following);
+  if (state.monitoring) followLabel(!!state.following, !!state.viewing);
+  citiesViewing = !!state.viewing;
+  els.citiesBtn.textContent = STRINGS[currentLang].citiesBtn;
   if (state.status === 'active') {
     renderActive(state);
   } else if (state.status === 'cancelled') {
@@ -2377,6 +2659,9 @@ function applyState(state) {
   } else {
     renderIdle();
   }
+  // The Cities link goes with a reading that is actually on screen (a hidden faint one has no Details link either).
+  const showCities = (state.status === 'active' && state.phase === 'measured' && els.detailsBtn.style.display !== 'none') || !!state.series_recent;
+  els.citiesBtn.style.display = showCities ? 'inline-block' : 'none';
 }
 window.applyState = applyState;
 

@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shindo Screener Web (alpha lite)</title>
+<meta name="description" content="Type your town and see the Shindo (seismic intensity) JMA reports for it, live, in your browser. No download.">
+<link rel="icon" type="image/png" href="../assets/favicon-32.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&family=Barlow:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0a0a09; --card:#161614; --text:#f5f5f0; --muted:#a9a89f; --line:#2a2a27; --accent:#3fc1d8; }
+  :root:not([data-theme="dark"]) { }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font-family: 'Archivo','Noto Sans JP',system-ui,sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 600ms ease, color 600ms ease; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 18px 16px 40px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .brand { font-weight: 800; font-size: 18px; letter-spacing: .01em; }
+  .tag { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; opacity: .7; vertical-align: middle; }
+  .tools { display: flex; gap: 8px; align-items: center; }
+  button, .btn { font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; opacity: .85; }
+  button:hover, .btn:hover { opacity: 1; }
+  button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  h1 { font-size: 26px; margin: 8px 0 6px; line-height: 1.2; }
+  p.lead { color: var(--muted); margin: 0 0 18px; line-height: 1.55; }
+  .search { display: flex; gap: 8px; }
+  .search input { flex: 1; min-width: 0; font: inherit; font-size: 17px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  .cands { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .cand { text-align: left; border-radius: 12px; padding: 12px 14px; background: var(--card); border: 1px solid var(--line); font-size: 16px; }
+  .status { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--muted); margin-bottom: 14px; }
+  .status b { color: var(--text); }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #777; margin-right: 6px; }
+  .dot.live { background: #4cc38a; }
+  .dot.wait { background: #e0a030; }
+  .ev1 { font-size: 22px; font-weight: 700; }
+  .ev2 { font-size: 17px; opacity: .85; margin-top: 4px; }
+  .card { border-radius: 20px; padding: 22px 22px 24px; margin-top: 16px; background: var(--card); transition: background 500ms ease, color 500ms ease; }
+  .cap { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+  .big { font-family: 'Barlow','Archivo','Noto Sans JP',sans-serif; font-weight: 800; font-size: clamp(96px, 30vw, 180px); line-height: 1; margin: 6px 0 2px; letter-spacing: -.02em; }
+  .big.msg { font-size: clamp(30px, 8vw, 48px); line-height: 1.2; letter-spacing: 0; }
+  .rule { height: 4px; width: 120px; background: currentColor; margin: 10px 0 12px; }
+  .lab { font-size: 22px; font-weight: 700; }
+  .note { font-size: 16px; margin-top: 8px; opacity: .85; line-height: 1.5; }
+  .idle { color: var(--muted); font-size: 18px; line-height: 1.5; padding: 26px 4px 6px; }
+  h2 { font-size: 17px; margin: 28px 0 10px; }
+  .row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 11px 14px; border-radius: 12px; background: var(--card); margin-bottom: 6px; }
+  .row .t { font-size: 14px; opacity: .7; white-space: nowrap; }
+  .row .m { font-weight: 700; font-size: 16px; }
+  .row .s { font-size: 13px; opacity: .6; margin-top: 2px; }
+  .chip { min-width: 54px; text-align: center; padding: 6px 10px; border-radius: 8px; font-weight: 800; font-size: 19px; background: #2a2a27; color: var(--text); }
+  .chip.small { font-size: 14px; font-weight: 600; }
+  .fine { font-size: 13px; color: var(--muted); line-height: 1.55; margin-top: 26px; border-top: 1px solid var(--line); padding-top: 16px; }
+  .fine a { color: inherit; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Shindo Screener<span class="tag" id="tag">alpha lite</span></div>
+    <div class="tools">
+      <button id="btnEn" onclick="setLang('en')">EN</button>
+      <button id="btnJa" onclick="setLang('ja')">日本語</button>
+    </div>
+  </header>
+
+  <section id="setup" hidden>
+    <h1 id="setupTitle"></h1>
+    <p class="lead" id="setupLead"></p>
+    <div class="search"><input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="goBtn" onclick="doSearch()"></button></div>
+    <div class="cands" id="cands"></div>
+  </section>
+
+  <section id="screen" hidden>
+    <div class="status">
+      <div><span id="monLabel"></span> <b id="monName"></b> <button id="changeBtn" onclick="changePlace()"></button></div>
+      <div><span class="dot" id="dot"></span><span id="connText"></span></div>
+    </div>
+    <div id="eventBlock" hidden>
+      <div class="ev1" id="ev1"></div>
+      <div class="ev2" id="ev2"></div>
+    </div>
+    <div class="card" id="card" hidden>
+      <div class="cap" id="cap"></div>
+      <div class="big" id="big"></div>
+      <div class="rule"></div>
+      <div class="lab" id="lab"></div>
+      <div class="note" id="note"></div>
+    </div>
+    <div class="idle" id="idle"></div>
+    <h2 id="recentTitle"></h2>
+    <div id="recent"></div>
+  </section>
+
+  <div class="fine" id="fine"></div>
+</div>
+<script>
+'use strict';
+// ---------------------------------------------------------------- constants
+const WOLFX_URL = 'wss://ws-api.wolfx.jp/jma_eew';
+const P2P_URL = 'wss://api.p2pquake.net/v2/ws';
+const P2P_HISTORY = 'https://api.p2pquake.net/v2/history?codes=551&limit=100';
+const STEP_ORDER = ['0','1','2','3','4','5-','5+','6-','6+','7'];
+const P2P_SCALE = {10:'1',20:'2',30:'3',40:'4',45:'5-',46:'5-',50:'5+',55:'6-',60:'6+',70:'7'};
+const SHINDO_TEXT = {'5弱':'5-','5強':'5+','6弱':'6-','6強':'6+','5-':'5-','5+':'5+','6-':'6-','6+':'6+','0':'0','1':'1','2':'2','3':'3','4':'4','7':'7'};
+const NEARBY_RADIUS_KM = 25, NEARBY_LIMIT = 12, EEW_NOTICE_RADIUS_KM = 300;
+const EEW_SHOW_MIN = 5, MEASURED_SHOW_MIN = 15, RECENT_HOURS = 72, RECENT_MAX = 8, RECENT_RADIUS_KM = 250;
+const BANDS = {
+  '0':{bg:'#161614',fg:'#f5f5f0'}, '1':{bg:'#e8e6dc',fg:'#0e0e0c'}, '2':{bg:'#cfe6f2',fg:'#0e0e0c'}, '3':{bg:'#3fc1d8',fg:'#0e0e0c'},
+  '4':{bg:'#f5c518',fg:'#0e0e0c'}, '5-':{bg:'#f08a24',fg:'#0e0e0c'}, '5+':{bg:'#e25a1e',fg:'#0e0e0c'},
+  '6-':{bg:'#d12f2a',fg:'#f5f5f0'}, '6+':{bg:'#a8102a',fg:'#f5f5f0'}, '7':{bg:'#7e1a6e',fg:'#f5f5f0'} };
+const LABELS = {
+  en: {'1':'Barely felt indoors','2':'Noticeable indoor shaking','3':'Clearly felt indoor shaking','4':'Moderate indoor shaking','5-':'Strong indoor shaking','5+':'Very strong indoor shaking','6-':'Severe indoor shaking','6+':'Violent indoor shaking','7':'Extreme indoor shaking'},
+  ja: {'1':'屋内でわずかに揺れを感じる','2':'屋内でしっかり揺れを感じる','3':'屋内ではっきりとした揺れ','4':'屋内でやや強い揺れ','5-':'屋内で強い揺れ','5+':'屋内で非常に強い揺れ','6-':'屋内で激しい揺れ','6+':'屋内で猛烈な揺れ','7':'屋内で極めて激しい揺れ'} };
+const ADVICE = {
+  en: {'1':'Some people sitting still feel it. No action needed.','2':'Hanging objects may sway. No action needed.','3':'Most people indoors feel it. Dishes may rattle. No action needed unless it grows.','4':'Many people are startled. Items may fall. Check around you.','5-':'Hard to move. Dishes and books may fall. Protect yourself.','5+':'Hard to stay standing. Furniture may move. Protect yourself.'},
+  ja: {'1':'じっとしている人が感じる程度です。対応は不要です。','2':'吊り下げた物が揺れることがあります。対応は不要です。','3':'屋内の多くの人が感じます。食器が鳴ることがあります。揺れが大きくならなければ対応は不要です。','4':'驚く人が多く、物が落ちることがあります。周囲を確認してください。','5-':'動くのが難しくなります。食器や本が落ちることがあります。身を守ってください。','5+':'立っているのが難しくなります。家具が動くことがあります。身を守ってください。'} };
+const T = {
+  en: { tag:'alpha lite', setupTitle:'See the Shindo JMA reports for your town', setupLead:'Type your town or city. The page then shows the shaking JMA (Japan Meteorological Agency) reports near you, live. No download. Your place stays in this browser only.', ph:'e.g. Oirase, Chiba, Osaka', go:'Search',
+    none:'No match. Try the romaji or Japanese spelling.', monitoring:'Monitoring:', change:'Change', connected:'Live: connected', connecting:'Connecting...', retry:'Reconnecting...',
+    idleTitle:'No quake reported near you right now.', idleHint:'This page updates by itself. Keep it open to see new reports.',
+    recent:'Recent quakes near you (last 72 hours)', recentNone:'No JMA-reported quakes near you in the last 72 hours.', below1:'<1', noval:'no value', km:'km away',
+    capStation:(s,k)=>`Measured at your nearest station, ${s} (${k} km away)`, capArea:(a)=>`Measured in your area, ${a} (quick report)`, capBelow:(s)=>`Your nearest station, ${s}`,
+    below1Big:'Below 1', below1Lab:'No Shindo 1 or more listed', below1Note:'JMA listed no Shindo 1 or more at your nearest station for this quake.',
+    capWarn:(a)=>`JMA early warning for your area, ${a}`, capFc:(a)=>`JMA forecast for your area, ${a}`, capNoArea:'Earthquake reported near you', noArea:'No forecast for your area',
+    noAreaNote:'JMA lists forecasts for areas only when it warns them. A measured value follows after the shaking.',
+    warnNote:'Shaking is expected. Be ready to take cover.', fcNote:'Shaking may be felt. This forecast can change.', orMore:' or stronger',
+    maxMeasured:'JMA maximum intensity (measured):', maxForecast:'JMA maximum forecast:',
+    fine:'<b>Alpha lite.</b> Every value comes from JMA, relayed by <a href="https://wolfx.jp" target="_blank" rel="noopener">Wolfx</a> (early warnings) and <a href="https://www.p2pquake.net" target="_blank" rel="noopener">P2P地震情報</a> (measured intensities). This page does not calculate or estimate anything. It only updates while it is open, and it is not an official alert: rely on your phone\'s emergency alerts and local authorities. Your place is stored in this browser only. Want sound alerts and more? <a href="https://github.com/Isaiah-Duncan/shindo-screener-app/releases/latest" target="_blank" rel="noopener">Get the Windows app</a> · <a href="../disclaimer.html">Disclaimer</a> · <a href="../privacy.html">Privacy</a>' },
+  ja: { tag:'アルファ版(簡易)', setupTitle:'お住まいの地域の震度を確認', setupLead:'市区町村名を入力すると、気象庁が発表した近くの揺れをリアルタイムで表示します。ダウンロード不要。場所はこのブラウザにだけ保存されます。', ph:'例: おいらせ町、千葉市、大阪', go:'検索',
+    none:'見つかりません。ローマ字か漢字・ひらがなで試してください。', monitoring:'監視地点:', change:'変更', connected:'接続中', connecting:'接続しています...', retry:'再接続しています...',
+    idleTitle:'いま、近くで報告された地震はありません。', idleHint:'このページは自動で更新されます。開いたままにしてください。',
+    recent:'近くの最近の地震(過去72時間)', recentNone:'過去72時間に、近くで気象庁が発表した地震はありません。', below1:'1未満', noval:'発表なし', km:'km',
+    capStation:(s,k)=>`最寄りの観測点 ${s}(${k}km)で観測`, capArea:(a)=>`${a}で観測(震度速報)`, capBelow:(s)=>`最寄りの観測点 ${s}`,
+    below1Big:'震度1未満', below1Lab:'震度1以上の発表なし', below1Note:'この地震では、最寄りの観測点で震度1以上は発表されていません。',
+    capWarn:(a)=>`${a}への緊急地震速報(警報)`, capFc:(a)=>`${a}の予想(気象庁)`, capNoArea:'近くで地震が発生', noArea:'この地域の予想なし',
+    noAreaNote:'気象庁は警報の対象地域にだけ地域ごとの予想を出します。揺れのあと、観測した震度が届きます。',
+    warnNote:'強い揺れが予想されます。身を守る準備をしてください。', fcNote:'揺れを感じる可能性があります。予想は変わることがあります。', orMore:'以上',
+    maxMeasured:'気象庁 最大震度(観測):', maxForecast:'気象庁 最大予想震度:',
+    fine:'<b>アルファ版(簡易)。</b>すべての数値は気象庁の発表で、<a href="https://wolfx.jp" target="_blank" rel="noopener">Wolfx</a>(緊急地震速報)と<a href="https://www.p2pquake.net" target="_blank" rel="noopener">P2P地震情報</a>(観測震度)が中継したものです。このページは何も計算・推定しません。ページを開いている間だけ更新され、公的な警報ではありません。スマートフォンの緊急速報や自治体の情報を優先してください。場所はこのブラウザにだけ保存されます。音での通知などは<a href="https://github.com/Isaiah-Duncan/shindo-screener-app/releases/latest" target="_blank" rel="noopener">Windows版アプリ</a>をご利用ください。 · <a href="../disclaimer.html">免責事項</a> · <a href="../privacy.html">プライバシー</a>' } };
+
+// ---------------------------------------------------------------- state
+let lang = (navigator.language || 'en').toLowerCase().startsWith('ja') ? 'ja' : 'en';
+let places = [], stations = [];
+let home = null, homeInfo = { area: null, stations: [] };
+const quakes = [];            // one record per quake: { origin, hypo, mag, lat, lon, msg, eew }
+let connLive = { p2p: false, wolfx: false };
+const $ = (id) => document.getElementById(id);
+const t = () => T[lang];
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+// ---------------------------------------------------------------- JMA data helpers (ported from the desktop app)
+const rank = (s) => STEP_ORDER.indexOf(s);
+function normShindo(v) { if (v === null || v === undefined) return null; return SHINDO_TEXT[String(v).trim()] || null; }
+function stepText(s) { return lang === 'ja' ? String(s).replace('-', '弱').replace('+', '強') : s; }
+function haversine(la1, lo1, la2, lo2) {
+  const r = 6371.0088, rad = Math.PI / 180, p1 = la1 * rad, p2 = la2 * rad;
+  const a = Math.sin((p2 - p1) / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin((lo2 - lo1) * rad / 2) ** 2;
+  return 2 * r * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function locateHome(h) {
+  const ranked = stations.map((s) => ({ ...s, distance_km: haversine(h.lat, h.lon, s.lat, s.lon) })).sort((a, b) => a.distance_km - b.distance_km);
+  if (!ranked.length) return { area: null, stations: [] };
+  const near = ranked.filter((s) => s.distance_km <= NEARBY_RADIUS_KM).slice(0, NEARBY_LIMIT);
+  return { area: ranked[0].area, stations: near.length ? near : ranked.slice(0, 1) };
+}
+const areaKey = (n) => (n || '').replace('地方', '').trim();
+function parseJst(text) {
+  const m = /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})(?::(\d{2}))?/.exec(text || '');
+  if (!m) return null;
+  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4] - 9, +m[5], +(m[6] || 0)));
+}
+const sameQuake = (a, b) => !!(a && b && Math.abs(a - b) <= 90000);
+function numOrNull(v) { const n = parseFloat(v); return Number.isFinite(n) ? n : null; }
+
+function parseEew(p, homeArea) {
+  if ((p.type !== undefined && p.type !== 'jma_eew') || p.isTraining) return null;
+  const id = String(p.EventID || '');
+  if (!id) return null;
+  if (p.isCancel) return { kind: 'cancel', id };
+  let areaForecast = null;
+  for (const w of p.WarnArea || []) {
+    if (areaKey(w.Chiiki) === areaKey(homeArea)) {
+      const raw = [w.Shindo1, w.Shindo2];
+      const steps = [...new Set(raw.map(normShindo).filter(Boolean))].sort((a, b) => rank(a) - rank(b));
+      if (steps.length) areaForecast = { from: steps[0], to: steps.length > 1 ? steps[steps.length - 1] : null,
+        orMore: steps.length === 1 && raw.some((v) => ['over', '以上', ''].includes(String(v).trim())), arrived: !!w.Arrive, area: w.Chiiki };
+      break;
+    }
+  }
+  return { kind: 'eew', id, serial: p.Serial, origin: parseJst(p.OriginTime), hypo: typeof p.Hypocenter === 'string' ? p.Hypocenter : null,
+    mag: numOrNull(p.Magnitude !== undefined ? p.Magnitude : p.Magunitude), lat: numOrNull(p.Latitude), lon: numOrNull(p.Longitude),
+    maxForecast: normShindo(p.MaxIntensity), isWarning: !!p.isWarn, isFinal: !!p.isFinal, areaForecast };
+}
+function parseP2P(msg, hi) {
+  if (msg.code !== 551) return null;
+  const type = (msg.issue || {}).type;
+  if (!['ScalePrompt', 'ScaleAndDestination', 'DetailScale'].includes(type)) return null;
+  const eq = msg.earthquake || {}, hyp = eq.hypocenter || {}, points = msg.points || [];
+  const byName = {};
+  for (const p of points) {
+    const step = P2P_SCALE[p.scale];
+    if (step && !p.isArea) byName[p.addr] = (byName[p.addr] && rank(byName[p.addr]) > rank(step)) ? byName[p.addr] : step;
+  }
+  const nearest = hi.stations[0] || null;
+  let reading = null;
+  if (nearest && byName[nearest.name]) reading = { source: 'station', step: byName[nearest.name], station: nearest.name, km: Math.round(nearest.distance_km * 10) / 10 };
+  else if (nearest && type === 'DetailScale' && Object.keys(byName).length) reading = { source: 'below', step: '0', station: nearest.name, km: Math.round(nearest.distance_km * 10) / 10 };
+  if (!reading && hi.area) {
+    for (const p of points) if (p.isArea && areaKey(p.addr) === areaKey(hi.area)) { const st = P2P_SCALE[p.scale]; if (st) reading = { source: 'area', step: st, area: hi.area }; break; }
+  }
+  const lat = hyp.latitude === -200 ? null : numOrNull(hyp.latitude), lon = hyp.longitude === -200 ? null : numOrNull(hyp.longitude);
+  const mag = numOrNull(hyp.magnitude);
+  return { type, origin: parseJst(eq.time), hypo: hyp.name || null, mag: mag !== null && mag >= 0 ? mag : null, lat, lon, maxMeasured: P2P_SCALE[eq.maxScale] || null, reading };
+}
+
+// ---------------------------------------------------------------- quake records
+function findQuake(origin) { return quakes.find((q) => sameQuake(q.origin, origin)); }
+function applyMeasured(msg, quiet) {
+  const info = parseP2P(msg, homeInfo);
+  if (!info || !info.origin) return;
+  let q = findQuake(info.origin);
+  if (!q) { q = { origin: info.origin }; quakes.push(q); }
+  q.msg = msg; q.measuredAt = quiet ? (q.measuredAt || 0) : Date.now();
+  for (const k of ['hypo', 'mag', 'lat', 'lon']) if (info[k] !== null && info[k] !== undefined) q[k] = info[k];
+  q.maxMeasured = info.maxMeasured || q.maxMeasured;
+  q.reading = info.reading;
+  q.updatedAt = Math.max(q.updatedAt || 0, quiet ? (info.origin ? info.origin.getTime() : 0) : Date.now());
+}
+function applyEew(payload) {
+  const info = parseEew(payload, homeInfo.area);
+  if (!info) return;
+  if (info.kind === 'cancel') { const q = quakes.find((x) => x.eewId === info.id); if (q && !q.measuredAt) { q.cancelled = true; q.updatedAt = Date.now(); } return; }
+  if (!info.origin || Date.now() - info.origin.getTime() > 10 * 60000) return;   // Wolfx replays the last warning on connect: ignore old ones
+  let q = findQuake(info.origin);
+  const dist = (info.lat !== null && info.lon !== null && home) ? haversine(home.lat, home.lon, info.lat, info.lon) : null;
+  if (!q) {
+    if (!(info.areaForecast || (dist !== null && dist <= EEW_NOTICE_RADIUS_KM))) return;
+    q = { origin: info.origin }; quakes.push(q);
+  }
+  q.eewId = info.id; q.eewRaw = payload; q.cancelled = false;
+  q.eew = { serial: info.serial, areaForecast: info.areaForecast || (q.eew && q.eew.areaForecast) || null, isWarning: info.isWarning || !!(q.eew && q.eew.isWarning), maxForecast: info.maxForecast, isFinal: info.isFinal };
+  for (const k of ['hypo', 'mag', 'lat', 'lon']) if (info[k] !== null && info[k] !== undefined) q[k] = info[k];
+  q.updatedAt = Date.now();
+}
+function recompute() {   // after the place changes
+  for (const q of quakes) {
+    if (q.msg) { const info = parseP2P(q.msg, homeInfo); if (info) q.reading = info.reading; }
+    if (q.eewRaw) { const info = parseEew(q.eewRaw, homeInfo.area); if (info && info.kind === 'eew' && q.eew) q.eew.areaForecast = info.areaForecast; }
+  }
+}
+
+// ---------------------------------------------------------------- rendering
+function fmtTime(d) {
+  try { return new Intl.DateTimeFormat(lang === 'ja' ? 'ja-JP' : 'en-GB', { timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(d) + ' JST'; }
+  catch (e) { return d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC'; }
+}
+function currentDisplay() {
+  const now = Date.now();
+  let best = null;
+  for (const q of quakes) {
+    if (q.cancelled) continue;
+    const age = (now - (q.updatedAt || 0)) / 60000;
+    const showMeasured = q.measuredAt && q.reading && age <= MEASURED_SHOW_MIN;
+    const showEew = !q.measuredAt && q.eew && age <= EEW_SHOW_MIN;
+    if ((showMeasured || showEew) && (!best || q.updatedAt > best.updatedAt)) best = q;
+  }
+  return best;
+}
+function render() {
+  const s = t();
+  document.documentElement.lang = lang;
+  $('tag').textContent = s.tag;
+  $('btnEn').classList.toggle('on', lang === 'en'); $('btnJa').classList.toggle('on', lang === 'ja');
+  $('fine').innerHTML = s.fine;
+  $('setupTitle').textContent = s.setupTitle; $('setupLead').textContent = s.setupLead; $('q').placeholder = s.ph; $('goBtn').textContent = s.go;
+  if (!home) { document.body.style.background = ''; document.body.style.color = ''; return; }
+  $('monLabel').textContent = s.monitoring; $('monName').textContent = home.name; $('changeBtn').textContent = s.change;
+  const live = connLive.p2p && connLive.wolfx, some = connLive.p2p || connLive.wolfx;
+  $('dot').className = 'dot ' + (live ? 'live' : (some ? 'wait' : ''));
+  $('connText').textContent = live ? s.connected : (some ? s.retry : s.connecting);
+  const q = currentDisplay();
+  const card = $('card'), idle = $('idle');
+  document.body.style.background = ''; document.body.style.color = '';
+  document.title = 'Shindo Screener';
+  if (!q) { $('eventBlock').hidden = true; card.hidden = true; idle.hidden = false; idle.innerHTML = `<b>${s.idleTitle}</b><br>${s.idleHint}`; }
+  else {
+    idle.hidden = true; card.hidden = false; $('eventBlock').hidden = false;
+    $('ev1').textContent = `${q.mag !== null && q.mag !== undefined ? 'M' + q.mag : ''}${q.hypo ? ' — ' + q.hypo : ''}`.trim() || '—';
+    let step = null, cap = '', big = '', lab = '', note = '', isMsg = false;
+    if (q.measuredAt && q.reading) {
+      $('ev2').textContent = q.maxMeasured ? `${s.maxMeasured} ${stepText(q.maxMeasured)}` : '';
+      const r = q.reading;
+      if (r.source === 'below') { step = '0'; cap = s.capBelow(r.station); big = s.below1Big; isMsg = true; lab = s.below1Lab; note = s.below1Note; }
+      else { step = r.step; cap = r.source === 'station' ? s.capStation(r.station, r.km) : s.capArea(r.area); big = stepText(r.step); lab = LABELS[lang][r.step]; note = ADVICE[lang][r.step] || ''; }
+    } else if (q.eew) {
+      $('ev2').textContent = q.eew.maxForecast ? `${s.maxForecast} ${stepText(q.eew.maxForecast)}` : '';
+      const af = q.eew.areaForecast;
+      if (af) {
+        step = af.from; cap = (q.eew.isWarning ? s.capWarn : s.capFc)(af.area);
+        big = stepText(af.from) + (af.to ? '–' + stepText(af.to) : ''); if (af.orMore) { big = stepText(af.from); lab = (lang === 'ja' ? '震度' : 'Shindo ') + stepText(af.from) + s.orMore; } else lab = LABELS[lang][af.from] || '';
+        note = q.eew.isWarning ? s.warnNote : s.fcNote;
+        if (big.length > 4) isMsg = false;
+      } else { step = null; cap = s.capNoArea; big = s.noArea; isMsg = true; lab = ''; note = s.noAreaNote; }
+    }
+    const band = step !== null ? BANDS[step] : { bg: '#161614', fg: '#f5f5f0' };
+    card.style.background = band.bg; card.style.color = band.fg;
+    $('cap').textContent = cap; $('big').textContent = big; $('big').className = 'big' + (isMsg ? ' msg' : ''); $('lab').textContent = lab; $('note').textContent = note;
+    document.title = (step !== null && !isMsg ? `${stepText(step)} · ` : '') + 'Shindo Screener';
+  }
+  renderRecent();
+}
+function renderRecent() {
+  const s = t(), now = Date.now(), box = $('recent');
+  $('recentTitle').textContent = s.recent;
+  const rows = quakes.filter((q) => q.msg && q.origin && now - q.origin.getTime() <= RECENT_HOURS * 3600000 && q.reading &&
+      (q.lat === undefined || q.lat === null || !home || haversine(home.lat, home.lon, q.lat, q.lon) <= RECENT_RADIUS_KM))
+    .sort((a, b) => b.origin - a.origin).slice(0, RECENT_MAX);
+  if (!rows.length) { box.innerHTML = `<div class="idle" style="padding:6px 4px">${s.recentNone}</div>`; return; }
+  box.innerHTML = '';
+  for (const q of rows) {
+    const r = q.reading, el = document.createElement('div'); el.className = 'row';
+    const tm = document.createElement('div'); tm.className = 't'; tm.textContent = fmtTime(q.origin);
+    const mid = document.createElement('div');
+    const m = document.createElement('div'); m.className = 'm'; m.textContent = `${q.mag !== null && q.mag !== undefined ? 'M' + q.mag + ' ' : ''}${q.hypo || ''}`;
+    const sub = document.createElement('div'); sub.className = 's'; sub.textContent = r.source === 'station' ? `${r.station} (${r.km} km)` : (r.source === 'area' ? r.area : r.station);
+    mid.appendChild(m); mid.appendChild(sub);
+    const chip = document.createElement('div'); chip.className = 'chip';
+    if (r.source === 'below') { chip.classList.add('small'); chip.textContent = s.below1; }
+    else { const b = BANDS[r.step]; chip.style.background = b.bg; chip.style.color = b.fg; chip.textContent = stepText(r.step); }
+    el.appendChild(tm); el.appendChild(mid); el.appendChild(chip); box.appendChild(el);
+  }
+}
+
+// ---------------------------------------------------------------- place search (ported from the desktop app)
+function normRomaji(text) {
+  let x = text.toLowerCase();
+  for (const [a, b] of [['ō','o'],['ū','u'],['ā','a'],['ī','i'],['ē','e']]) x = x.split(a).join(b);
+  x = x.replace(/[^a-z0-9]/g, '');
+  return x.replace(/oh/g,'o').replace(/ou/g,'o').replace(/oo/g,'o').replace(/uu/g,'u').replace(/sh/g,'s').replace(/ch/g,'t').replace(/ts/g,'t').replace(/j/g,'z').replace(/fu/g,'hu');
+}
+const toHira = (s) => s.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+function searchPlaces(query) {
+  const q = query.trim(); if (!q) return [];
+  const ascii = /^[\x00-\x7f]*$/.test(q), scored = [];
+  if (ascii) {
+    const nq = normRomaji(q); if (!nq) return [];
+    for (const p of places) {
+      const key = normRomaji(p.k); let score;
+      if (key.startsWith(nq)) score = 0;
+      else if (p.k.split(' ').slice(1).some((w) => normRomaji(w).startsWith(nq))) score = 1;
+      else if (normRomaji(p.e.split(', ').pop().replace(' Prefecture', '')).startsWith(nq)) score = 2;
+      else if (key.includes(nq) && nq.length >= 3) score = 3; else continue;
+      scored.push([score, 'cwm'.indexOf(p.t), key.length, p]);
+    }
+  } else {
+    const qh = toHira(q);
+    for (const p of places) {
+      let score; const full = p.p + p.j;
+      if (p.j.startsWith(q) || (p.h && p.h.startsWith(qh))) score = 0;
+      else if (full.startsWith(q) || p.p.startsWith(q)) score = 2;
+      else if (p.j.includes(q)) score = 3; else continue;
+      scored.push([score, 'cwm'.indexOf(p.t), p.j.length, p]);
+    }
+  }
+  scored.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+  return scored.slice(0, 8).map((x) => x[3]);
+}
+function doSearch() {
+  const res = searchPlaces($('q').value), box = $('cands');
+  box.innerHTML = '';
+  if (!res.length) { const d = document.createElement('div'); d.className = 'idle'; d.style.padding = '6px 2px'; d.textContent = t().none; box.appendChild(d); return; }
+  for (const p of res) {
+    const b = document.createElement('button'); b.className = 'cand';
+    b.textContent = lang === 'ja' ? (p.p + p.j) : p.e;
+    b.onclick = () => choosePlace({ name: lang === 'ja' ? (p.p + p.j) : p.e, ja: p.p + p.j, en: p.e, lat: p.a, lon: p.o });
+    box.appendChild(b);
+  }
+}
+function choosePlace(h) {
+  home = h; store('shindo_web_home', JSON.stringify(h));
+  homeInfo = locateHome(h); recompute();
+  $('setup').hidden = true; $('screen').hidden = false; loadHistory(); render();
+}
+function changePlace() { home = null; $('screen').hidden = true; $('setup').hidden = false; $('cands').innerHTML = ''; $('q').value = ''; render(); }
+function setLang(l) {
+  lang = l; store('shindo_web_lang', l);
+  if (home && home.en) home.name = l === 'ja' ? home.ja : home.en;
+  render();
+}
+$('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+
+// ---------------------------------------------------------------- connections
+function connect(url, kind, handler) {
+  let delay = 2000;
+  const open = () => {
+    let ws;
+    try { ws = new WebSocket(url); } catch (e) { setTimeout(open, delay); return; }
+    ws.onopen = () => { connLive[kind] = true; delay = 2000; render(); };
+    ws.onmessage = (ev) => { let p; try { p = JSON.parse(ev.data); } catch (e) { return; } if (p && typeof p === 'object') { try { handler(p); } catch (e) { console.error(e); } render(); } };
+    ws.onclose = () => { connLive[kind] = false; render(); setTimeout(open, delay); delay = Math.min(delay * 2, 30000); };
+    ws.onerror = () => { try { ws.close(); } catch (e) {} };
+  };
+  open();
+}
+function loadHistory() {
+  fetch(P2P_HISTORY).then((r) => r.json()).then((rows) => {
+    if (!Array.isArray(rows)) return;
+    rows.slice().reverse().forEach((m) => { try { applyMeasured(m, true); } catch (e) {} });
+    render();
+  }).catch(() => {});
+}
+function start() {
+  connect(P2P_URL, 'p2p', (p) => { if (p.code === 551 && home) applyMeasured(p, false); });
+  connect(WOLFX_URL, 'wolfx', (p) => { if (p.type !== 'heartbeat' && home) applyEew(p); });
+  setInterval(render, 15000);
+}
+
+// ---------------------------------------------------------------- boot
+(async function boot() {
+  const savedLang = store('shindo_web_lang'); if (savedLang === 'ja' || savedLang === 'en') lang = savedLang;
+  try {
+    const [pl, st] = await Promise.all([fetch('data/places_jp.json').then((r) => r.json()), fetch('data/stations_jp.json').then((r) => r.json())]);
+    places = pl.places || [];
+    stations = (st.stations || []).map(([name, lat, lon, area]) => ({ name, lat, lon, area }));
+  } catch (e) { $('setupLead').textContent = 'Could not load the place data. Reload the page.'; }
+  let saved = null; try { saved = JSON.parse(store('shindo_web_home') || 'null'); } catch (e) {}
+  if (saved && saved.lat !== undefined) { home = saved; if (home.en) home.name = lang === 'ja' ? home.ja : home.en; homeInfo = locateHome(home); $('screen').hidden = false; loadHistory(); }
+  else $('setup').hidden = false;
+  render(); start();
+})();
+</script>
+</body>
+</html>

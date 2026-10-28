@@ -133,13 +133,81 @@ def prune_felt_log(entries):
     return kept
 
 
+DUPLICATE_WINDOW_MINUTES = 15
+
+
+def _same_logged_quake(a, b):
+    """Two log rows describe one quake: same place name, same magnitude (when both known),
+    logged within DUPLICATE_WINDOW_MINUTES of each other."""
+    try:
+        gap = abs((datetime.fromisoformat(a["felt_at"]) - datetime.fromisoformat(b["felt_at"])).total_seconds())
+    except (KeyError, TypeError, ValueError):
+        return False
+    if gap > DUPLICATE_WINDOW_MINUTES * 60:
+        return False
+    if (a.get("hypocenter") or None) != (b.get("hypocenter") or None):
+        return False
+    ma, mb = a.get("magnitude"), b.get("magnitude")
+    return ma is None or mb is None or ma == mb
+
+
+def clean_felt_log(entries):
+    """Rows made while the beta "follow the quake" mode showed another place are not readings
+    for the saved place, so they are dropped. Rows that describe the same quake are merged
+    into one (the earliest time, the newest values)."""
+    rows = [e for e in entries if not e.get("beta_follow")]
+    rows.sort(key=lambda e: e.get("felt_at") or "")
+    merged = []
+    for e in rows:
+        for m in merged:
+            if _same_logged_quake(m, e):
+                newer = (e.get("updated_at") or "") >= (m.get("updated_at") or "")
+                if newer:
+                    first = m.get("felt_at")
+                    m.update({k: v for k, v in e.items() if v is not None})
+                    m["felt_at"] = first
+                break
+        else:
+            merged.append(dict(e))
+    return merged
+
+
 def load_felt_log():
     try:
         with open(FELT_LOG_PATH, "r", encoding="utf-8") as f:
             entries = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         entries = []
-    return prune_felt_log(entries)
+    return clean_felt_log(prune_felt_log(entries))
+
+
+# ---- Quake series (for the aftershock table) --------------------------------
+# One small row per measured earthquake JMA reported, with the value at each nearby big city.
+# Kept on this computer for SERIES_KEEP_DAYS days. Every value is JMA's own; nothing is estimated.
+SERIES_PATH = os.path.join(settings_dir(), "quake_series.json")
+SERIES_KEEP_DAYS = 14
+AFTERSHOCK_RADIUS_KM = 80
+AFTERSHOCK_WINDOW_HOURS = 72
+MAINSHOCK_MIN_MAGNITUDE = 4.5
+SERIES_CITY_RADIUS_KM = 200
+
+
+def load_series():
+    try:
+        with open(SERIES_PATH, "r", encoding="utf-8") as f:
+            rows = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        rows = []
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=SERIES_KEEP_DAYS)).isoformat()
+    return [r for r in rows if isinstance(r, dict) and (r.get("origin") or "") >= cutoff]
+
+
+def save_series(rows):
+    try:
+        with open(SERIES_PATH, "w", encoding="utf-8") as f:
+            json.dump(rows, f, ensure_ascii=False)
+    except OSError:
+        pass
 
 
 def save_felt_log(entries):
@@ -309,6 +377,64 @@ def search_locations(city_name, lang="en"):
 _places_cache = None
 _last_online_lookup = 0.0
 _online_lock = threading.Lock()
+
+
+# Major cities for the "Cities" panel (rough city-centre coordinates). Each one is matched to its
+# nearest JMA station; the value shown is always JMA's own measured value for that station.
+MAJOR_CITIES = [
+    ('Sapporo', '札幌', 43.06, 141.35),
+    ('Asahikawa', '旭川', 43.77, 142.36),
+    ('Hakodate', '函館', 41.77, 140.73),
+    ('Aomori', '青森', 40.82, 140.74),
+    ('Hachinohe', '八戸', 40.51, 141.49),
+    ('Misawa', '三沢', 40.68, 141.37),
+    ('Morioka', '盛岡', 39.7, 141.15),
+    ('Sendai', '仙台', 38.27, 140.87),
+    ('Akita', '秋田', 39.72, 140.1),
+    ('Yamagata', '山形', 38.24, 140.33),
+    ('Fukushima', '福島', 37.76, 140.47),
+    ('Koriyama', '郡山', 37.4, 140.36),
+    ('Mito', '水戸', 36.34, 140.45),
+    ('Utsunomiya', '宇都宮', 36.57, 139.88),
+    ('Maebashi', '前橋', 36.39, 139.06),
+    ('Saitama', 'さいたま', 35.86, 139.65),
+    ('Chiba', '千葉', 35.61, 140.12),
+    ('Funabashi', '船橋', 35.69, 139.98),
+    ('Tokyo', '東京', 35.69, 139.69),
+    ('Kawasaki', '川崎', 35.53, 139.7),
+    ('Yokohama', '横浜', 35.44, 139.64),
+    ('Kofu', '甲府', 35.66, 138.57),
+    ('Niigata', '新潟', 37.92, 139.04),
+    ('Nagano', '長野', 36.65, 138.18),
+    ('Toyama', '富山', 36.7, 137.21),
+    ('Kanazawa', '金沢', 36.56, 136.66),
+    ('Fukui', '福井', 36.07, 136.22),
+    ('Shizuoka', '静岡', 34.98, 138.38),
+    ('Hamamatsu', '浜松', 34.71, 137.73),
+    ('Nagoya', '名古屋', 35.18, 136.91),
+    ('Gifu', '岐阜', 35.42, 136.76),
+    ('Tsu', '津', 34.73, 136.51),
+    ('Kyoto', '京都', 35.01, 135.77),
+    ('Osaka', '大阪', 34.69, 135.5),
+    ('Kobe', '神戸', 34.69, 135.2),
+    ('Nara', '奈良', 34.69, 135.83),
+    ('Wakayama', '和歌山', 34.23, 135.17),
+    ('Okayama', '岡山', 34.66, 133.92),
+    ('Hiroshima', '広島', 34.4, 132.46),
+    ('Matsue', '松江', 35.47, 133.05),
+    ('Takamatsu', '高松', 34.34, 134.04),
+    ('Matsuyama', '松山', 33.84, 132.77),
+    ('Kochi', '高知', 33.56, 133.53),
+    ('Tokushima', '徳島', 34.07, 134.56),
+    ('Fukuoka', '福岡', 33.59, 130.4),
+    ('Kumamoto', '熊本', 32.8, 130.71),
+    ('Nagasaki', '長崎', 32.75, 129.88),
+    ('Oita', '大分', 33.24, 131.61),
+    ('Kagoshima', '鹿児島', 31.6, 130.56),
+    ('Naha', '那覇', 26.21, 127.68),
+]
+CITY_TABLE_SIZE = 8
+CITY_TABLE_MAX_AGE_MINUTES = 90
 
 
 def _load_places():
@@ -595,6 +721,41 @@ class Api:
             listener.set_follow(value == "on")
         return {"ok": True}
 
+    def get_cities(self, lang="en"):
+        listener = self._get_listener()
+        return listener.city_table(lang) if listener is not None else {"ok": False, "reason": "none"}
+
+    def get_aftershocks(self, lang="en"):
+        listener = self._get_listener()
+        return listener.aftershocks(lang) if listener is not None else {"ok": False, "reason": "none"}
+
+    def view_city(self, name_en):
+        listener = self._get_listener()
+        return listener.view_city(name_en) if listener is not None else {"ok": False}
+
+    def view_back(self):
+        listener = self._get_listener()
+        if listener is not None:
+            listener.view_back()
+        return {"ok": True}
+
+    def save_share_image(self, data_url, stem="shindo-screener"):
+        """Saves the PNG the Cities panel drew to Pictures/Shindo Screener and returns its path."""
+        import base64
+        try:
+            head, _, b64 = (data_url or "").partition(",")
+            if "image/png" not in head or not b64:
+                return {"ok": False, "error": "Not a PNG image."}
+            folder = os.path.join(os.path.expanduser("~"), "Pictures", "Shindo Screener")
+            os.makedirs(folder, exist_ok=True)
+            safe = "".join(c for c in str(stem) if c.isalnum() or c in "-_")[:60] or "shindo-screener"
+            path = os.path.join(folder, safe + ".png")
+            with open(path, "wb") as f:
+                f.write(base64.b64decode(b64))
+            return {"ok": True, "path": path}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
     def preview_alert_sound(self, volume):
         """Plays the chosen volume preset once, sound only, so a person
         can hear how loud Quiet/Normal/Loud is before picking one. No
@@ -701,6 +862,7 @@ class Listener:
         self.follow_quake = follow_quake   # beta mode, see set_follow
         self.base_home = None    # the saved place, while a followed place is shown
         self.beta_ticked = set() # event keys that already played the beta wood tick
+        self.viewing = False     # True while the user has picked a city in the Cities panel
         self.lock = threading.Lock()
         # Mutated directly by the Api set_alert_* methods when the user
         # changes a setting, so a change takes effect on the very next
@@ -782,7 +944,178 @@ class Listener:
         diag_log("follow_quake_switched")
         return True
 
+    # ------------------------------------------------------------ Cities panel
+
+    def _series_recent(self):
+        """True when the last 72 hours hold a quake big enough to have aftershocks worth listing."""
+        now = time.time()
+        if now - getattr(self, "_series_checked", 0) < 60:
+            return getattr(self, "_series_flag", False)
+        self._series_checked = now
+        try:
+            self._series_flag = bool(self.aftershocks().get("ok"))
+        except Exception:
+            self._series_flag = False
+        return self._series_flag
+
+    def city_values(self, msg, lat, lon, limit_km=None):
+        """JMA's measured value at the nearest station of each big city, nearest to the epicenter first.
+        step is None when JMA listed no Shindo 1 or more there; source tells "below 1" from "no report"."""
+        rows = []
+        for en, ja, clat, clon in MAJOR_CITIES:
+            dist = jma_sources.haversine_km(lat, lon, clat, clon)
+            if limit_km is None or dist <= limit_km:
+                rows.append((dist, en, ja, clat, clon))
+        rows.sort()
+        out = []
+        for dist, en, ja, clat, clon in rows:
+            info = jma_sources.parse_p2p_quake(msg, jma_sources.locate_home({"lat": clat, "lon": clon}, self.stations))
+            r = (info or {}).get("reading")
+            out.append({"en": en, "ja": ja, "step": r["step"] if r and r["source"] != "station_below_1" else None,
+                        "source": (r or {}).get("source"), "station": (r or {}).get("station"),
+                        "distance_km": round(dist), "viewable": r is not None})
+        return out
+
+    def record_series(self, msg, info):
+        """Keeps one row per measured quake (several JMA messages for one quake merge into one row)."""
+        try:
+            origin = info.get("origin_time")
+            if origin is None or info.get("lat") is None or info.get("lon") is None:
+                return
+            cities = [{"en": c["en"], "step": c["step"], "src": c["source"]}
+                      for c in self.city_values(msg, info["lat"], info["lon"], SERIES_CITY_RADIUS_KM)]
+            row = {"origin": origin.astimezone(timezone.utc).isoformat(), "hypocenter": info.get("hypocenter"),
+                   "lat": info["lat"], "lon": info["lon"], "magnitude": info.get("magnitude"),
+                   "max_step": info.get("jma_max_measured"), "cities": cities, "updated_at": self.now_iso()}
+            rows = load_series()
+            for r in rows:
+                try:
+                    other = datetime.fromisoformat(r["origin"])
+                except (KeyError, ValueError):
+                    continue
+                if jma_sources.same_quake(origin, other):
+                    keep = {k: v for k, v in row.items() if v is not None}
+                    r.update(keep)
+                    break
+            else:
+                rows.append(row)
+            rows.sort(key=lambda r: r.get("origin") or "")
+            save_series(rows)
+        except Exception:
+            traceback.print_exc()
+
+    def aftershocks(self, lang="en"):
+        """The biggest recent quake and the quakes JMA reported near it afterward, each with the big
+        cities that felt it. Pure bookkeeping of JMA reports."""
+        rows = load_series()
+        now = datetime.now(timezone.utc)
+        recent = []
+        for r in rows:
+            try:
+                t = datetime.fromisoformat(r["origin"])
+            except (KeyError, ValueError):
+                continue
+            if (now - t).total_seconds() <= AFTERSHOCK_WINDOW_HOURS * 3600:
+                recent.append((t, r))
+        mains = [(t, r) for t, r in recent if (r.get("magnitude") or 0) >= MAINSHOCK_MIN_MAGNITUDE
+                 or jma_sources.rank(r.get("max_step") or "0") >= jma_sources.rank("4")]
+        if not mains:
+            return {"ok": False, "reason": "no_main"}
+        mt, mr = max(mains, key=lambda x: ((x[1].get("magnitude") or 0), x[0]))
+        jst = timezone(timedelta(hours=9))
+        out = []
+        for t, r in sorted(recent, key=lambda x: x[0], reverse=True):
+            if r is mr or t <= mt + timedelta(seconds=60):
+                continue
+            if jma_sources.haversine_km(mr["lat"], mr["lon"], r["lat"], r["lon"]) > AFTERSHOCK_RADIUS_KM:
+                continue
+            felt = [c for c in r.get("cities") or [] if c.get("step")]
+            felt.sort(key=lambda c: -jma_sources.rank(c["step"]))
+            names = {c[0]: c[1] for c in MAJOR_CITIES}
+            out.append({"time": t.astimezone(jst).strftime("%m-%d %H:%M"), "magnitude": r.get("magnitude"),
+                        "hypocenter": r.get("hypocenter"), "max_step": r.get("max_step"),
+                        "cities": [{"en": c["en"], "ja": names.get(c["en"], c["en"]), "step": c["step"]} for c in felt[:4]]})
+        return {"ok": True, "main": {"hypocenter": mr.get("hypocenter"), "magnitude": mr.get("magnitude"),
+                                     "max_step": mr.get("max_step"), "time": mt.astimezone(jst).strftime("%Y-%m-%d %H:%M")},
+                "count": len(out), "rows": out[:8]}
+
+    def city_table(self, lang="en"):
+        """The big cities nearest the epicenter of the latest measured report, each with JMA's own
+        measured value at that city's nearest station. A city with no value was below Shindo 1 or
+        not listed by JMA. Nothing is estimated."""
+        msg = self._last_measured_msg
+        if msg is None or self._last_measured_received_at is None:
+            return {"ok": False, "reason": "no_report"}
+        if (datetime.now(timezone.utc) - self._last_measured_received_at).total_seconds() > CITY_TABLE_MAX_AGE_MINUTES * 60:
+            return {"ok": False, "reason": "old"}
+        base = jma_sources.parse_p2p_quake(msg, self.home_info)
+        if not base or base.get("lat") is None or base.get("lon") is None:
+            return {"ok": False, "reason": "no_epicenter"}
+        rows = []
+        for en, ja, lat, lon in MAJOR_CITIES:
+            dist = jma_sources.haversine_km(base["lat"], base["lon"], lat, lon)
+            rows.append((dist, en, ja, lat, lon))
+        rows.sort()
+        out = []
+        for dist, en, ja, lat, lon in rows[:CITY_TABLE_SIZE]:
+            info = jma_sources.parse_p2p_quake(msg, jma_sources.locate_home({"lat": lat, "lon": lon}, self.stations))
+            r = (info or {}).get("reading")
+            step = r["step"] if r and r["source"] != "station_below_1" else None
+            out.append({"en": en, "ja": ja, "step": step, "source": (r or {}).get("source"),
+                        "station": (r or {}).get("station"), "distance_km": round(dist),
+                        "viewable": r is not None})
+        # The station JMA lists with the highest measured value (first one when several tie).
+        top = None
+        for pt in msg.get("points") or []:
+            step = jma_sources.P2P_SCALE.get(pt.get("scale"))
+            if step and not pt.get("isArea") and (top is None or jma_sources.rank(step) > jma_sources.rank(top["step"])):
+                top = {"step": step, "station": pt.get("addr"), "pref": pt.get("pref")}
+        origin = base.get("origin_time")
+        return {"ok": True, "viewing": self.viewing, "max_place": top, "hypocenter": base.get("hypocenter"),
+                "magnitude": base.get("magnitude"), "jma_max": base.get("jma_max_measured"),
+                "time": origin.astimezone(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M") if origin else None,
+                "cities": out}
+
+    def view_city(self, name_en):
+        """Show the latest measured quake for a chosen city until the user goes back or the quake leaves the screen."""
+        city = next((c for c in MAJOR_CITIES if c[0] == name_en), None)
+        msg = self._last_measured_msg
+        if city is None or msg is None:
+            return {"ok": False}
+        place = {"name": self._city_label(city), "lat": city[2], "lon": city[3]}
+        probe = jma_sources.parse_p2p_quake(msg, jma_sources.locate_home(place, self.stations))
+        with self.lock:
+            if not probe or probe.get("reading") is None or not self.event or self.event.get("phase") != "measured":
+                return {"ok": False}
+            if self.base_home is None:
+                self.base_home = self._home
+            self._home = place
+            self.home_info = jma_sources.locate_home(place, self.stations)
+            self.viewing = True
+            self.event["reading"] = {}
+        self.handle_measured(msg)
+        return {"ok": True}
+
+    def _city_label(self, city):
+        lang = (load_settings() or {}).get("language", "en")
+        return city[1] if lang == "ja" else city[0]
+
+    def view_back(self):
+        with self.lock:
+            self.restore_home()
+        msg = self._last_measured_msg
+        if msg is None or not self.event:
+            return
+        probe = jma_sources.parse_p2p_quake(msg, self.home_info)
+        if probe and probe.get("reading") is not None:
+            with self.lock:
+                self.event["reading"] = {}
+            self.handle_measured(msg)
+        else:
+            self.go_idle()   # the saved place did not feel this quake
+
     def restore_home(self):
+        self.viewing = False
         if self.base_home is not None:
             self._home = self.base_home
             self.home_info = jma_sources.locate_home(self._home, self.stations)
@@ -792,7 +1125,8 @@ class Listener:
 
     def push(self, state):
         # Which place the screen is showing, so the screen can follow a switch (beta).
-        state = dict(state, monitoring=(self._home or {}).get("name"), following=self.base_home is not None)
+        state = dict(state, monitoring=(self._home or {}).get("name"), following=self.base_home is not None and not self.viewing, viewing=self.viewing,
+                     series_recent=bool(self._series_recent()))
         self.current_state = state
         try:
             self.window.evaluate_js(f"window.applyState({json.dumps(state, ensure_ascii=False)})")
@@ -965,6 +1299,10 @@ class Listener:
                     # values already replaced the warning (those stay).
                     diag_log("eew_cancel_not_applied", on_screen=on_screen, **seen)
                 return
+            if self.viewing and not (self.event and (self.event.get("eew_id") == info["event_id"]
+                    or jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"]))):
+                self.restore_home()
+                info = jma_sources.parse_eew(payload, self.home_info.get("area")) or info
             if self.follow_quake and info["lat"] is not None and not (
                     self.event and (self.event.get("eew_id") == info["event_id"]
                                     or jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"]))):
@@ -1017,8 +1355,12 @@ class Listener:
         # nearest station felt nothing.
         self._last_measured_msg = msg
         self._last_measured_received_at = datetime.now(timezone.utc)
+        self.record_series(msg, info)
         with self.lock:
             same = self.event and jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"])
+            if not same and self.viewing:
+                self.restore_home()
+                info = jma_sources.parse_p2p_quake(msg, self.home_info) or info
             if not same and self.follow_quake and info.get("lat") is not None:
                 if self.follow_epicenter(info["lat"], info["lon"]):
                     info = jma_sources.parse_p2p_quake(msg, self.home_info) or info
@@ -1059,34 +1401,44 @@ class Listener:
             # already-logged quake just refines that one entry.
             if info.get("felt_near_user"):
                 self.record_felt_event(ev)
+            if self.base_home is not None:
+                own = jma_sources.parse_p2p_quake(msg, jma_sources.locate_home(self.base_home, self.stations))
+                if own and own.get("felt_near_user") and own.get("reading"):
+                    self.record_felt_event(dict(ev, reading=own["reading"]), home=self.base_home)
             self.push(self.build_state())
 
-    def record_felt_event(self, ev):
+    def record_felt_event(self, ev, home=None):
         """Adds or updates this event's entry in the local "felt this"
         log (see FELT_LOG_PATH), for the Settings > History export. Not
         JMA data in itself, just a personal record of when the app's own
         relayed JMA readings actually showed something felt here."""
         reading = ev.get("reading") or {}
         step = reading.get("step")
-        if not step:
+        # While another place is on screen (follow mode, or a city picked in the Cities panel) the
+        # reading is not "felt here"; handle_measured logs the saved place's own reading instead
+        # and passes home=.
+        if not step or (self.base_home is not None and home is None):
             return
         now = self.now_iso()
+        origin = ev.get("origin_time")
+        occurred = origin.astimezone(timezone.utc).isoformat() if origin else now
         # The saved location name at the time of the reading, so the history can
         # be told apart when the user changes location (older entries have none).
-        location = (self._home or {}).get("name")
+        location = (home or self._home or {}).get("name")
         entries = load_felt_log()
+        probe = {"felt_at": occurred, "hypocenter": ev.get("hypocenter"), "magnitude": ev.get("magnitude")}
         for e in entries:
-            if e.get("event_key") == ev["key"]:
+            if e.get("event_key") == ev["key"] or _same_logged_quake(e, probe):
                 e.update(display_step=step, magnitude=ev.get("magnitude"), hypocenter=ev.get("hypocenter"),
                          station=reading.get("station"), station_km=reading.get("station_km"),
                          location=location, updated_at=now)
                 break
         else:
             entries.append({
-                "event_key": ev["key"], "felt_at": now, "updated_at": now,
+                "event_key": ev["key"], "felt_at": occurred, "updated_at": now,
                 "display_step": step, "magnitude": ev.get("magnitude"), "hypocenter": ev.get("hypocenter"),
                 "station": reading.get("station"), "station_km": reading.get("station_km"),
-                "location": location, "beta_follow": self.base_home is not None or None,
+                "location": location,
             })
         save_felt_log(prune_felt_log(entries))
 
