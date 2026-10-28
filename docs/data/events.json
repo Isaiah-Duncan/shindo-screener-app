@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-27T19:05:38Z",
- "count": 239,
+ "updated_at": "2026-10-28T07:51:11Z",
+ "count": 240,
  "events": [
+  {
+   "id": "20261028142855",
+   "time": "2026-10-28T14:28:00+09:00",
+   "location_ja": "奄美大島近海",
+   "lat": 28.3,
+   "lon": 129.5,
+   "depth_km": 40.0,
+   "magnitude": 3.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261028033204",
    "time": "2026-10-28T03:32:00+09:00",
