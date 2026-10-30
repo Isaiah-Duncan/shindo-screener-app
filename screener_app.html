@@ -2350,8 +2350,8 @@ function renderActive(state) {
                    : `Forecast for your area: Shindo ${f0.from} or stronger`;
     }
   } else if (src === 'none') {
-    bigText = ja ? 'お住まいの地域の震度は、まもなく発表されます。'
-                 : "Your area's Shindo level will be reported shortly.";
+    bigText = ja ? '気象庁の観測震度を待っています。通常2〜3分かかります。'
+                 : "Waiting for JMA's measured Shindo for your area. This usually takes 2 to 3 minutes.";
     isMsg = true;
     const waitMax = (prefMaxOf(state) || (state.jma_max_kind === 'forecast' ? state.jma_max : null));
     if (state.jma_max_kind === 'forecast' && waitMax) {
