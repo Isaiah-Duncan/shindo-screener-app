@@ -2301,11 +2301,12 @@ function renderActive(state) {
 
   const maturityWords = ja ? MATURITY_JA : MATURITY_EN;
   const maturityText = maturityWords[state.maturity] || '';
-  let matLine = (state.phase === 'eew' && state.serial != null)
-    ? (ja ? `第${state.serial}報 — ${maturityText}` : `Report ${state.serial} — ${maturityText}`)
-    : maturityText;
+  // Only what helps the reader: no report numbers or report-type labels. A test
+  // keeps its "not a real earthquake" label, and a prefecture forecast keeps the
+  // nationwide maximum for comparison.
+  let matLine = state.maturity === 'test' ? maturityText : '';
   if (state.jma_max_kind === 'forecast' && prefMaxOf(state) && max) {
-    matLine += ja ? ` ・全国の予想最大震度: ${jaStep(max)}` : ` · Nationwide maximum (forecast): ${max}`;
+    matLine = ja ? `全国の予想最大震度: ${jaStep(max)}` : `Nationwide maximum (forecast): ${max}`;
   }
   els.maturityLine.textContent = matLine;
 
@@ -2391,12 +2392,8 @@ function renderActive(state) {
   // reported epicenter, not an app-computed intensity forecast for this spot.
   const parts = [];
   if (state.epicenter_km != null) parts.push(ja ? `発表された震源から約${state.epicenter_km} km` : `~${state.epicenter_km} km from the reported epicenter`);
-  if (state.nearby_max) {
-    const n = state.nearby_max;
-    parts.push(ja ? `周辺: ${n.station}で震度${jaStep(n.step)}` : `Nearby: Shindo ${n.step} at ${n.station}`);
-  }
-  const srcText = state.phase === 'eew' ? (ja ? '情報源: 気象庁の緊急地震速報（Wolfx経由）' : 'Source: JMA early warning, relayed by Wolfx')
-                : (state.phase === 'measured' ? (ja ? '情報源: 気象庁の地震情報（P2P地震情報経由）' : 'Source: JMA earthquake report, relayed by P2P地震情報') : '');
+  const srcText = state.phase === 'eew' ? (ja ? '気象庁の発表（Wolfx経由）' : 'Reported by JMA (via Wolfx)')
+                : (state.phase === 'measured' ? (ja ? '気象庁の発表（P2P地震情報経由）' : 'Reported by JMA (via P2P地震情報)') : '');
   if (srcText) parts.push(srcText);
   els.metaText.textContent = parts.join(' · ');
   els.readoutNote.textContent = eewNoteText(state);
@@ -2406,7 +2403,7 @@ function renderActive(state) {
   // Neutral "time since last felt" context (see describeLastFelt):
   // only for steps 1-3, where recency plausibly affects how a reading
   // lands, and only once there's a prior felt event to compare to.
-  els.lastFeltText.textContent = (['1', '2', '3'].includes(step) && state.last_felt_at && src !== 'test')
+  els.lastFeltText.textContent = (['1', '2', '3'].includes(step) && state.last_felt_at && src !== 'test' && !state.following && !state.viewing)
     ? describeLastFelt(state.last_felt_at, ja)
     : '';
 }
