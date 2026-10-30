@@ -1,8 +1,56 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-10-30T18:51:17Z",
- "count": 256,
+ "updated_at": "2026-10-30T22:44:12Z",
+ "count": 260,
  "events": [
+  {
+   "id": "20261031061524",
+   "time": "2026-10-31T06:15:00+09:00",
+   "location_ja": "種子島近海",
+   "lat": 30.3,
+   "lon": 131.2,
+   "depth_km": 30.0,
+   "magnitude": 4.0,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261031054730",
+   "time": "2026-10-31T05:47:00+09:00",
+   "location_ja": "天草灘",
+   "lat": 32.0,
+   "lon": 130.1,
+   "depth_km": 10.0,
+   "magnitude": 3.0,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261031052651",
+   "time": "2026-10-31T05:26:00+09:00",
+   "location_ja": "種子島近海",
+   "lat": 30.4,
+   "lon": 131.2,
+   "depth_km": 30.0,
+   "magnitude": 4.0,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261031045401",
+   "time": "2026-10-31T04:53:00+09:00",
+   "location_ja": "熊本県熊本地方",
+   "lat": 32.7,
+   "lon": 130.8,
+   "depth_km": 10.0,
+   "magnitude": 2.3,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261031014545",
    "time": "2026-10-31T01:45:00+09:00",
