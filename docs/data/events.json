@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-03T08:08:40Z",
- "count": 275,
+ "updated_at": "2026-11-03T21:44:36Z",
+ "count": 278,
  "events": [
+  {
+   "id": "20261104053431",
+   "time": "2026-11-04T05:34:00+09:00",
+   "location_ja": "千葉県東方沖",
+   "lat": 35.4,
+   "lon": 140.4,
+   "depth_km": 60.0,
+   "magnitude": 3.4,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261104051155",
+   "time": "2026-11-04T05:11:00+09:00",
+   "location_ja": "和歌山県北部",
+   "lat": 34.2,
+   "lon": 135.3,
+   "depth_km": 10.0,
+   "magnitude": 1.9,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261104014852",
+   "time": "2026-11-04T01:48:00+09:00",
+   "location_ja": "硫黄島近海",
+   "lat": 24.3,
+   "lon": 141.3,
+   "depth_km": 150.0,
+   "magnitude": 5.4,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261103144025",
    "time": "2026-11-03T14:40:00+09:00",
