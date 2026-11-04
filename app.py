@@ -618,11 +618,13 @@ class Api:
         listener = self._get_listener()
         home = (listener.home if listener is not None else None) or {}
         codes = home_town_codes(home.get("name"))
+        # No town code (Tokyo as a whole, for one): the old map stays off, but the dashboard still
+        # needs the saved place's coordinates to centre its own map.
         if not codes:
-            return {"ok": False}
+            return {"ok": False, "lat": home.get("lat"), "lon": home.get("lon")}
         towns = _load_geo().get(codes[0][:2])
         if not towns:
-            return {"ok": False}
+            return {"ok": False, "lat": home.get("lat"), "lon": home.get("lon")}
         return {"ok": True, "home": codes, "towns": towns, "lat": home.get("lat"), "lon": home.get("lon")}
 
     def confirm_location(self, name, lat, lon):

@@ -3133,7 +3133,7 @@ function dashEnsureHome() {
   dMapPending = true; const key = currentHomeName;
   window.pywebview.api.get_map().then((res) => {
     dMapPending = false; dMapHomeKey = key; dMapHome = res && res.ok ? new Set(res.home) : new Set();
-    dMapLL = res && res.ok && res.lat != null ? { lat: res.lat, lon: res.lon } : null;
+    dMapLL = res && res.lat != null ? { lat: res.lat, lon: res.lon } : null;
     dMapTowns = null; dMapTownsKey = null; dPathCache.clear();
     dashRender(false);
   }).catch(() => { dMapPending = false; dMapHomeKey = key; dMapHome = new Set(); });
@@ -3206,6 +3206,8 @@ function dashMap(st, mode, step) {
   const fill = felt || (standbyFill ? '#2E2E2E' : '#2E2E2E');
   let out = `<rect x="${x0}" y="${y0}" width="${2 * v.W}" height="${2 * v.H}" fill="#0F0F0F"/>`;
   out += `<g class="d-zoomg" style="transform-origin:${v.cx}px ${v.cy}px"><g fill="#1E1E1E" stroke="#363636" stroke-width="1" stroke-linejoin="round" vector-effect="non-scaling-stroke">${paths.replace(/<path /g, '<path vector-effect="non-scaling-stroke" ')}</g>`;
+  // A saved place with no town outline (Tokyo as a whole): mark the spot itself.
+  if (!homePath && dMapHome && !dMapHome.size) out += `<circle cx="${v.proj(st.home_lon, st.home_lat)[0].toFixed(2)}" cy="${v.proj(st.home_lon, st.home_lat)[1].toFixed(2)}" r="${(9 / ppu).toFixed(3)}" fill="${fill}" stroke="#F2F1EC" stroke-width="2.5" vector-effect="non-scaling-stroke"/>`;
   if (homePath) out += `<path class="d-fill" d="${homePath}" fill="${fill}" stroke="#F2F1EC" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
   out += '</g>';
   const hasEpi = (mode === 'eew' || mode === 'wait' || mode === 'alert') && st.epi_lat != null;
