@@ -2994,8 +2994,8 @@ function dashRender(allowPlay) {
       name = below1 ? t.below1 : t.names[step];
     }
     desc = below1 ? t.below1d : (t.descs[step] || '');
-    full = !below1 && step && jma_rank(step) >= jma_rank('4');
-    tileClass = 'd-tile' + (full ? ' outline' : '');
+    full = !below1 && step && jma_rank(step) >= jma_rank('5-');
+    tileClass = 'd-tile outline';
   }
   const b = curStep ? dBand(curStep) : null;
   panel.style.background = full ? b.bg : '';
@@ -3003,8 +3003,8 @@ function dashRender(allowPlay) {
   dEl('dPLabel').textContent = plabel;
   tile.className = tileClass + (tileHtml.length > 6 ? ' small-n' : '');
   tile.innerHTML = tileHtml;
-  tile.style.background = (!full && curStep) ? b.bg : '';
-  tile.style.color = full ? b.fg : ((!full && curStep) ? b.fg : '');
+  tile.style.background = '';
+  tile.style.color = full ? b.fg : (curStep ? b.bg : '');
   dEl('dName').textContent = name;
   dEl('dDesc').textContent = desc;
   // strongest elsewhere
