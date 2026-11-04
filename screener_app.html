@@ -3120,6 +3120,7 @@ function dashClock() {
   if (!dEl('dDate')) return;
   dEl('dDate').textContent = (() => { const n = new Date(); return currentLang === 'ja' ? n.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' }) : n.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); })();
   dEl('dTime').textContent = els.timeEl.textContent;
+  // The bridge to Python can arrive after the first draw: keep asking until the map data is in.
   if (dashLangSeen !== currentLang || dashFmtSeen !== currentTimeFormat) { dashLangSeen = currentLang; dashFmtSeen = currentTimeFormat; if (dEl('dash').classList.contains('show')) dashRender(false); }
 }
 let dashLangSeen = null, dashFmtSeen = null;
@@ -3294,6 +3295,15 @@ function devEndPreview() {
 function devOpenCities(tab) { openCities(); if (tab) setCitiesTab(tab); }
 window.devPreview = devPreview; window.devEndPreview = devEndPreview; window.devOpenCities = devOpenCities;
 
+// A new saved place: forget the old place's map data and coordinates, then redraw.
+function dashLocationChanged(name) {
+  dMapHomeKey = null; dMapLL = null; dMapHome = null; dMapTowns = null; dMapTownsKey = null; dMapReqKey = null; dPathCache.clear(); dPathKey = null;
+  if (dashState) dashState = Object.assign({}, dashState, { home_lat: null, home_lon: null, monitoring: name });
+  dashRender(false);
+}
+window.dashLocationChanged = dashLocationChanged;
+function dashTick() { if (dEl('dash').classList.contains('show') && !(dMapHomeKey === currentHomeName && dMapTowns)) dashRender(false); }
+
 window.applyState = applyState;
 
 function showSetupScreen() {
@@ -3412,6 +3422,7 @@ async function saveSelected(context) {
       currentHomeName = result.name;
       els.currentLocValue.textContent = result.name;
       els.locationLabel.textContent = `${STRINGS[currentLang].monitoring}: ${result.name}`;
+      dashLocationChanged(result.name);
       if (isSetup) {
         showMainScreen(result.name);
       } else {
@@ -3593,7 +3604,7 @@ applyTextScaleButtons();
 renderIdle();
 updateClock();
 applyStandbyButtons(); devRefresh();
-setInterval(() => { updateClock(); dashClock(); }, 1000);
+setInterval(() => { updateClock(); dashClock(); dashTick(); }, 1000);
 
 // pywebview's JS<->Python bridge (window.pywebview.api) is injected
 // asynchronously, it is not guaranteed to exist the instant the page
