@@ -622,7 +622,7 @@ class Api:
         towns = _load_geo().get(codes[0][:2])
         if not towns:
             return {"ok": False}
-        return {"ok": True, "home": codes, "towns": towns}
+        return {"ok": True, "home": codes, "towns": towns, "lat": home.get("lat"), "lon": home.get("lon")}
 
     def confirm_location(self, name, lat, lon):
         """

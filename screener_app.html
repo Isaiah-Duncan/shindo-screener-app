@@ -3125,15 +3125,16 @@ function dashClock() {
 let dashLangSeen = null, dashFmtSeen = null;
 
 // ---- Dashboard map (town outlines from MLIT, via the app's own data) ----
-let dMapHome = null, dMapHomeKey = null, dMapPending = false, dMapReqKey = null, dMapTowns = null, dMapTownsKey = null;
+let dMapLL = null, dMapHome = null, dMapHomeKey = null, dMapPending = false, dMapReqKey = null, dMapTowns = null, dMapTownsKey = null;
 const dPathCache = new Map(); let dPathKey = null;
 function dashEnsureHome() {
   if (dMapHomeKey === currentHomeName || dMapPending || !window.pywebview || !window.pywebview.api.get_map) return false;
   dMapPending = true; const key = currentHomeName;
   window.pywebview.api.get_map().then((res) => {
     dMapPending = false; dMapHomeKey = key; dMapHome = res && res.ok ? new Set(res.home) : new Set();
+    dMapLL = res && res.ok && res.lat != null ? { lat: res.lat, lon: res.lon } : null;
     dMapTowns = null; dMapTownsKey = null; dPathCache.clear();
-    if (dashState) dashRender(false);
+    dashRender(false);
   }).catch(() => { dMapPending = false; dMapHomeKey = key; dMapHome = new Set(); });
   return false;
 }
@@ -3165,8 +3166,11 @@ function dTownBox(t, proj) {
 }
 function dashMap(st, mode, step) {
   const svg = dEl('dSvg'), box = dEl('dMap');
-  if (!st || st.home_lat == null || st.home_lon == null) { svg.innerHTML = ''; return; }
   if (dMapHomeKey !== currentHomeName) { dashEnsureHome(); }
+  // Before any pushed state (a fresh start in standby) the saved place comes from get_map itself.
+  const ll = st && st.home_lat != null ? { lat: st.home_lat, lon: st.home_lon } : dMapLL;
+  if (!ll) { svg.innerHTML = ''; return; }
+  st = Object.assign({}, st || {}, { home_lat: ll.lat, home_lon: ll.lon });
   const w = box.clientWidth, h = box.clientHeight;
   if (!w || !h) return;
   const aspect = w / h;
@@ -3181,7 +3185,7 @@ function dashMap(st, mode, step) {
     window.pywebview.api.get_region(bboxLon0, bboxLat0, bboxLon1, bboxLat1).then((res) => {
       if (dMapReqKey !== reqKey) return;
       dMapTowns = res && res.ok ? res.towns : []; dMapTownsKey = reqKey; dMapReqKey = null;
-      if (dashState) dashRender(false);
+      dashRender(false);
     }).catch(() => { dMapReqKey = null; });
   }
   const px = (n) => (n / ppu).toFixed(3);
