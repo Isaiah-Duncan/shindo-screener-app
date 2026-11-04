@@ -617,6 +617,11 @@ class Api:
         simply shows no map)."""
         listener = self._get_listener()
         home = (listener.home if listener is not None else None) or {}
+        if not home.get("name") or home.get("lat") is None:
+            # Right after a restart the listener may not hold the saved place yet; read it from the settings file.
+            saved = load_settings() or {}
+            if saved.get("name"):
+                home = {"name": saved.get("name"), "lat": saved.get("lat"), "lon": saved.get("lon")}
         codes = home_town_codes(home.get("name"))
         # No town code (Tokyo as a whole, for one): the old map stays off, but the dashboard still
         # needs the saved place's coordinates to centre its own map.

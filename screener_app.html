@@ -3137,11 +3137,14 @@ function dashEnsureHome() {
   if (dMapHomeKey === currentHomeName || dMapPending || !window.pywebview || !window.pywebview.api.get_map) return false;
   dMapPending = true; const key = currentHomeName;
   window.pywebview.api.get_map().then((res) => {
-    dMapPending = false; dMapHomeKey = key; dMapHome = res && res.ok ? new Set(res.home) : new Set();
-    dMapLL = res && res.lat != null ? { lat: res.lat, lon: res.lon } : null;
+    dMapPending = false;
+    // Right after a restart the backend may not know the saved place yet: leave the key unset so the next tick asks again.
+    if (!res || res.lat == null) return;
+    dMapHomeKey = key; dMapHome = res.ok ? new Set(res.home) : new Set();
+    dMapLL = { lat: res.lat, lon: res.lon };
     dMapTowns = null; dMapTownsKey = null; dPathCache.clear();
     dashRender(false);
-  }).catch(() => { dMapPending = false; dMapHomeKey = key; dMapHome = new Set(); });
+  }).catch(() => { dMapPending = false; });
   return false;
 }
 function dashView(st, mode, aspect) {
