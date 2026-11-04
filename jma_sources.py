@@ -262,6 +262,9 @@ def parse_p2p_quake(msg, home):
         "tsunami_cleared": eq.get("domesticTsunami") == "None",
         "reading": reading,
         "nearby_max": nearby_max,
+        # Strongest station in the whole report (JMA's own reading, named as JMA names it), for the
+        # dashboard's "strongest elsewhere" chip.
+        "max_point": ({"name": max(by_name, key=lambda k: rank(by_name[k])), "step": max(by_name.values(), key=rank)} if by_name else None),
         "felt_near_user": reading is not None and reading["source"] != "station_below_1",
     }
 

@@ -19,3 +19,4 @@ alert-samples/
 # OS cruft
 .DS_Store
 Thumbs.db
+dev_build.flag

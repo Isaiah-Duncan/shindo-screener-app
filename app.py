@@ -87,6 +87,25 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
+# Developer features (Cities table, aftershock table, share images, follow-the-quake).
+# They exist only in a "dev build": build_dev.bat bundles the marker file below and the public
+# build_exe.bat does not. Without the marker the Developer section never appears in Settings, the
+# features cannot be switched on, and a saved dev_features=on is ignored. This is a product switch
+# so the public app stays simple, not a security measure.
+DEV_FLAG_FILE = "dev_build.flag"
+
+
+def dev_available():
+    return os.path.exists(resource_path(DEV_FLAG_FILE))
+
+
+def dev_enabled(settings=None):
+    if not dev_available():
+        return False
+    settings = settings if settings is not None else (load_settings() or {})
+    return settings.get("dev_features", "off") == "on"
+
+
 def settings_dir():
     """
     Proper per-user app-data folder, not the exe's own folder: a
@@ -276,6 +295,8 @@ SETTINGS_DEFAULTS = {
     "quiet_hours": alert.DEFAULT_QUIET_HOURS,
     "alert_voice": alert.DEFAULT_ALERT_VOICE,
     "sensitivity": "normal",
+    "standby_style": "minimal",   # "minimal" (the quiet black screen) or "dashboard" (quiet dashboard)
+    "dev_features": "off",   # only honored in a dev build, see dev_available()
     "follow_quake": "off",   # beta: switch the monitored place to the one nearest each quake's epicenter
 }
 
@@ -467,6 +488,24 @@ def _load_geo():
             traceback.print_exc()
             _geo_cache = {}
     return _geo_cache
+
+
+_bbox_cache = {}
+
+
+def _town_bbox(town):
+    """(min lon, min lat, max lon, max lat) of a town's outline, cached by town code."""
+    code = town.get("c")
+    if code in _bbox_cache:
+        return _bbox_cache[code]
+    xs, ys = [], []
+    for poly in town.get("g") or []:
+        for ring in poly:
+            for pt in ring:
+                xs.append(pt[0]); ys.append(pt[1])
+    bb = (min(xs), min(ys), max(xs), max(ys)) if xs else None
+    _bbox_cache[code] = bb
+    return bb
 
 
 def home_town_codes(name):
@@ -713,6 +752,8 @@ class Api:
         changes the saved location."""
         if value not in ("on", "off"):
             return {"ok": False, "error": f"Not a follow setting: {value}"}
+        if value == "on" and not dev_enabled():
+            return {"ok": False, "error": "Developer features are off."}
         existing = load_settings()
         if existing:
             save_settings(merged_settings(existing, follow_quake=value))
@@ -721,15 +762,61 @@ class Api:
             listener.set_follow(value == "on")
         return {"ok": True}
 
+    def set_standby_style(self, value):
+        if value not in ("minimal", "dashboard"):
+            return {"ok": False, "error": f"Not a standby style: {value}"}
+        existing = load_settings()
+        if existing:
+            save_settings(merged_settings(existing, standby_style=value))
+        return {"ok": True}
+
+    def get_region(self, lon0, lat0, lon1, lat1):
+        """Town outlines whose bounding box touches a longitude/latitude box, for the dashboard's wide
+        map. Same MLIT data as get_map; towns of every prefecture are searched, so a view near a
+        prefecture border includes the neighbours."""
+        try:
+            lon0, lat0, lon1, lat1 = float(lon0), float(lat0), float(lon1), float(lat1)
+        except (TypeError, ValueError):
+            return {"ok": False}
+        out = []
+        for towns in _load_geo().values():
+            for t in towns:
+                bb = _town_bbox(t)
+                if bb and bb[0] <= lon1 and bb[2] >= lon0 and bb[1] <= lat1 and bb[3] >= lat0:
+                    out.append(t)
+        return {"ok": True, "towns": out}
+
+    def set_dev_features(self, value):
+        """Switches the developer features on or off. Does nothing in a public build."""
+        if value not in ("on", "off") or not dev_available():
+            return {"ok": False, "error": "Developer features are not available in this build."}
+        existing = load_settings()
+        if existing:
+            save_settings(merged_settings(existing, dev_features=value))
+        listener = self._get_listener()
+        if listener is not None:
+            if value == "off":
+                listener.set_follow(False)
+            else:
+                listener.set_follow((load_settings() or {}).get("follow_quake", "off") == "on")
+            listener.push(listener.build_state() if listener.event else dict(listener.current_state))
+        return {"ok": True}
+
     def get_cities(self, lang="en"):
+        if not dev_enabled():
+            return {"ok": False, "reason": "off"}
         listener = self._get_listener()
         return listener.city_table(lang) if listener is not None else {"ok": False, "reason": "none"}
 
     def get_aftershocks(self, lang="en"):
+        if not dev_enabled():
+            return {"ok": False, "reason": "off"}
         listener = self._get_listener()
         return listener.aftershocks(lang) if listener is not None else {"ok": False, "reason": "none"}
 
     def view_city(self, name_en):
+        if not dev_enabled():
+            return {"ok": False}
         listener = self._get_listener()
         return listener.view_city(name_en) if listener is not None else {"ok": False}
 
@@ -742,6 +829,8 @@ class Api:
     def save_share_image(self, data_url, stem="shindo-screener"):
         """Saves the PNG the Cities panel drew to Pictures/Shindo Screener and returns its path."""
         import base64
+        if not dev_enabled():
+            return {"ok": False, "error": "Developer features are off."}
         try:
             head, _, b64 = (data_url or "").partition(",")
             if "image/png" not in head or not b64:
@@ -978,6 +1067,8 @@ class Listener:
 
     def record_series(self, msg, info):
         """Keeps one row per measured quake (several JMA messages for one quake merge into one row)."""
+        if not dev_enabled():
+            return
         try:
             origin = info.get("origin_time")
             if origin is None or info.get("lat") is None or info.get("lon") is None:
@@ -1126,7 +1217,9 @@ class Listener:
     def push(self, state):
         # Which place the screen is showing, so the screen can follow a switch (beta).
         state = dict(state, monitoring=(self._home or {}).get("name"), following=self.base_home is not None and not self.viewing, viewing=self.viewing,
-                     series_recent=bool(self._series_recent()))
+                     home_lat=(self._home or {}).get("lat"), home_lon=(self._home or {}).get("lon"),
+                     series_recent=bool(self._series_recent()) if dev_enabled() else False,
+                     dev_available=dev_available(), dev_features=dev_enabled())
         self.current_state = state
         try:
             self.window.evaluate_js(f"window.applyState({json.dumps(state, ensure_ascii=False)})")
@@ -1224,6 +1317,10 @@ class Listener:
             "accuracy": ev.get("accuracy"),
             "first_magnitude": ev.get("first_magnitude"),
             "first_seen_at": ev.get("first_seen_at"),
+            "origin_time": ev["origin_time"].astimezone(timezone.utc).isoformat() if ev.get("origin_time") else None,
+            "epi_lat": ev.get("lat"), "epi_lon": ev.get("lon"),
+            "tsunami_clear": bool(ev.get("tsunami_clear")),
+            "max_place": ev.get("max_point"),
             "is_warning": bool(ev.get("is_warning")),
             "pref_name": (ev.get("pref") or {}).get("name"),
             "pref_max": (ev.get("pref") or {}).get("max"),
@@ -1383,6 +1480,9 @@ class Listener:
                                         and info["reading"]["source"] == "area"):
                 ev["reading"] = info["reading"]
                 ev["nearby_max"] = info["nearby_max"]
+            mp = info.get("max_point")
+            if mp and (ev.get("max_point") is None or jma_sources.rank(mp["step"]) >= jma_sources.rank(ev["max_point"]["step"])):
+                ev["max_point"] = mp
             if ev.get("reading") is None:
                 return  # e.g. a destination-only report with nothing for this location yet
             ev.update(phase="measured", serial=None,
@@ -1398,8 +1498,10 @@ class Listener:
             # already shown untouched rather than guessing.
             if info.get("tsunami"):
                 ev["tsunami"] = info["tsunami"]
+                ev["tsunami_clear"] = False
             elif info.get("tsunami_cleared"):
                 ev["tsunami"] = None
+                ev["tsunami_clear"] = True
             # Personal log (Settings > History): only earthquakes actually
             # felt at the user's nearest station/area, never every nearby
             # quake JMA reported. info["felt_near_user"] reflects *this*
@@ -1503,7 +1605,7 @@ def main():
             sensitivity=settings.get("sensitivity", "normal"),
             quiet_hours=settings.get("quiet_hours", alert.DEFAULT_QUIET_HOURS) == "on",
             alert_voice=settings.get("alert_voice", alert.DEFAULT_ALERT_VOICE),
-            follow_quake=settings.get("follow_quake", "off") == "on",
+            follow_quake=settings.get("follow_quake", "off") == "on" and dev_enabled(settings),
         )
         listener_holder["instance"] = listener
         threading.Thread(target=listener.run, daemon=True).start()
@@ -1545,7 +1647,9 @@ def main():
             window.evaluate_js(f"window.applySensitivityOnly({json.dumps(sensitivity)})")
             window.evaluate_js(f"window.applyQuietHoursOnly({json.dumps(quiet_hours)})")
             window.evaluate_js(f"window.applyAlertVoiceOnly({json.dumps(alert_voice)})")
-            window.evaluate_js(f"window.applyFollowQuakeOnly({json.dumps(settings.get('follow_quake', 'off'))})")
+            window.evaluate_js(f"window.applyStandbyStyleOnly({json.dumps(settings.get('standby_style', 'minimal'))})")
+            window.evaluate_js(f"window.applyDevFeaturesOnly({json.dumps(dev_available())}, {json.dumps(dev_enabled(settings))})")
+            window.evaluate_js(f"window.applyFollowQuakeOnly({json.dumps(settings.get('follow_quake', 'off') if dev_enabled(settings) else 'off')})")
             window.evaluate_js(f"window.showMainScreen({json.dumps(settings['name'])})")
             start_listener(settings)
         else:
