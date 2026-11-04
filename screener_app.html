@@ -851,7 +851,11 @@
       </div>
     </div>
     <div class="d-foot" id="dFoot">
-      <button class="d-btn icon" id="dGear" onclick="openSettings()" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
+      <button class="d-btn icon" id="dGear" onclick="openSettings()" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg></button>
+      <button class="d-btn icon" id="dRecent" onclick="openSettings(); showSettingsPage('history')" title="Recent earthquakes" aria-label="Recent earthquakes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2-6 4 12 3-9 2 3h5"/></svg></button>
       <button class="d-btn" id="dDetailsBtn" onclick="dashToggleDetails()"></button>
       <button class="d-btn" id="dDismissBtn" onclick="dismissActiveReading()"></button>
       <button class="d-btn" id="dCitiesBtn" onclick="openCities()"></button>
@@ -2961,6 +2965,7 @@ function dashApply(st) {
 function dashRender(allowPlay) {
   const dash = dEl('dash');
   if (!dash) return;
+  els.citiesBtn.textContent = STRINGS[currentLang].citiesBtn;
   const st = dashState, mode = dashMode(st), t = dT();
   const wantShow = !dashSetupHidden && (mode !== 'standby' || standbyStyle === 'dashboard');
   if (!wantShow) { dash.classList.remove('show', 'alerting', 'play'); dash.style.background = ''; return; }
@@ -3268,8 +3273,16 @@ function dashSyncFlags(state) {
 }
 
 // ---- Developer page: sample screens built in the page itself (no sound, nothing is sent anywhere) ----
-function devPreview(kind, step) {
-  if (!devOn || !devHome) return;
+async function devHomeLL() {
+  if (devHome) return devHome;
+  if (dMapLL) return (devHome = dMapLL);
+  try { const r = await window.pywebview.api.get_map(); if (r && r.lat != null) { devHome = { lat: r.lat, lon: r.lon }; } } catch (e) { /* no bridge yet */ }
+  return devHome;
+}
+async function devPreview(kind, step) {
+  if (!devOn) return;
+  await devHomeLL();
+  if (!devHome) return;
   const now = new Date().toISOString();
   const st = {
     status: 'active', event_key: 'dev-' + Date.now(), updated_at: now, following: false, viewing: false,
@@ -3289,7 +3302,8 @@ function devPreview(kind, step) {
   closeSettings();
   applyState(st);
 }
-function devEndPreview() {
+async function devEndPreview() {
+  await devHomeLL();
   if (!devHome) return;
   closeSettings();
   applyState({ status: 'idle', home_lat: devHome.lat, home_lon: devHome.lon, monitoring: currentHomeName, dev_available: true, dev_features: 'on' });
