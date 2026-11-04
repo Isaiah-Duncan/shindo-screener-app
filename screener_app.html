@@ -716,6 +716,13 @@
   .dash.play .d-alert { animation: dAlertIn 0.2s var(--d-ease) both; }
   @media (prefers-reduced-motion: reduce) { .dash.play, .dash.play * { animation: none !important; } }
   .dash.nomotion.play, .dash.nomotion.play * { animation: none !important; }
+
+  .dev-row { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .dev-row + .dev-row { border-top: 1px solid rgba(245, 245, 240, 0.1); }
+  .d-btn-dev { font: inherit; color: inherit; background: transparent; border: 1.5px solid rgba(245,245,240,0.4); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+  #citiesBtn.cities-btn { display: none; position: fixed; left: calc(5vw + 104px); bottom: 4vh; z-index: 6; height: 40px; padding: 0 14px; margin: 0; align-items: center; border: 1.5px solid currentColor; border-radius: 11px; text-decoration: none; opacity: 0.55; font-size: 14px; font-weight: 700; background: none; }
+  body.dev-on #citiesBtn.cities-btn { display: flex !important; }
+  #citiesBtn.cities-btn:hover { opacity: 1; }
 </style>
 </head>
 <body>
@@ -985,10 +992,6 @@
           <div class="yours-title" data-i18n="alertVoice">Spoken message</div>
           <div class="seg-group" id="voiceGroup"></div>
           <div class="yours-help" data-i18n="voiceHelp">A short spoken line after the chime. Warnings only is the default.</div>
-          <div class="yours-sep"></div>
-          <div class="yours-title" data-i18n="followTitle">Follow the quake (beta)</div>
-          <div class="seg-group" id="followGroup"></div>
-          <div class="yours-help" data-i18n="followHelp">For testing. When a quake happens, the screen shows the place nearest its epicenter instead of your saved place, with a wood tick, then returns. Your saved place does not change.</div>
         </div>
       </div>
     </section>
@@ -998,13 +1001,30 @@
       <p class="page-sub">Only in the developer build. A public build does not contain this page.</p>
       <div class="card">
         <div class="row-card">
-          <div><div class="row-title">Developer features</div><div class="row-desc">Cities table, aftershock table, share images and follow the quake.</div></div>
+          <div><div class="row-title">Developer features</div><div class="row-desc">Turns on everything below, plus the Cities button on the main screen.</div></div>
           <div class="seg-group format-switch">
             <button id="devOnBtn" onclick="setDevFeatures('on')">On</button>
             <button id="devOffBtn" onclick="setDevFeatures('off')">Off</button>
           </div>
         </div>
       </div>
+      <div class="eyebrow" style="margin-top:26px;">Test quakes</div>
+      <p class="page-sub">Sample screens drawn in the app. They make no sound and use your saved place. A real earthquake replaces them.</p>
+      <div class="card">
+        <div class="dev-row"><div class="row-title">Early warning forecast (dashboard)</div><div class="seg-group" style="flex-wrap:wrap"><button onclick="devPreview('eew','1')">1</button><button onclick="devPreview('eew','2')">2</button><button onclick="devPreview('eew','3')">3</button></div></div>
+        <div class="dev-row"><div class="row-title">Full-screen alert</div><div class="seg-group" style="flex-wrap:wrap"><button onclick="devPreview('alert','4')">4</button><button onclick="devPreview('alert','5-')">5−</button><button onclick="devPreview('alert','5+')">5+</button><button onclick="devPreview('alert','6-')">6−</button><button onclick="devPreview('alert','6+')">6+</button><button onclick="devPreview('alert','7')">7</button></div></div>
+        <div class="dev-row"><div class="row-title">Waiting for your area (forecast elsewhere)</div><div class="seg-group" style="flex-wrap:wrap"><button onclick="devPreview('wait','2')">2</button><button onclick="devPreview('wait','3')">3</button><button onclick="devPreview('wait','4')">4</button><button onclick="devPreview('wait','5-')">5−</button><button onclick="devPreview('wait','')">?</button></div></div>
+        <div class="dev-row"><div class="row-title">Preliminary report</div><div class="seg-group" style="flex-wrap:wrap"><button onclick="devPreview('prelim','1')">1</button><button onclick="devPreview('prelim','2')">2</button><button onclick="devPreview('prelim','3')">3</button><button onclick="devPreview('prelim','4')">4</button><button onclick="devPreview('prelim','5-')">5−</button></div></div>
+        <div class="dev-row"><div class="row-title">Final report</div><div class="seg-group" style="flex-wrap:wrap"><button onclick="devPreview('final','1')">1</button><button onclick="devPreview('final','2')">2</button><button onclick="devPreview('final','3')">3</button><button onclick="devPreview('final','4')">4</button><button onclick="devPreview('final','5-')">5−</button><button onclick="devPreview('final','5+')">5+</button><button onclick="devPreview('final','6-')">6−</button><button onclick="devPreview('final','6+')">6+</button><button onclick="devPreview('final','7')">7</button></div></div>
+        <div class="dev-row"><button class="d-btn-dev" onclick="devEndPreview()">End preview, back to standby</button></div>
+      </div>
+      <div class="eyebrow" style="margin-top:26px;">Follow the quake</div>
+      <div class="card"><div class="dev-row" id="devFollowSlot"><div class="yours-title" data-i18n="followTitle">Follow the quake (beta)</div>
+          <div class="seg-group" id="followGroup"></div>
+          <div class="yours-help" data-i18n="followHelp">For testing. When a quake happens, the screen shows the place nearest its epicenter instead of your saved place, with a wood tick, then returns. Your saved place does not change.</div></div></div>
+      <div class="eyebrow" style="margin-top:26px;">Impacted areas</div>
+      <p class="page-sub">The Cities table (share images are saved from it) and the aftershock table.</p>
+      <div class="card"><div class="dev-row"><div class="seg-group"><button onclick="devOpenCities('cities')">Cities table</button><button onclick="devOpenCities('after')">Aftershock table</button></div></div></div>
     </section>
 
     <!-- Recent Earthquakes -->
@@ -2128,7 +2148,7 @@ function showSettingsPage(id) {
     el.classList.toggle('active', on);
     if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
   });
-  if (id === 'alerts') renderAlertsPage();
+  if (id === 'alerts' || id === 'dev') renderAlertsPage();
   if (id === 'display') renderDisplayPreview();
   if (id === 'history') loadHistory();
   document.getElementById('settingsMain').scrollTop = 0;
@@ -2932,8 +2952,10 @@ function dTimeText(iso) {
                                      : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
+let devHome = null;
 function dashApply(st) {
   dashState = st;
+  if (st && st.home_lat != null) devHome = { lat: st.home_lat, lon: st.home_lon };
   dashRender(true);
 }
 function dashRender(allowPlay) {
@@ -3059,7 +3081,7 @@ function dashRender(allowPlay) {
   dEl('dDismissBtn').textContent = t.dismiss;
   dEl('dDismissBtn').style.display = (mode === 'prelim' || mode === 'final') ? '' : 'none';
   dEl('dCitiesBtn').textContent = t.cities;
-  dEl('dCitiesBtn').style.display = devOn && (mode === 'final' || mode === 'prelim' || (st && st.series_recent)) ? '' : 'none';
+  dEl('dCitiesBtn').style.display = devOn ? '' : 'none';
   dEl('dNotice').innerHTML = '';
   [t.notice, t.credit].forEach((x) => { const d = document.createElement('div'); d.textContent = x; dEl('dNotice').appendChild(d); });
   dEl('dMon').innerHTML = els.locationLabel.innerHTML;
@@ -3217,6 +3239,7 @@ function applyStandbyButtons() {
 }
 window.applyStandbyStyleOnly = function (v) { standbyStyle = v === 'dashboard' ? 'dashboard' : 'minimal'; applyStandbyButtons(); dashRender(false); };
 function devRefresh() {
+  document.body.classList.toggle('dev-on', devOn);
   const nav = document.querySelector('.nav-row[data-page="dev"]');
   if (nav) nav.style.display = devAvailable ? '' : 'none';
   const on = document.getElementById('devOnBtn'), off = document.getElementById('devOffBtn');
@@ -3236,6 +3259,36 @@ window.applyDevFeaturesOnly = function (available, enabled) { devAvailable = !!a
 function dashSyncFlags(state) {
   if (state && state.dev_available !== undefined) { const a = !!state.dev_available, o = a && state.dev_features === 'on'; if (a !== devAvailable || o !== devOn) { devAvailable = a; devOn = o; devRefresh(); } }
 }
+
+// ---- Developer page: sample screens built in the page itself (no sound, nothing is sent anywhere) ----
+function devPreview(kind, step) {
+  if (!devOn || !devHome) return;
+  const now = new Date().toISOString();
+  const st = {
+    status: 'active', event_key: 'dev-' + Date.now(), updated_at: now, following: false, viewing: false,
+    home_lat: devHome.lat, home_lon: devHome.lon, monitoring: currentHomeName, dev_available: true, dev_features: 'on',
+    magnitude: 6.0, depth_km: 30, hypocenter: currentLang === 'ja' ? 'テスト震源' : 'Test epicenter', origin_time: now,
+    epi_lat: devHome.lat - 0.55, epi_lon: devHome.lon + 0.75, tsunami_warning: null, tsunami_clear: false, last_felt_at: null,
+  };
+  if (kind === 'eew' || kind === 'alert') {
+    Object.assign(st, { phase: 'eew', display_step: step, alert_step: step, display_source: 'area_warning', jma_max: step, jma_max_kind: 'forecast', area_forecast: { 'from': step, to: step, or_more: false } });
+  } else if (kind === 'wait') {
+    Object.assign(st, { phase: 'eew', display_step: null, alert_step: null, display_source: 'none', jma_max: step || null, jma_max_kind: 'forecast' });
+  } else if (kind === 'prelim') {
+    Object.assign(st, { phase: 'measured', display_step: step, alert_step: step, display_source: 'area', area: currentHomeName, jma_max: step, epi_lat: null, epi_lon: null, magnitude: null, hypocenter: null, origin_time: null });
+  } else {
+    Object.assign(st, { phase: 'measured', display_step: step, alert_step: step, display_source: 'station', jma_max: step, tsunami_clear: true });
+  }
+  closeSettings();
+  applyState(st);
+}
+function devEndPreview() {
+  if (!devHome) return;
+  closeSettings();
+  applyState({ status: 'idle', home_lat: devHome.lat, home_lon: devHome.lon, monitoring: currentHomeName, dev_available: true, dev_features: 'on' });
+}
+function devOpenCities(tab) { openCities(); if (tab) setCitiesTab(tab); }
+window.devPreview = devPreview; window.devEndPreview = devEndPreview; window.devOpenCities = devOpenCities;
 
 window.applyState = applyState;
 
