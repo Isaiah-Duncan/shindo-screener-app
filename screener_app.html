@@ -291,6 +291,10 @@
     flex-shrink: 0;
   }
   .gear-btn:hover { opacity: 1; }
+  .gear-btn { width: 40px; height: 40px; border: 1.5px solid currentColor; border-radius: 11px; }
+  .gear-btn svg { width: 20px; height: 20px; }
+  .idle-line { display: none !important; }
+  .recent-btn { position: fixed; top: 22px; left: 22px; z-index: 6; }
   .gear-btn svg { width: 22px; height: 22px; }
 
   .rings { width: 72px; height: 72px; }
@@ -752,6 +756,7 @@
   </div>
   <div class="map-wrap" id="mapWrap" aria-hidden="true"><svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><g id="mapG"></g></svg></div>
   <div class="idle-line" id="idleLine"></div>
+  <button class="gear-btn recent-btn" id="recentBtn" onclick="openSettings(); showSettingsPage('history')" title="Recent earthquakes" aria-label="Recent earthquakes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2-6 4 12 3-9 2 3h5"/></svg></button>
   <div class="bottom-row">
     <button class="gear-btn" id="gearBtn" onclick="openSettings()" title="Settings" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1689,7 +1694,7 @@ function fmt(template, vars) {
   return String(template).replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] != null ? vars[k] : m));
 }
 
-const APP_VERSION = "0.4.0";
+const APP_VERSION = "0.5.0";
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
 // BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
