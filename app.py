@@ -71,6 +71,7 @@ SENSITIVITY_LEVELS = ("high", "normal", "low", "off")
 # an archive, so it's bounded rather than growing forever on disk.
 FELT_LOG_RETENTION_DAYS = 30
 EEW_NOTICE_RADIUS_KM = 300    # show early warnings for quakes this close even when JMA hasn't warned your area
+FOLLOW_NEAR_KM = 100          # follow-the-quake keeps the saved place when the epicenter is this close to it
 HOME_CHANGE_REPLAY_MINUTES = 10  # re-show a recent quake against a newly chosen location, see recheck_last_events
 CHECK_INTERVAL_SECONDS = 15
 ACTIVE_POLL_INTERVAL_SECONDS = 3
@@ -1022,6 +1023,13 @@ class Listener:
         """Show the place nearest the epicenter. Does not touch the saved location and does not
         replay old messages (the caller re-parses the message it is handling)."""
         if lat is None or lon is None:
+            return False
+        saved = self.base_home or self._home
+        if saved and saved.get("lat") is not None and jma_sources.haversine_km(saved["lat"], saved["lon"], lat, lon) <= FOLLOW_NEAR_KM:
+            # A quake near the saved place: show that place's own impact, not the place nearest the epicenter.
+            if self.base_home is not None:
+                self.restore_home()
+                return True   # the caller re-reads the message against the saved place
             return False
         place = self.nearest_place(lat, lon)
         if place is None:
