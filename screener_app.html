@@ -2839,7 +2839,7 @@ const D_STR = {
     noEvent: 'NO ACTIVE EVENT', quiet: 'Quiet. No earthquakes right now.', yourStation: 'YOUR STATION', watching: "Watching for JMA reports",
     eewLabel: 'JMA EARTHQUAKE EARLY WARNING · FORECAST', expectedArea: 'EXPECTED IN YOUR AREA (FORECAST)',
     light: 'Light shaking is on the way.', shaking: 'Shaking is on the way.', detected: 'An earthquake was detected.',
-    waitArea: 'YOUR AREA · WAITING FOR JMA', waitName: "Waiting for JMA's value for your area.", waitDesc: 'This usually takes 2 to 3 minutes.',
+    waitArea: 'YOUR AREA · WAITING FOR JMA', fcPref: (p) => `FORECAST · ${p}`, fcJapan: 'FORECAST · STRONGEST IN JAPAN', waitName: "Waiting for JMA's value for your area.", waitDesc: 'This usually takes 2 to 3 minutes.',
     prelimLabel: 'JMA PRELIMINARY REPORT · AREA LEVEL', prelimHead: (n) => `Shindo ${n} expected in your area.`, prelimPanel: (a) => `YOUR AREA · ${a} (PRELIMINARY)`,
     finalLabel: 'JMA FINAL REPORT', noTsu: ' · NO TSUNAMI', finalHead: (n) => `Shindo ${n} felt here.`, finalPanel: 'FELT AT YOUR STATION (FINAL)',
     below1: 'Below Shindo 1', below1d: 'Not felt at your station.',
@@ -2858,7 +2858,7 @@ const D_STR = {
     noEvent: '現在の地震情報なし', quiet: '静かです。今は地震はありません。', yourStation: 'あなたの観測点', watching: '気象庁の発表を待っています',
     eewLabel: '気象庁 緊急地震速報 · 予報', expectedArea: 'あなたの地域の予想(予報)',
     light: '弱い揺れが近づいています。', shaking: '揺れが近づいています。', detected: '地震を検知しました。',
-    waitArea: 'あなたの地域 · 気象庁の発表待ち', waitName: '地域の震度を待っています。', waitDesc: '通常2〜3分かかります。',
+    waitArea: 'あなたの地域 · 気象庁の発表待ち', fcPref: (p) => `予報 · ${p}`, fcJapan: '予報 · 全国の最大', waitName: '地域の震度を待っています。', waitDesc: '通常2〜3分かかります。',
     prelimLabel: '気象庁 震度速報 · 地域の震度', prelimHead: (n) => `あなたの地域は震度${n}の予想。`, prelimPanel: (a) => `あなたの地域 · ${a}(速報)`,
     finalLabel: '気象庁 確定情報', noTsu: ' · 津波の心配なし', finalHead: (n) => `ここでは震度${n}を観測。`, finalPanel: 'あなたの観測点の震度(確定)',
     below1: '震度1未満', below1d: 'あなたの観測点では感じませんでした。',
@@ -2979,22 +2979,27 @@ function dashRender(allowPlay) {
 
   // --- Shindo panel ---
   const panel = dEl('dPanel'), tile = dEl('dTile');
+  const waitStep = mode === 'wait' && st.phase === 'eew' ? (st.pref_max || st.jma_max || null) : null;
   let plabel = t.yourStation, name = '', desc = '', tileHtml = '', tileClass = 'd-tile empty', full = false, curStep = null;
   if (mode === 'standby' || mode === 'cancelled') { name = t.watching; }
-  else if (mode === 'wait') { plabel = t.waitArea; name = t.waitName; desc = t.waitDesc; }
+  else if (mode === 'wait' && !waitStep) { plabel = t.waitArea; name = t.waitName; desc = t.waitDesc; }
   else {
-    curStep = step;
-    tileHtml = below1 ? '&lt;1' : dStepHtml(step);
-    if (mode === 'eew' || mode === 'alert') {
+    const pstep = mode === 'wait' ? waitStep : step;
+    curStep = pstep;
+    tileHtml = below1 ? '&lt;1' : dStepHtml(pstep);
+    if (mode === 'wait') {
+      plabel = st.pref_max && st.pref_name ? t.fcPref(st.pref_name) : t.fcJapan;
+      name = t.expected(dStepText(pstep));
+    } else if (mode === 'eew' || mode === 'alert') {
       plabel = t.expectedArea;
       const rng = af && af.to && af.to !== af.from ? `${dStepText(af.from)}${currentLang === 'ja' ? '〜' : ' to '}${dStepText(af.to)}${af.or_more ? (currentLang === 'ja' ? '以上' : ' or more') : ''}` : dStepText(step);
       name = t.expected(rng);
     } else {
       plabel = mode === 'prelim' ? t.prelimPanel(st.area || st.home_area || currentHomeName) : t.finalPanel;
-      name = below1 ? t.below1 : t.names[step];
+      name = below1 ? t.below1 : t.names[pstep];
     }
-    desc = below1 ? t.below1d : (t.descs[step] || '');
-    full = !below1 && step && jma_rank(step) >= jma_rank('5-');
+    desc = mode === 'wait' ? `${t.waitName} ${t.waitDesc}` : (below1 ? t.below1d : (t.descs[pstep] || ''));
+    full = !below1 && pstep && jma_rank(pstep) >= jma_rank('5-');
     tileClass = 'd-tile outline';
   }
   const b = curStep ? dBand(curStep) : null;
@@ -3007,9 +3012,10 @@ function dashRender(allowPlay) {
   tile.style.color = full ? b.fg : (curStep ? b.bg : '');
   dEl('dName').textContent = name;
   dEl('dDesc').textContent = desc;
+  dEl('dDesc').classList.toggle('action', mode === 'wait');
   // strongest elsewhere
   let chip = '';
-  if (active) {
+  if (active && !waitStep) {
     const mp = st.max_place, mx = (mp && mp.step) || st.jma_max;
     if (mx && (!curStep || jma_rank(mx) > jma_rank(curStep))) {
       chip = (mp && mp.name && st.phase === 'measured') ? t.strongest(dStepText(mx), mp.name) : (st.phase === 'eew' ? t.strongestF(dStepText(mx)) : t.strongest(dStepText(mx), ''));
