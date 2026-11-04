@@ -5,7 +5,7 @@
 <title>Shindo Screener</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700;800&family=DM+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
   :root { --text-scale: 1; }
   * { box-sizing: border-box; }
@@ -103,12 +103,12 @@
   .screen:not(.details-open) #metaText { display: none; }
   /* Map: the saved prefecture while a warning is up, then a zoom to the saved town once
      JMA reports a measured value. Drawing only; every value on it is JMA's. */
-  .map-wrap { position: absolute; left: 54vw; right: 3vw; top: 13vh; bottom: 15vh; display: none; pointer-events: none; z-index: 1; }
+  .map-wrap { position: absolute; left: 54vw; right: 3vw; top: 19vh; bottom: 17vh; display: none; pointer-events: none; z-index: 1; }
   .screen.has-map .map-wrap { display: block; }
   .map-wrap svg { width: 100%; height: 100%; overflow: hidden; }
   /* A dark panel behind the map keeps every band color readable, including when the shaded color equals the screen color. */
   .map-wrap { background: rgba(0,0,0,0.34); border-radius: 2vh; overflow: hidden; }
-  .screen.has-map .readout, .screen.has-map .readout-note { max-width: 50vw; }
+  .screen.has-map .readout, .screen.has-map .readout-note { max-width: 46vw; }
   .details-btn { align-self: flex-start; text-align: left; display: none; background: none; border: none; color: inherit; font: inherit; font-size: var(--tier4-size); font-weight: 600; text-decoration: underline; opacity: 0.7; padding: 0.3em 0; cursor: pointer; margin-top: 0.4vh; }
   .details-btn:hover, .details-btn:focus-visible { opacity: 1; }
   .dismiss-btn #dismissBtnLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -228,6 +228,30 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
+  .cities-btn { margin-top: 0.6vh; }
+  .cities-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; padding: 3vh 4vw; }
+  .cities-card { background: #141412; color: #f5f5f0; border-radius: 16px; width: min(760px, 100%); max-height: 100%; overflow: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px; font-family: inherit; }
+  .cities-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .cities-title { font-size: 22px; font-weight: 700; }
+  .cities-sub { font-size: 15px; opacity: 0.7; margin-top: 4px; }
+  .cities-list { display: flex; flex-direction: column; gap: 6px; }
+  .city-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; background: #1f1f1c; border: 1px solid transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .city-row:hover, .city-row:focus-visible { border-color: #f5f5f0; }
+  .city-row.disabled { cursor: default; opacity: 0.6; }
+  .city-row.disabled:hover { border-color: transparent; }
+  .city-name { font-size: 18px; font-weight: 700; }
+  .city-meta { font-size: 13px; opacity: 0.65; margin-top: 2px; }
+  .city-chip { min-width: 64px; text-align: center; padding: 6px 12px; border-radius: 8px; font-size: 20px; font-weight: 700; }
+  .city-chip.none { background: #2a2a27; color: #f5f5f0; font-size: 14px; font-weight: 600; }
+  .cities-note { font-size: 13px; opacity: 0.65; line-height: 1.45; }
+  .cities-tabs { display: flex; gap: 8px; }
+  .after-row { display: grid; grid-template-columns: 74px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 10px; background: #1f1f1c; }
+  .after-time { font-size: 15px; opacity: 0.75; }
+  .after-main { font-size: 17px; font-weight: 700; }
+  .after-felt { font-size: 13px; opacity: 0.7; margin-top: 2px; }
+  .cities-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .cities-status { font-size: 14px; min-height: 1.2em; opacity: 0.85; }
+  .location-label .follow-tag { display: block; font-size: var(--tier4-size); font-weight: 600; opacity: 0.7; letter-spacing: 0.05em; }
 
   /* The gear button lives in normal document flow alongside the
      bottom-left text block (.meta) and the location label, as three
@@ -243,9 +267,7 @@
     min-width: 0;
   }
   .bottom-row .meta-wrap .meta {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
   /* "Last felt here: ..." line (see renderActive): plain context, not
      a warning, so it sits visually subordinate to .meta above it. */
@@ -589,6 +611,107 @@
     .settings-main { padding: 20px 18px 60px; }
     .preset-grid { grid-template-columns: repeat(2, 1fr); }
   }
+
+  /* ===== Dashboard revamp (see handoff brief). Sizes are in design pixels at 1920 x 1080, scaled by --u. ===== */
+  .dash {
+    --u: min(calc(100vw / 1920), calc(100vh / 1080));
+    --d-bg: #0a0a0a; --d-panel: #141414; --d-text: #f2f1ec; --d-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: fixed; inset: 0; z-index: 25; display: none;
+    background: var(--d-bg); color: var(--d-text);
+    font-family: 'DM Sans', 'Noto Sans JP', 'Bahnschrift', Arial, sans-serif;
+  }
+  .dash.show { display: block; }
+  .dash * { box-sizing: border-box; }
+  .d-main { position: absolute; inset: 0; padding: calc(46 * var(--u)) calc(52 * var(--u)) calc(34 * var(--u)); display: flex; flex-direction: column; gap: calc(26 * var(--u)); }
+  .d-head { display: flex; align-items: center; gap: calc(26 * var(--u)); min-height: calc(92 * var(--u)); }
+  .d-icon { width: calc(92 * var(--u)); height: calc(92 * var(--u)); border-radius: calc(20 * var(--u)); flex: none; display: flex; align-items: center; justify-content: center; border: calc(3 * var(--u)) solid transparent; }
+  .d-icon svg { width: 58%; height: 58%; }
+  .d-title { flex: 1; min-width: 0; }
+  .d-label { font-size: calc(20 * var(--u)); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.78; }
+  .d-headline { font-size: calc(58 * var(--u)); font-weight: 900; line-height: 1.08; letter-spacing: -0.01em; margin-top: calc(4 * var(--u)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .d-clock { text-align: right; flex: none; }
+  .d-clock .dd { font-size: calc(26 * var(--u)); font-weight: 700; opacity: 0.85; }
+  .d-clock .dt { font-size: calc(56 * var(--u)); font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .d-body { flex: 1; min-height: 0; display: flex; gap: calc(30 * var(--u)); }
+  .d-panel { width: calc(700 * var(--u)); flex: none; border-radius: calc(18 * var(--u)); padding: calc(30 * var(--u)) calc(36 * var(--u)); background: var(--d-panel); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .d-plabel { font-size: calc(20 * var(--u)); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.8; }
+  .d-tilerow { display: flex; align-items: center; gap: calc(34 * var(--u)); margin-top: calc(22 * var(--u)); }
+  .d-tile { width: calc(210 * var(--u)); height: calc(210 * var(--u)); border-radius: calc(28 * var(--u)); flex: none; display: flex; align-items: center; justify-content: center; font-size: calc(172 * var(--u)); font-weight: 900; line-height: 1; letter-spacing: -0.03em; }
+  .d-tile.small-n { font-size: calc(128 * var(--u)); }
+  .d-tile.empty { border: calc(4 * var(--u)) solid #5c5c5c; background: transparent; }
+  .d-tile.outline { border: calc(5 * var(--u)) solid currentColor; background: transparent; }
+  .d-name { font-size: calc(58 * var(--u)); font-weight: 900; line-height: 1.04; }
+  .d-desc { font-size: calc(44 * var(--u)); font-weight: 800; line-height: 1.16; margin-top: calc(24 * var(--u)); }
+  .d-desc.action { font-size: calc(34 * var(--u)); }
+  .d-chip { align-self: flex-start; margin-top: calc(22 * var(--u)); background: #2a2a2a; color: #f2f1ec; border-radius: calc(12 * var(--u)); padding: calc(8 * var(--u)) calc(16 * var(--u)); font-size: calc(24 * var(--u)); font-weight: 800; }
+  .d-chip:empty, .d-tsu:empty { display: none; }
+  .d-tsu { margin-top: calc(18 * var(--u)); align-self: flex-start; border: calc(3 * var(--u)) solid currentColor; border-radius: calc(12 * var(--u)); padding: calc(8 * var(--u)) calc(16 * var(--u)); font-size: calc(26 * var(--u)); font-weight: 900; }
+  .d-spacer { flex: 1; min-height: calc(10 * var(--u)); }
+  .d-bars { display: flex; align-items: flex-end; gap: calc(8 * var(--u)); height: calc(70 * var(--u)); }
+  .d-bar { flex: 1; transform-origin: bottom; border-radius: calc(4 * var(--u)); }
+  .d-barlabels { display: flex; gap: calc(8 * var(--u)); margin-top: calc(10 * var(--u)); }
+  .d-barlabels span { flex: 1; text-align: center; font-size: calc(20 * var(--u)); font-weight: 700; opacity: 0.8; }
+  .d-mapcol { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(16 * var(--u)); }
+  .d-maphead { display: flex; justify-content: space-between; align-items: flex-end; gap: calc(20 * var(--u)); min-height: calc(86 * var(--u)); }
+  .d-mh1 { font-size: calc(52 * var(--u)); font-weight: 900; line-height: 1.05; }
+  .d-mh1.small { font-size: calc(34 * var(--u)); }
+  .d-mh2 { font-size: calc(30 * var(--u)); font-weight: 800; opacity: 0.8; margin-top: calc(4 * var(--u)); }
+  .d-mh3 { font-size: calc(30 * var(--u)); font-weight: 800; opacity: 0.85; white-space: nowrap; }
+  .d-map { flex: 1; min-height: 0; border-radius: calc(18 * var(--u)); background: #0f0f0f; overflow: hidden; position: relative; }
+  .d-map svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .d-foot { display: flex; align-items: center; gap: calc(18 * var(--u)); min-height: calc(52 * var(--u)); }
+  .d-btn { font: inherit; color: inherit; background: transparent; border: calc(2 * var(--u)) solid rgba(242, 241, 236, 0.42); border-radius: calc(12 * var(--u)); padding: calc(8 * var(--u)) calc(20 * var(--u)); font-size: calc(24 * var(--u)); font-weight: 800; cursor: pointer; flex: none; }
+  .d-btn:hover { background: rgba(242, 241, 236, 0.1); }
+  .d-btn.icon { width: calc(52 * var(--u)); height: calc(52 * var(--u)); padding: 0; display: flex; align-items: center; justify-content: center; }
+  .d-btn.icon svg { width: 60%; height: 60%; }
+  .d-notice { font-size: calc(16 * var(--u)); font-weight: 600; opacity: 0.62; flex: 1; min-width: 0; line-height: 1.35; }
+  .d-mon { font-size: calc(30 * var(--u)); font-weight: 900; text-align: right; flex: none; max-width: 42%; }
+  .d-mon .follow-tag { display: block; font-size: calc(18 * var(--u)); font-weight: 700; opacity: 0.7; }
+  .d-details { position: absolute; left: calc(52 * var(--u)); right: calc(52 * var(--u)); bottom: calc(96 * var(--u)); background: #1c1c1c; border-radius: calc(14 * var(--u)); padding: calc(16 * var(--u)) calc(24 * var(--u)); font-size: calc(24 * var(--u)); font-weight: 700; display: none; gap: calc(34 * var(--u)); flex-wrap: wrap; z-index: 3; }
+  .d-details.open { display: flex; }
+  .d-details span b { opacity: 0.6; font-weight: 700; margin-right: calc(8 * var(--u)); }
+  /* Full-screen alert: forecast Shindo 4 or above */
+  .d-alert { position: absolute; inset: 0; display: none; align-items: center; justify-content: space-between; padding: 0 calc(140 * var(--u)); z-index: 4; }
+  .dash.alerting .d-alert { display: flex; }
+  .dash.alerting .d-main { visibility: hidden; }
+  .d-al-top { display: flex; align-items: center; gap: calc(18 * var(--u)); }
+  .d-al-icon { width: calc(72 * var(--u)); height: calc(72 * var(--u)); border-radius: calc(16 * var(--u)); background: #e8402f; color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+  .d-al-icon svg { width: 60%; height: 60%; }
+  .d-al-lab { font-size: calc(22 * var(--u)); font-weight: 800; letter-spacing: 0.04em; line-height: 1.25; text-transform: uppercase; }
+  .d-al-h { font-size: calc(112 * var(--u)); font-weight: 900; line-height: 1.02; letter-spacing: -0.02em; margin-top: calc(34 * var(--u)); }
+  .d-al-jp { font-size: calc(56 * var(--u)); font-weight: 900; margin-top: calc(22 * var(--u)); }
+  .d-al-sub { font-size: calc(34 * var(--u)); font-weight: 700; margin-top: calc(26 * var(--u)); }
+  .d-al-right { text-align: center; flex: none; }
+  .d-al-num { font-size: calc(520 * var(--u)); font-weight: 900; line-height: 0.9; letter-spacing: -0.04em; }
+  .d-al-cap { font-size: calc(44 * var(--u)); font-weight: 800; margin-top: calc(10 * var(--u)); }
+  /* Motion: timings from the brief. Sound and notifications never wait for this. */
+  @keyframes dRise { from { opacity: 0; transform: translateY(calc(28 * var(--u))); } to { opacity: 1; transform: none; } }
+  @keyframes dPop { 0% { opacity: 0; transform: scale(0.85); } 60% { opacity: 1; transform: scale(1.04); } 100% { opacity: 1; transform: scale(1); } }
+  @keyframes dFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes dGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes dRing { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+  @keyframes dZoom { from { transform: scale(0.35); } to { transform: scale(1); } }
+  @keyframes dAlertIn { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
+  .dash.play { animation: dFade 0.16s var(--d-ease) both; }
+  .dash.play .d-icon { animation: dPop 0.48s var(--d-ease) 0.08s both; }
+  .dash.play .d-title { animation: dRise 0.56s var(--d-ease) 0.08s both; }
+  .dash.play .d-panel, .dash.play .d-mapcol { animation: dRise 0.56s var(--d-ease) 0.16s both; }
+  .dash.play .d-tile { animation: dPop 0.56s var(--d-ease) 0.19s both; }
+  .dash.play .d-bar { animation: dGrow 0.48s var(--d-ease) both; animation-delay: calc(0.24s + var(--i) * 0.03s); }
+  .dash.play .d-foot { animation: dFade 0.48s var(--d-ease) 0.32s both; }
+  .dash.play .d-fill { animation: dFade 0.64s var(--d-ease) 0.24s both; }
+  .dash.play.final .d-fill { animation-delay: 0.48s; }
+  .dash.play .d-ring { transform-box: fill-box; transform-origin: center; animation: dRing 0.64s var(--d-ease) both; }
+  .dash.play .d-ring.r1 { animation-delay: 0.40s; } .dash.play .d-ring.r2 { animation-delay: 0.50s; } .dash.play .d-ring.r3 { animation-delay: 0.59s; }
+  .dash.play .d-rlab { animation: dFade 0.48s var(--d-ease) both; }
+  .dash.play .d-rlab.r1 { animation-delay: 0.56s; } .dash.play .d-rlab.r2 { animation-delay: 0.65s; } .dash.play .d-rlab.r3 { animation-delay: 0.75s; }
+  .dash.play .d-epiline { animation: dFade 0.48s var(--d-ease) 0.64s both; }
+  .dash.play .d-epix { transform-box: fill-box; transform-origin: center; animation: dPop 0.48s var(--d-ease) 0.64s both; }
+  .dash.play .d-epilab { animation: dFade 0.48s var(--d-ease) 0.72s both; }
+  .dash.play.final .d-zoomg { animation: dZoom 1.12s var(--d-ease) 0.16s both; }
+  .dash.play .d-alert { animation: dAlertIn 0.2s var(--d-ease) both; }
+  @media (prefers-reduced-motion: reduce) { .dash.play, .dash.play * { animation: none !important; } }
+  .dash.nomotion.play, .dash.nomotion.play * { animation: none !important; }
 </style>
 </head>
 <body>
@@ -608,6 +731,7 @@
       <div id="jmaMaxLine" class="meta-line-2"></div>
       <div id="maturityLine" class="meta-line-3"></div>
       <button type="button" class="details-btn" id="detailsBtn" onclick="toggleDetails()" aria-expanded="false"></button>
+      <button type="button" class="details-btn cities-btn" id="citiesBtn" onclick="openCities()"></button>
     </div>
     <div class="datetime">
       <span class="date" id="dateEl"></span>
@@ -643,6 +767,31 @@
   </div>
 </div>
 
+<div class="cities-overlay" id="citiesOverlay" style="display:none;" onclick="if(event.target===this)closeCities()">
+  <div class="cities-card" role="dialog" aria-modal="true" aria-labelledby="citiesTitle">
+    <div class="cities-head">
+      <div>
+        <div class="cities-title" id="citiesTitle"></div>
+        <div class="cities-sub" id="citiesSub"></div>
+      </div>
+      <button type="button" class="ghost" onclick="closeCities()" id="citiesClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="cities-tabs" id="citiesTabs">
+      <button type="button" class="seg active" id="tabCities" onclick="setCitiesTab('cities')"></button>
+      <button type="button" class="seg" id="tabAfter" onclick="setCitiesTab('after')"></button>
+    </div>
+    <div class="cities-list" id="citiesList"></div>
+    <div class="cities-note" id="citiesNote"></div>
+    <div class="cities-actions">
+      <button type="button" class="ghost" id="citiesBack" onclick="citiesBack()" style="display:none;"></button>
+      <button type="button" class="ghost" id="citiesCopyJa" onclick="citiesCopyText('ja')">Copy post (日本語)</button>
+      <button type="button" class="ghost" id="citiesCopyEn" onclick="citiesCopyText('en')">Copy post (English)</button>
+      <button type="button" class="ghost" id="citiesSave" onclick="citiesSaveImage()"></button>
+    </div>
+    <div class="cities-status" id="citiesStatus"></div>
+  </div>
+</div>
+
 <div class="setup" id="setup">
   <div class="top-corner lang-switch">
     <button id="langEnBtn" onclick="setLanguage('en')">EN</button>
@@ -666,6 +815,50 @@
   <div class="error" id="setupError"></div>
 </div>
 
+<div class="dash" id="dash" aria-live="polite">
+  <div class="d-main" id="dMain">
+    <div class="d-head">
+      <div class="d-icon" id="dIcon"></div>
+      <div class="d-title"><div class="d-label" id="dLabel"></div><div class="d-headline" id="dHeadline"></div></div>
+      <div class="d-clock"><div class="dd" id="dDate"></div><div class="dt" id="dTime"></div></div>
+    </div>
+    <div class="d-body">
+      <div class="d-panel" id="dPanel">
+        <div class="d-plabel" id="dPLabel"></div>
+        <div class="d-tilerow"><div class="d-tile" id="dTile"></div><div class="d-name" id="dName"></div></div>
+        <div class="d-desc" id="dDesc"></div>
+        <div class="d-chip" id="dChip"></div>
+        <div class="d-tsu" id="dTsu"></div>
+        <div class="d-spacer"></div>
+        <div class="d-bars" id="dBars"></div>
+        <div class="d-barlabels" id="dBarLabels"></div>
+      </div>
+      <div class="d-mapcol">
+        <div class="d-maphead"><div><div class="d-mh1" id="dMh1"></div><div class="d-mh2" id="dMh2"></div></div><div class="d-mh3" id="dMh3"></div></div>
+        <div class="d-map" id="dMap"><svg id="dSvg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg></div>
+      </div>
+    </div>
+    <div class="d-foot" id="dFoot">
+      <button class="d-btn icon" id="dGear" onclick="openSettings()" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
+      <button class="d-btn" id="dDetailsBtn" onclick="dashToggleDetails()"></button>
+      <button class="d-btn" id="dDismissBtn" onclick="dismissActiveReading()"></button>
+      <button class="d-btn" id="dCitiesBtn" onclick="openCities()"></button>
+      <div class="d-notice" id="dNotice"></div>
+      <div class="d-mon" id="dMon"></div>
+    </div>
+  </div>
+  <div class="d-details" id="dDetails"></div>
+  <div class="d-alert" id="dAlert">
+    <div>
+      <div class="d-al-top"><div class="d-al-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4.5M12 17.6v.1"/></svg></div><div class="d-al-lab" id="dAlLab"></div></div>
+      <div class="d-al-h" id="dAlH"></div>
+      <div class="d-al-jp">頭を守って</div>
+      <div class="d-al-sub" id="dAlSub"></div>
+    </div>
+    <div class="d-al-right"><div class="d-al-num" id="dAlNum"></div><div class="d-al-cap" id="dAlCap"></div></div>
+  </div>
+</div>
+
 <div class="settings-panel" id="settingsPanel">
   <button class="settings-close" onclick="closeSettings()" aria-label="Close">&times;</button>
 
@@ -676,6 +869,7 @@
     <button class="nav-row" data-page="alerts" onclick="showSettingsPage('alerts')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span data-i18n="groupAlerts">Alerts</span></button>
     <button class="nav-row" data-page="history" onclick="showSettingsPage('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span data-i18n="groupHistory">Recent Earthquakes</span></button>
     <button class="nav-row" data-page="support" onclick="showSettingsPage('support')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 1 1 3.8 2.6c-.8.3-1 1-1 1.7v.3"/></svg><span data-i18n="groupSupport">Support</span></button>
+    <button class="nav-row" data-page="dev" style="display:none" onclick="showSettingsPage('dev')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7 3 12l5 5M16 7l5 5-5 5M14 4l-4 16"/></svg><span>Developer</span></button>
     <div class="version-footer" id="versionFooter">Shindo Screener: Beta</div>
   </nav>
 
@@ -731,6 +925,13 @@
             <button id="textSizeXLargeBtn" onclick="setTextScale('xlarge')" style="font-size:21px;" aria-label="Extra large">A</button>
           </div>
         </div>
+        <div class="row-card">
+          <div><div class="row-title">Standby screen</div><div class="row-desc">Minimal is a quiet clock. Dashboard keeps the map and Shindo scale on screen between earthquakes.</div></div>
+          <div class="seg-group format-switch">
+            <button id="standbyMinBtn" onclick="setStandbyStyle('minimal')">Minimal</button>
+            <button id="standbyDashBtn" onclick="setStandbyStyle('dashboard')">Dashboard</button>
+          </div>
+        </div>
       </div>
       <div class="eyebrow" style="margin-top:26px;" data-i18n="previewLabel">Preview</div>
       <div class="display-preview">
@@ -779,6 +980,24 @@
           <div class="yours-title" data-i18n="alertVoice">Spoken message</div>
           <div class="seg-group" id="voiceGroup"></div>
           <div class="yours-help" data-i18n="voiceHelp">A short spoken line after the chime. Warnings only is the default.</div>
+          <div class="yours-sep"></div>
+          <div class="yours-title" data-i18n="followTitle">Follow the quake (beta)</div>
+          <div class="seg-group" id="followGroup"></div>
+          <div class="yours-help" data-i18n="followHelp">For testing. When a quake happens, the screen shows the place nearest its epicenter instead of your saved place, with a wood tick, then returns. Your saved place does not change.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="settings-page" id="page-dev">
+      <h2>Developer</h2>
+      <p class="page-sub">Only in the developer build. A public build does not contain this page.</p>
+      <div class="card">
+        <div class="row-card">
+          <div><div class="row-title">Developer features</div><div class="row-desc">Cities table, aftershock table, share images and follow the quake.</div></div>
+          <div class="seg-group format-switch">
+            <button id="devOnBtn" onclick="setDevFeatures('on')">On</button>
+            <button id="devOffBtn" onclick="setDevFeatures('off')">Off</button>
+          </div>
         </div>
       </div>
     </section>
@@ -1063,7 +1282,7 @@ function prepGeo(res) {
   return { towns, bb, hb };
 }
 function ensureGeo() {
-  if (geo && geoKey === currentHomeName) return;
+  if (geoKey === currentHomeName) return;   // also when the last try found no outline: do not ask again in a loop
   if (geoPending || !window.pywebview || !window.pywebview.api.get_map) return;
   geoPending = true;
   const key = currentHomeName;
@@ -1341,6 +1560,10 @@ const NEW_STRINGS = {
     alertVoice: "Spoken message",
     voiceHelp: "A short spoken line after the chime. Warnings only is the default. This app does not replace your phone's warning.",
     voiceWarning: "Warnings only", voiceAll: "All alerts", voiceOff: "Off",
+    citiesBtn: "Cities", citiesTitle: "Nearest big cities", citiesNone: "No measured report yet. JMA usually sends one within a few minutes of the quake.", citiesOld: "The latest quake is too old to list.",
+    citiesBelow: "Below 1", citiesNoReport: "No report", citiesBack: "Back to my location", citiesCopy: "Copy post text", citiesSave: "Save images (日本語 + English)", citiesTabCities: "Cities", citiesTabAfter: "Aftershocks", afterNone: "No aftershocks reported yet near this quake.", afterNoMain: "No strong quake in the last 3 days.", afterNote: "Quakes JMA reported within 80 km of the strongest recent quake, after it. Cities show JMA's measured value at their nearest station.", afterNoCity: "no big city reported", citiesCopied: "Copied. Paste it into your post.", citiesSaved: "Image saved to", citiesFail: "Could not do that.", citiesNote: "Each value is JMA's measured intensity at the city's nearest station. \"Below 1\" means JMA listed no Shindo 1 or more there. Tap a city to show it on the main screen.", viewTag: "viewing this city", citiesKm: "km from epicenter",
+    followTitle: "Follow the quake (beta)", followOn: "On", followOff: "Off", followTag: "following the quake",
+    followHelp: "For testing. When a quake happens, the screen shows the place nearest its epicenter instead of your saved place, with a wood tick, then returns. Your saved place does not change.",
     testPlaying: "Playing the {vol} alarm once.",
     supportSub: "Data sources and bug reports.",
     aboutData: "About the data",
@@ -1407,6 +1630,10 @@ const NEW_STRINGS = {
     alertVoice: "音声メッセージ",
     voiceHelp: "チャイムのあとに短い音声で知らせます。初期設定は「警報のみ」です。このアプリは携帯電話の警報の代わりにはなりません。",
     voiceWarning: "警報のみ", voiceAll: "すべての通知", voiceOff: "オフ",
+    citiesBtn: "都市", citiesTitle: "震源に近い大都市", citiesNone: "観測した震度の発表はまだありません。通常、地震の数分後に届きます。", citiesOld: "最新の地震が古いため表示できません。",
+    citiesBelow: "震度1未満", citiesNoReport: "発表なし", citiesBack: "登録地点に戻る", citiesCopy: "投稿文をコピー", citiesSave: "画像を保存(日本語 + English)", citiesTabCities: "都市", citiesTabAfter: "余震", afterNone: "この地震の近くで、報告された余震はまだありません。", afterNoMain: "直近3日間に強い地震はありません。", afterNote: "直近で最も強い地震の後、80km以内で気象庁が発表した地震です。都市は最寄りの観測点で気象庁が観測した震度です。", afterNoCity: "大都市の発表なし", citiesCopied: "コピーしました。投稿に貼り付けてください。", citiesSaved: "画像を保存しました:", citiesFail: "できませんでした。", citiesNote: "各値は、その都市に最も近い観測点で気象庁が観測した震度です。「震度1未満」は、気象庁が震度1以上を発表していないことを表します。都市をタップすると、メイン画面にその都市を表示します。", viewTag: "この都市を表示中", citiesKm: "km(震源から)",
+    followTitle: "地震を追う(ベータ)", followOn: "オン", followOff: "オフ", followTag: "震源に最も近い地点",
+    followHelp: "テスト用です。地震が起きると、登録した地点ではなく震源に最も近い地点を表示し、木の音で知らせたあと元に戻ります。登録した地点は変わりません。",
     testPlaying: "{vol}の音量で1回再生中です。",
     supportSub: "データの提供元と不具合の報告です。",
     aboutData: "データについて",
@@ -1491,6 +1718,7 @@ const els = {
   readoutSub: document.getElementById('readoutSub'),
   readoutNote: document.getElementById('readoutNote'),
   detailsBtn: document.getElementById('detailsBtn'),
+  citiesBtn: document.getElementById('citiesBtn'),
   dateEl: document.getElementById('dateEl'),
   timeEl: document.getElementById('timeEl'),
   mid: document.getElementById('mid'),
@@ -1777,6 +2005,9 @@ function renderAlertsPage() {
   document.getElementById('quietGroup').innerHTML = ['on', 'off'].map((v) => (
     `<button class="seg${v === currentQuietHours ? ' active' : ''}" onclick="setQuietHours('${v}')">${s['quiet' + (v === 'on' ? 'On' : 'Off')]}</button>`
   )).join('');
+  document.getElementById('followGroup').innerHTML = ['on', 'off'].map((v) => (
+    `<button class="seg${v === currentFollowQuake ? ' active' : ''}" onclick="setFollowQuake('${v}')">${s['follow' + (v === 'on' ? 'On' : 'Off')]}</button>`
+  )).join('');
   document.getElementById('voiceGroup').innerHTML = ['warning', 'all', 'off'].map((v) => (
     `<button class="seg${v === currentAlertVoice ? ' active' : ''}" onclick="setAlertVoice('${v}')">${s['voice' + v.charAt(0).toUpperCase() + v.slice(1)]}</button>`
   )).join('');
@@ -1835,6 +2066,10 @@ window.applySensitivityOnly = applySensitivityOnly;
 let currentAlertVolume = 'normal';
 let currentQuietHours = 'on';
 let currentAlertVoice = 'warning';
+let currentFollowQuake = 'off';
+function setFollowQuake(v) { currentFollowQuake = v; if (window.pywebview) window.pywebview.api.set_follow_quake(v); renderAlertsPage(); }
+window.setFollowQuake = setFollowQuake;
+window.applyFollowQuakeOnly = function (v) { currentFollowQuake = v === 'on' ? 'on' : 'off'; renderAlertsPage(); };
 function setQuietHours(v) { currentQuietHours = v; if (window.pywebview) window.pywebview.api.set_quiet_hours(v); renderAlertsPage(); }
 function setAlertVoice(v) { currentAlertVoice = v; if (window.pywebview) window.pywebview.api.set_alert_voice(v); renderAlertsPage(); }
 window.setQuietHours = setQuietHours; window.setAlertVoice = setAlertVoice;
@@ -2233,11 +2468,12 @@ function renderActive(state) {
 
   const maturityWords = ja ? MATURITY_JA : MATURITY_EN;
   const maturityText = maturityWords[state.maturity] || '';
-  let matLine = (state.phase === 'eew' && state.serial != null)
-    ? (ja ? `第${state.serial}報 — ${maturityText}` : `Report ${state.serial} — ${maturityText}`)
-    : maturityText;
+  // Only what helps the reader: no report numbers or report-type labels. A test
+  // keeps its "not a real earthquake" label, and a prefecture forecast keeps the
+  // nationwide maximum for comparison.
+  let matLine = state.maturity === 'test' ? maturityText : '';
   if (state.jma_max_kind === 'forecast' && prefMaxOf(state) && max) {
-    matLine += ja ? ` ・全国の予想最大震度: ${jaStep(max)}` : ` · Nationwide maximum (forecast): ${max}`;
+    matLine = ja ? `全国の予想最大震度: ${jaStep(max)}` : `Nationwide maximum (forecast): ${max}`;
   }
   els.maturityLine.textContent = matLine;
 
@@ -2281,8 +2517,8 @@ function renderActive(state) {
                    : `Forecast for your area: Shindo ${f0.from} or stronger`;
     }
   } else if (src === 'none') {
-    bigText = ja ? 'お住まいの地域の震度は、まもなく発表されます。'
-                 : "Your area's Shindo level will be reported shortly.";
+    bigText = ja ? '気象庁の観測震度を待っています。通常2〜3分かかります。'
+                 : "Waiting for JMA's measured Shindo for your area. This usually takes 2 to 3 minutes.";
     isMsg = true;
     const waitMax = (prefMaxOf(state) || (state.jma_max_kind === 'forecast' ? state.jma_max : null));
     if (state.jma_max_kind === 'forecast' && waitMax) {
@@ -2323,12 +2559,8 @@ function renderActive(state) {
   // reported epicenter, not an app-computed intensity forecast for this spot.
   const parts = [];
   if (state.epicenter_km != null) parts.push(ja ? `発表された震源から約${state.epicenter_km} km` : `~${state.epicenter_km} km from the reported epicenter`);
-  if (state.nearby_max) {
-    const n = state.nearby_max;
-    parts.push(ja ? `周辺: ${n.station}で震度${jaStep(n.step)}` : `Nearby: Shindo ${n.step} at ${n.station}`);
-  }
-  const srcText = state.phase === 'eew' ? (ja ? '情報源: 気象庁の緊急地震速報（Wolfx経由）' : 'Source: JMA early warning, relayed by Wolfx')
-                : (state.phase === 'measured' ? (ja ? '情報源: 気象庁の地震情報（P2P地震情報経由）' : 'Source: JMA earthquake report, relayed by P2P地震情報') : '');
+  const srcText = state.phase === 'eew' ? (ja ? '気象庁の発表（Wolfx経由）' : 'Reported by JMA (via Wolfx)')
+                : (state.phase === 'measured' ? (ja ? '気象庁の発表（P2P地震情報経由）' : 'Reported by JMA (via P2P地震情報)') : '');
   if (srcText) parts.push(srcText);
   els.metaText.textContent = parts.join(' · ');
   els.readoutNote.textContent = eewNoteText(state);
@@ -2338,12 +2570,252 @@ function renderActive(state) {
   // Neutral "time since last felt" context (see describeLastFelt):
   // only for steps 1-3, where recency plausibly affects how a reading
   // lands, and only once there's a prior felt event to compare to.
-  els.lastFeltText.textContent = (['1', '2', '3'].includes(step) && state.last_felt_at && src !== 'test')
+  els.lastFeltText.textContent = (['1', '2', '3'].includes(step) && state.last_felt_at && src !== 'test' && !state.following && !state.viewing)
     ? describeLastFelt(state.last_felt_at, ja)
     : '';
 }
 
+let citiesViewing = false, citiesData = null, afterData = null, citiesTab = 'cities';
+
+function chipFor(step) { return BANDS[step] || null; }
+function stepIn(step, lang) { return lang === 'ja' ? jaStep(step) : step; }
+function valueWord(c, lang) {
+  const ja = lang === 'ja';
+  return c.step ? stepIn(c.step, lang) : (c.source === 'station_below_1' || c.src === 'station_below_1' ? (ja ? '1未満' : '<1') : (ja ? '発表なし' : 'no report'));
+}
+function nameIn(c, lang) { return lang === 'ja' ? c.ja : c.en; }
+
+function openCities() {
+  document.getElementById('citiesOverlay').style.display = 'flex';
+  document.getElementById('citiesStatus').textContent = '';
+  refreshCities(true);
+}
+function closeCities() { document.getElementById('citiesOverlay').style.display = 'none'; }
+function setCitiesTab(t) { citiesTab = t; renderCitiesTab(); }
+
+function refreshCities(pickTab) {
+  const s = STRINGS[currentLang];
+  document.getElementById('citiesTitle').textContent = s.citiesTitle;
+  document.getElementById('tabCities').textContent = s.citiesTabCities;
+  document.getElementById('tabAfter').textContent = s.citiesTabAfter;
+  document.getElementById('citiesBack').textContent = s.citiesBack;
+  document.getElementById('citiesSave').textContent = s.citiesSave;
+  if (!window.pywebview) { document.getElementById('citiesList').textContent = s.citiesNone; return; }
+  Promise.all([
+    window.pywebview.api.get_cities(currentLang).catch(() => null),
+    window.pywebview.api.get_aftershocks(currentLang).catch(() => null),
+  ]).then(([c, a]) => {
+    citiesData = c; afterData = a;
+    if (pickTab) citiesTab = (c && c.ok) ? 'cities' : ((a && a.ok) ? 'after' : 'cities');
+    renderCitiesTab();
+  });
+}
+
+function renderCitiesTab() {
+  const s = STRINGS[currentLang], ja = currentLang === 'ja';
+  const list = document.getElementById('citiesList');
+  document.getElementById('tabCities').classList.toggle('active', citiesTab === 'cities');
+  document.getElementById('tabAfter').classList.toggle('active', citiesTab === 'after');
+  document.getElementById('citiesBack').style.display = (citiesData && citiesData.viewing && citiesTab === 'cities') ? 'inline-block' : 'none';
+  list.innerHTML = '';
+  document.getElementById('citiesTitle').textContent = citiesTab === 'after' ? s.citiesTabAfter : s.citiesTitle;
+  if (citiesTab === 'after') {
+    document.getElementById('citiesNote').textContent = s.afterNote;
+    const d = afterData;
+    if (!d || !d.ok) { document.getElementById('citiesSub').textContent = ''; list.textContent = s.afterNoMain; return; }
+    document.getElementById('citiesSub').textContent =
+      `M${d.main.magnitude != null ? d.main.magnitude : '?'} ${d.main.hypocenter || ''} · ${d.main.time} JST · ${ja ? '最大震度' : 'max'} ${stepShort(d.main.max_step || '0')}`;
+    if (!d.rows.length) { list.textContent = s.afterNone; return; }
+    d.rows.forEach((r) => {
+      const row = document.createElement('div'); row.className = 'after-row';
+      const t = document.createElement('div'); t.className = 'after-time'; t.textContent = r.time;
+      const mid = document.createElement('div');
+      const m = document.createElement('div'); m.className = 'after-main'; m.textContent = `M${r.magnitude != null ? r.magnitude : '?'} ${r.hypocenter || ''}`;
+      const f = document.createElement('div'); f.className = 'after-felt';
+      f.textContent = r.cities.length ? r.cities.map((c) => `${nameIn(c, currentLang)} ${stepShort(c.step)}`).join(ja ? '、' : ' · ') : s.afterNoCity;
+      mid.appendChild(m); mid.appendChild(f);
+      const chip = document.createElement('div');
+      const bd = chipFor(r.max_step);
+      chip.className = 'city-chip'; if (bd) { chip.style.background = bd.bg; chip.style.color = bd.fg; } chip.textContent = r.max_step ? stepShort(r.max_step) : '-';
+      row.appendChild(t); row.appendChild(mid); row.appendChild(chip); list.appendChild(row);
+    });
+    return;
+  }
+  document.getElementById('citiesNote').textContent = s.citiesNote;
+  const d = citiesData;
+  if (!d || !d.ok) {
+    document.getElementById('citiesSub').textContent = '';
+    list.textContent = d && d.reason === 'old' ? s.citiesOld : s.citiesNone;
+    return;
+  }
+  document.getElementById('citiesSub').textContent =
+    `M${d.magnitude != null ? d.magnitude : '?'} ${d.hypocenter || ''}` + (d.time ? ` · ${d.time} JST` : '') +
+    (d.jma_max ? ` · ${ja ? '最大震度' : 'JMA max'} ${stepShort(d.jma_max)}` : '');
+  d.cities.forEach((c) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'city-row' + (c.viewable ? '' : ' disabled');
+    const left = document.createElement('div');
+    const nm = document.createElement('div'); nm.className = 'city-name'; nm.textContent = nameIn(c, currentLang);
+    const mt = document.createElement('div'); mt.className = 'city-meta';
+    mt.textContent = `${c.distance_km} ${s.citiesKm}` + (c.station ? ` · ${c.station}` : '');
+    left.appendChild(nm); left.appendChild(mt);
+    const chip = document.createElement('div');
+    const band = c.step ? chipFor(c.step) : null;
+    if (band) { chip.className = 'city-chip'; chip.style.background = band.bg; chip.style.color = band.fg; chip.textContent = stepShort(c.step); }
+    else { chip.className = 'city-chip none'; chip.textContent = c.source === 'station_below_1' ? s.citiesBelow : s.citiesNoReport; }
+    b.appendChild(left); b.appendChild(chip);
+    if (c.viewable) b.onclick = () => { window.pywebview.api.view_city(c.en).then(() => closeCities()); };
+    else b.disabled = true;
+    list.appendChild(b);
+  });
+}
+function citiesBack() { window.pywebview.api.view_back().then(() => closeCities()); }
+
+// Cities worth showing in a post: Shindo 2 or more, strongest first (nearest first among equals), at most six.
+// If none felt that much, the three nearest with their values.
+function citiesForPost(d) {
+  const felt = d.cities.filter((c) => c.step && jma_rank(c.step) >= jma_rank('2'));
+  felt.sort((x, y) => (jma_rank(y.step) - jma_rank(x.step)) || (x.distance_km - y.distance_km));
+  return felt.length ? felt.slice(0, 6) : d.cities.slice(0, 3);
+}
+
+function postTextCities(lang) {
+  const d = citiesData; if (!d || !d.ok) return '';
+  const ja = lang === 'ja', mp = d.max_place;
+  const top = mp ? mp.step : d.jma_max;
+  const rows = citiesForPost(d).map((c) => `${nameIn(c, lang)} ${valueWord(c, lang)}`).join(ja ? '、' : ' · ');
+  if (ja) {
+    return `【最大震度${stepIn(top, 'ja')}】${d.hypocenter || ''} M${d.magnitude}\n` + (mp ? `最大: ${mp.pref || ''}${mp.station}\n` : '') +
+      `\n近くの大都市の震度: ${rows}\n\n数値はすべて気象庁の発表です。\nshindoscreener.com`;
+  }
+  return `Max Shindo ${top}, M${d.magnitude} ${d.hypocenter || ''} (${d.time} JST)\n` + (mp ? `Strongest: ${mp.pref || ''} ${mp.station}\n` : '') +
+    `\nBig cities near the epicenter: ${rows}\n\nAll values relayed from JMA.\nshindoscreener.com`;
+}
+function postTextAfter(lang) {
+  const d = afterData; if (!d || !d.ok) return '';
+  const ja = lang === 'ja';
+  const lines = d.rows.map((r) => {
+    const felt = r.cities.length ? ` (${r.cities.map((c) => `${nameIn(c, lang)} ${stepIn(c.step, lang)}`).join(ja ? '、' : ', ')})` : '';
+    return `${r.time.slice(6)} M${r.magnitude} ${r.hypocenter || ''} ${ja ? '最大震度' : 'max'} ${r.max_step ? stepIn(r.max_step, lang) : '-'}${felt}`;
+  });
+  const head = ja ? `M${d.main.magnitude} ${d.main.hypocenter}(${d.main.time} JST)の余震(気象庁発表)${d.rows.length ? '' : ': まだありません'}`
+                  : `Aftershocks of the M${d.main.magnitude} ${d.main.hypocenter} quake (${d.main.time} JST), as reported by JMA${d.rows.length ? '' : ': none yet'}`;
+  return head + (lines.length ? '\n\n' + lines.join('\n') : '') + (ja ? '\n\n数値はすべて気象庁の発表です。\nshindoscreener.com' : '\n\nAll values relayed from JMA.\nshindoscreener.com');
+}
+function citiesPostText(lang) { return citiesTab === 'after' ? postTextAfter(lang) : postTextCities(lang); }
+
+function citiesCopyText(lang) {
+  const st = document.getElementById('citiesStatus'); const s = STRINGS[currentLang];
+  const t = citiesPostText(lang);
+  if (!t) { st.textContent = s.citiesFail; return; }
+  const done = () => { st.textContent = s.citiesCopied; };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(() => { st.textContent = s.citiesFail; });
+  else { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { st.textContent = s.citiesFail; } ta.remove(); }
+}
+
+const IMG_FONT = "'DM Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif";
+function imgBase() {
+  const W = 1200, H = 675, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'); g.fillStyle = '#0a0a09'; g.fillRect(0, 0, W, H); return { W, H, cv, g };
+}
+function imgFooter(g, W, H, lang) {
+  g.fillStyle = '#f5f5f0'; g.globalAlpha = 0.65; g.font = `500 21px ${IMG_FONT}`; g.textAlign = 'left';
+  g.fillText(lang === 'ja' ? '数値はすべて気象庁の発表(P2P地震情報経由)  ·  shindoscreener.com' : 'All values relayed from JMA via P2P地震情報  ·  shindoscreener.com', 48, H - 22);
+  g.globalAlpha = 1;
+}
+function drawStepBlock(g, x, y, w, h, step, caption, lang) {
+  const band = chipFor(step) || { bg: '#e8e6dc', fg: '#0e0e0c' };
+  g.fillStyle = band.bg; g.beginPath(); g.roundRect(x, y, w, h, 20); g.fill();
+  g.fillStyle = band.fg; g.textAlign = 'center';
+  g.font = `600 26px ${IMG_FONT}`; g.fillText(caption, x + w / 2, y + 44);
+  const word = stepIn(step, lang);
+  g.font = `800 ${word.length > 1 ? 118 : 140}px ${IMG_FONT}`; g.fillText(word, x + w / 2, y + h - 28);
+  g.textAlign = 'left';
+}
+function drawCitiesImage(lang) {
+  const d = citiesData, ja = lang === 'ja';
+  const { W, H, cv, g } = imgBase();
+  const top = d.max_place ? d.max_place.step : d.jma_max;
+  drawStepBlock(g, 48, 40, 330, 230, top, ja ? '最大震度' : 'MAX SHINDO', lang);
+  g.fillStyle = '#f5f5f0'; g.font = `700 46px ${IMG_FONT}`; g.fillText(`M${d.magnitude}  ${d.hypocenter || ''}`, 412, 98);
+  g.font = `500 28px ${IMG_FONT}`; g.globalAlpha = 0.75; g.fillText(d.time ? `${d.time} JST` : '', 412, 140); g.globalAlpha = 1;
+  if (d.max_place) {
+    g.font = `600 24px ${IMG_FONT}`; g.globalAlpha = 0.65; g.fillText(ja ? '最も強く観測した地点' : 'Strongest reading', 412, 204); g.globalAlpha = 1;
+    g.font = `700 38px ${IMG_FONT}`; g.fillText(`${d.max_place.pref || ''} ${d.max_place.station}`.trim(), 412, 252);
+  }
+  g.font = `600 26px ${IMG_FONT}`; g.globalAlpha = 0.7; g.fillText(ja ? '震源に近い大都市の震度' : 'Big cities near the epicenter', 48, 322); g.globalAlpha = 1;
+  const list = citiesForPost(d), cols = 3, tw = 352, th = 118, gx = 24, gy = 20;
+  list.forEach((c, i) => {
+    const x = 48 + (i % cols) * (tw + gx), y = 346 + Math.floor(i / cols) * (th + gy);
+    g.fillStyle = '#1b1b19'; g.beginPath(); g.roundRect(x, y, tw, th, 16); g.fill();
+    const bd = c.step ? chipFor(c.step) : null;
+    g.fillStyle = bd ? bd.bg : '#2a2a27'; g.beginPath(); g.roundRect(x + 14, y + 14, 90, th - 28, 12); g.fill();
+    g.fillStyle = bd ? bd.fg : '#f5f5f0'; g.textAlign = 'center';
+    const w = valueWord(c, lang); g.font = `800 ${w.length > 2 ? 24 : 54}px ${IMG_FONT}`; g.fillText(w, x + 59, y + th / 2 + (w.length > 2 ? 9 : 19)); g.textAlign = 'left';
+    g.fillStyle = '#f5f5f0'; g.font = `700 36px ${IMG_FONT}`; g.fillText(nameIn(c, lang), x + 122, y + 58);
+    g.font = `500 20px ${IMG_FONT}`; g.globalAlpha = 0.6; g.fillText(ja ? `震源から${c.distance_km} km` : `${c.distance_km} km from epicenter`, x + 122, y + 90); g.globalAlpha = 1;
+  });
+  imgFooter(g, W, H, lang);
+  return cv.toDataURL('image/png');
+}
+function drawAfterImage(lang) {
+  const d = afterData, ja = lang === 'ja';
+  const { W, H, cv, g } = imgBase();
+  g.fillStyle = '#f5f5f0'; g.font = `800 54px ${IMG_FONT}`; g.fillText(ja ? '余震' : 'AFTERSHOCKS', 48, 84);
+  g.font = `600 28px ${IMG_FONT}`; g.globalAlpha = 0.75;
+  g.fillText(`M${d.main.magnitude} ${d.main.hypocenter || ''}  ·  ${d.main.time} JST  ·  ${ja ? '最大震度' : 'max'} ${stepIn(d.main.max_step || '0', lang)}`, 48, 128); g.globalAlpha = 1;
+  const rows = d.rows.slice(0, 6), rh = 72, y0 = 160;
+  if (!rows.length) { g.font = `600 40px ${IMG_FONT}`; g.fillText(ja ? '報告された余震はまだありません' : 'No aftershocks reported yet', 48, 300); }
+  rows.forEach((r, i) => {
+    const y = y0 + i * (rh + 10);
+    g.fillStyle = '#1b1b19'; g.beginPath(); g.roundRect(48, y, W - 96, rh, 14); g.fill();
+    const bd = chipFor(r.max_step) || { bg: '#2a2a27', fg: '#f5f5f0' };
+    g.fillStyle = bd.bg; g.beginPath(); g.roundRect(60, y + 10, 78, rh - 20, 10); g.fill();
+    g.fillStyle = bd.fg; g.textAlign = 'center'; g.font = `800 ${r.max_step && stepIn(r.max_step, lang).length > 1 ? 30 : 38}px ${IMG_FONT}`;
+    g.fillText(r.max_step ? stepIn(r.max_step, lang) : '-', 99, y + rh / 2 + 13); g.textAlign = 'left';
+    g.fillStyle = '#f5f5f0'; g.font = `500 24px ${IMG_FONT}`; g.globalAlpha = 0.75; g.fillText(r.time.slice(6), 158, y + 44); g.globalAlpha = 1;
+    g.font = `700 28px ${IMG_FONT}`; g.fillText(`M${r.magnitude} ${r.hypocenter || ''}`, 268, y + 33);
+    g.font = `500 21px ${IMG_FONT}`; g.globalAlpha = 0.7;
+    g.fillText(r.cities.length ? r.cities.map((c) => `${nameIn(c, lang)} ${stepIn(c.step, lang)}`).join(ja ? '、' : ' · ') : (ja ? '大都市の発表なし' : 'no big city reported'), 268, y + 60); g.globalAlpha = 1;
+  });
+  imgFooter(g, W, H, lang);
+  return cv.toDataURL('image/png');
+}
+function citiesSaveImage() {
+  const st = document.getElementById('citiesStatus'); const s = STRINGS[currentLang];
+  const d = citiesTab === 'after' ? afterData : citiesData;
+  if (!d || !d.ok || !window.pywebview) { st.textContent = s.citiesFail; return; }
+  const when = ((citiesTab === 'after' ? d.main.time : d.time) || 'quake').replace(/[^0-9]/g, '');
+  const kind = citiesTab === 'after' ? 'aftershocks' : 'cities';
+  const draw = citiesTab === 'after' ? drawAfterImage : drawCitiesImage;
+  Promise.all(['ja', 'en'].map((lang) => window.pywebview.api.save_share_image(draw(lang), `shindo-screener-${kind}-${when}-${lang}`)))
+    .then((rs) => { st.textContent = rs.every((r) => r && r.ok) ? `${s.citiesSaved} ${rs[0].path.replace(/[^\\/]+$/, '')}` : s.citiesFail; })
+    .catch(() => { st.textContent = s.citiesFail; });
+}
+window.openCities = openCities; window.closeCities = closeCities; window.citiesBack = citiesBack; window.setCitiesTab = setCitiesTab;
+window.citiesCopyText = citiesCopyText; window.citiesSaveImage = citiesSaveImage;
+
+function followLabel(following, viewing) {
+  const s = STRINGS[currentLang];
+  els.locationLabel.textContent = `${s.monitoring}: ${currentHomeName}`;
+  if (following || viewing) {
+    const tag = document.createElement('span');
+    tag.className = 'follow-tag';
+    tag.textContent = `(${viewing ? s.viewTag : s.followTag})`;
+    els.locationLabel.appendChild(tag);
+  }
+}
+
 function applyState(state) {
+  // Beta "follow the quake": the app may be showing a different place than the saved one.
+  if (state.monitoring && state.monitoring !== currentHomeName) {
+    currentHomeName = state.monitoring;
+    geo = null; geoKey = null; mapBuilt = false;
+  }
+  if (state.monitoring) followLabel(!!state.following, !!state.viewing);
+  citiesViewing = !!state.viewing;
+  els.citiesBtn.textContent = STRINGS[currentLang].citiesBtn;
   if (state.status === 'active') {
     renderActive(state);
   } else if (state.status === 'cancelled') {
@@ -2351,10 +2823,406 @@ function applyState(state) {
   } else {
     renderIdle();
   }
+  // The Cities link goes with a reading that is actually on screen (a hidden faint one has no Details link either).
+  const showCities = (state.status === 'active' && state.phase === 'measured' && els.detailsBtn.style.display !== 'none') || !!state.series_recent;
+  els.citiesBtn.style.display = (showCities && devOn) ? 'inline-block' : 'none';
+  dashSyncFlags(state);
+  dashApply(state);
 }
+// ===== Dashboard revamp ======================================================
+// Draws JMA's values only. Nothing here forecasts anything. Layout and wording follow the handoff brief.
+let standbyStyle = 'minimal', devAvailable = false, devOn = false;
+let dashState = null, dashAnimKey = null, dashEventKey = null, dashPlayTimer = 0, dashDetailsOpen = false, dashSetupHidden = false;
+const D_STEPS = ['1', '2', '3', '4', '5-', '5+', '6-', '6+', '7'];
+const D_STR = {
+  en: {
+    noEvent: 'NO ACTIVE EVENT', quiet: 'Quiet. No earthquakes right now.', yourStation: 'YOUR STATION', watching: "Watching for JMA reports",
+    eewLabel: 'JMA EARTHQUAKE EARLY WARNING · FORECAST', expectedArea: 'EXPECTED IN YOUR AREA (FORECAST)',
+    light: 'Light shaking is on the way.', shaking: 'Shaking is on the way.', detected: 'An earthquake was detected.',
+    waitArea: 'YOUR AREA · WAITING FOR JMA', waitName: "Waiting for JMA's value for your area.", waitDesc: 'This usually takes 2 to 3 minutes.',
+    prelimLabel: 'JMA PRELIMINARY REPORT · AREA LEVEL', prelimHead: (n) => `Shindo ${n} expected in your area.`, prelimPanel: (a) => `YOUR AREA · ${a} (PRELIMINARY)`,
+    finalLabel: 'JMA FINAL REPORT', noTsu: ' · NO TSUNAMI', finalHead: (n) => `Shindo ${n} felt here.`, finalPanel: 'FELT AT YOUR STATION (FINAL)',
+    below1: 'Below Shindo 1', below1d: 'Not felt at your station.',
+    expected: (n) => `Shindo ${n} expected`, strongest: (n, p) => `Strongest: Shindo ${n}${p ? ' in ' + p : ''} · weaker here`, strongestF: (n) => `Strongest forecast: Shindo ${n} · weaker here`,
+    estimate: 'Estimate', epiWait: "Epicenter: waiting for JMA's final report", watchMap: 'Waiting for JMA reports',
+    details: 'Details', detailsHide: 'Hide details', dismiss: 'Dismiss', cities: 'Cities',
+    notice: 'No new message does not mean you are safe. Source: JMA.', credit: 'Map: 「国土数値情報（行政区域データ）」（国土交通省）を加工して作成',
+    protect: 'Protect your head now.', away: 'Stay away from windows and shelves.', alertLab: 'JMA EARTHQUAKE\nEARLY WARNING',
+    magnitude: 'Magnitude', depth: 'Depth', time: 'Time', tsunami: 'Tsunami', none: 'No tsunami reported', cancelled: 'JMA cancelled the forecast.',
+    dirs: ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'],
+    names: { '1': 'Barely felt', '2': 'Felt indoors', '3': 'Clearly felt', '4': 'Moderate shaking', '5-': 'Strong shaking', '5+': 'Very strong shaking', '6-': 'Severe shaking', '6+': 'Violent shaking', '7': 'Extreme shaking' },
+    descs: { '1': 'A few people sitting still feel it.', '2': 'Many people indoors feel it.', '3': 'Most people indoors feel it.', '4': 'Most people are startled.', '5-': 'Many people grab onto something.', '5+': 'Hard to walk. Furniture may tip.', '6-': 'Hard to stand. Walls may crack.', '6+': 'You cannot stand.', '7': 'You cannot move.' },
+  },
+  // Japanese wording is a first draft and needs a native review (brief: Shindo 3 description is marked 要確認).
+  ja: {
+    noEvent: '現在の地震情報なし', quiet: '静かです。今は地震はありません。', yourStation: 'あなたの観測点', watching: '気象庁の発表を待っています',
+    eewLabel: '気象庁 緊急地震速報 · 予報', expectedArea: 'あなたの地域の予想(予報)',
+    light: '弱い揺れが近づいています。', shaking: '揺れが近づいています。', detected: '地震を検知しました。',
+    waitArea: 'あなたの地域 · 気象庁の発表待ち', waitName: '地域の震度を待っています。', waitDesc: '通常2〜3分かかります。',
+    prelimLabel: '気象庁 震度速報 · 地域の震度', prelimHead: (n) => `あなたの地域は震度${n}の予想。`, prelimPanel: (a) => `あなたの地域 · ${a}(速報)`,
+    finalLabel: '気象庁 確定情報', noTsu: ' · 津波の心配なし', finalHead: (n) => `ここでは震度${n}を観測。`, finalPanel: 'あなたの観測点の震度(確定)',
+    below1: '震度1未満', below1d: 'あなたの観測点では感じませんでした。',
+    expected: (n) => `震度${n}の予想`, strongest: (n, p) => `最大: 震度${n}${p ? '(' + p + ')' : ''} · ここはより小さい`, strongestF: (n) => `最大予想: 震度${n} · ここはより小さい`,
+    estimate: '推定', epiWait: '震源: 気象庁の確定情報を待っています', watchMap: '気象庁の発表を待っています',
+    details: '詳細', detailsHide: '詳細を閉じる', dismiss: '閉じる', cities: '都市',
+    notice: '新しい情報がないことは、安全を意味しません。出典: 気象庁', credit: '地図: 「国土数値情報（行政区域データ）」（国土交通省）を加工して作成',
+    protect: 'まず頭を守って。', away: '窓や棚から離れてください。', alertLab: '気象庁\n緊急地震速報',
+    magnitude: 'マグニチュード', depth: '深さ', time: '時刻', tsunami: '津波', none: '津波の情報なし', cancelled: '気象庁が予報を取り消しました。',
+    dirs: ['北', '北東', '東', '南東', '南', '南西', '西', '北西'],
+    names: { '1': 'ほとんど感じない', '2': '屋内で感じる', '3': 'はっきり感じる', '4': 'やや強い揺れ', '5-': '強い揺れ', '5+': '非常に強い揺れ', '6-': '激しい揺れ', '6+': '猛烈な揺れ', '7': '極めて激しい揺れ' },
+    descs: { '1': '静かにしている人の一部が感じる。', '2': '屋内の多くの人が感じる。', '3': '屋内のほとんどの人が感じる。', '4': 'ほとんどの人が驚く。', '5-': '多くの人が何かにつかまる。', '5+': '歩くのが難しい。家具が倒れることがある。', '6-': '立つのが難しい。壁にひびが入ることがある。', '6+': '立っていられない。', '7': '動けない。' },
+  },
+};
+const dEl = (id) => document.getElementById(id);
+function dT() { return D_STR[currentLang === 'ja' ? 'ja' : 'en']; }
+function dStepHtml(step) {
+  if (step == null || step === '') return '–';
+  const s = String(step);
+  if (s === '0') return '&lt;1';
+  const n = s[0], m = s.slice(1);
+  if (!m) return n;
+  const sg = currentLang === 'ja' ? (m === '-' ? '弱' : '強') : (m === '-' ? '−' : '+');
+  return `${n}<span style="font-size:0.5em;font-weight:900;vertical-align:0.38em;margin-left:0.04em">${sg}</span>`;
+}
+function dStepText(step) { return currentLang === 'ja' ? jaStep(step) : String(step).replace('-', '−'); }
+function dBand(step) { return BANDS[step] || BANDS['0']; }
+
+function dashMode(st) {
+  if (!st || st.status === 'idle') return 'standby';
+  if (st.status === 'cancelled') return 'cancelled';
+  if (st.status !== 'active') return 'standby';
+  const src = st.display_source;
+  if (st.phase === 'eew') {
+    if (src === 'area_warning' && st.display_step) {
+      const af = st.area_forecast || {};
+      const top = af.to || af.from || st.display_step;
+      return jma_rank(top) >= jma_rank('4') ? 'alert' : 'eew';
+    }
+    return 'wait';
+  }
+  if (src === 'area') return 'prelim';
+  if (src === 'none' || !st.display_step) return 'wait';
+  return 'final';
+}
+function dDirection(lat0, lon0, lat1, lon1) {
+  const dy = lat1 - lat0, dx = (lon1 - lon0) * Math.cos(lat0 * Math.PI / 180);
+  const ang = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
+  return dT().dirs[Math.round(ang / 45) % 8];
+}
+function dKm(lat0, lon0, lat1, lon1) {
+  const R = 6371, r = Math.PI / 180, dLat = (lat1 - lat0) * r, dLon = (lon1 - lon0) * r;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat0 * r) * Math.cos(lat1 * r) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+function dEpiText(st) {
+  if (st.epi_lat == null || st.home_lat == null) return null;
+  const km = Math.max(5, Math.round(dKm(st.home_lat, st.home_lon, st.epi_lat, st.epi_lon) / 5) * 5);
+  const dir = dDirection(st.home_lat, st.home_lon, st.epi_lat, st.epi_lon);
+  return currentLang === 'ja' ? `${dir}へ約${km} km` : `${km} km ${dir}`;
+}
+function dTimeText(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return currentTimeFormat === '12h' ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+                                     : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function dashApply(st) {
+  dashState = st;
+  dashRender(true);
+}
+function dashRender(allowPlay) {
+  const dash = dEl('dash');
+  if (!dash) return;
+  const st = dashState, mode = dashMode(st), t = dT();
+  const wantShow = !dashSetupHidden && (mode !== 'standby' || standbyStyle === 'dashboard');
+  if (!wantShow) { dash.classList.remove('show', 'alerting', 'play'); dash.style.background = ''; return; }
+  const wasHidden = !dash.classList.contains('show');
+  dash.classList.add('show');
+  dash.classList.toggle('nomotion', !motionEffectsEnabled);
+  const evKey = st && st.event_key;
+  if (evKey !== dashEventKey) { dashEventKey = evKey; dashDetailsOpen = false; }
+  const animKey = [mode, evKey, st && st.display_step, st && st.display_source, st && st.phase].join('|');
+  const play = allowPlay && (wasHidden || animKey !== dashAnimKey);
+  dashAnimKey = animKey;
+  if (play) { dash.classList.remove('play'); void dash.offsetWidth; }
+
+  const active = mode !== 'standby' && mode !== 'cancelled';
+  const step = active && st.display_step && st.display_step !== '0' ? st.display_step : null;
+  const below1 = active && (st.display_source === 'station_below_1' || st.display_step === '0');
+  const af = st && st.area_forecast;
+  const topStep = mode === 'alert' ? ((af && (af.to || af.from)) || st.display_step) : null;
+  dash.classList.toggle('alerting', mode === 'alert');
+  dash.classList.toggle('final', mode === 'final');
+
+  // --- header ---
+  let label = t.noEvent, headline = t.quiet, iconKind = 'standby', band = null;
+  if (mode === 'cancelled') { headline = t.cancelled; }
+  if (mode === 'eew' || mode === 'wait' || mode === 'alert') {
+    label = t.eewLabel; iconKind = 'warn';
+    const lvl = (af && (af.to || af.from)) || null;
+    headline = mode === 'wait' ? t.detected : (lvl && jma_rank(lvl) >= jma_rank('3') ? t.shaking : t.light);
+  } else if (mode === 'prelim') {
+    label = t.prelimLabel; headline = t.prelimHead(dStepText(step)); iconKind = 'step'; band = dBand(step);
+  } else if (mode === 'final') {
+    label = t.finalLabel + (st.tsunami_clear && !st.tsunami_warning ? t.noTsu : '');
+    headline = below1 ? t.below1 + '.' : t.finalHead(dStepText(step)); iconKind = 'step'; band = dBand(step || '0');
+  }
+  dEl('dLabel').textContent = label;
+  dEl('dHeadline').textContent = headline;
+  const icon = dEl('dIcon');
+  const waveSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2-6 4 12 3-9 2 3h5"/></svg>';
+  const warnSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4.5M12 17.6v.1"/></svg>';
+  if (iconKind === 'warn') { const warnYellow = mode !== 'alert'; icon.style.cssText = `background:${warnYellow ? '#FFD100' : '#E8402F'};color:${warnYellow ? '#1a1400' : '#fff'}`; icon.innerHTML = warnSvg; }
+  else if (iconKind === 'step') { icon.style.cssText = `background:${band.bg};color:${band.fg}`; icon.innerHTML = waveSvg; }
+  else { icon.style.cssText = 'background:#141414;color:#8c8c86;border-color:#3a3a3a'; icon.innerHTML = waveSvg; }
+
+  // --- Shindo panel ---
+  const panel = dEl('dPanel'), tile = dEl('dTile');
+  let plabel = t.yourStation, name = '', desc = '', tileHtml = '', tileClass = 'd-tile empty', full = false, curStep = null;
+  if (mode === 'standby' || mode === 'cancelled') { name = t.watching; }
+  else if (mode === 'wait') { plabel = t.waitArea; name = t.waitName; desc = t.waitDesc; }
+  else {
+    curStep = step;
+    tileHtml = below1 ? '&lt;1' : dStepHtml(step);
+    if (mode === 'eew' || mode === 'alert') {
+      plabel = t.expectedArea;
+      const rng = af && af.to && af.to !== af.from ? `${dStepText(af.from)}${currentLang === 'ja' ? '〜' : ' to '}${dStepText(af.to)}${af.or_more ? (currentLang === 'ja' ? '以上' : ' or more') : ''}` : dStepText(step);
+      name = t.expected(rng);
+    } else {
+      plabel = mode === 'prelim' ? t.prelimPanel(st.area || st.home_area || currentHomeName) : t.finalPanel;
+      name = below1 ? t.below1 : t.names[step];
+    }
+    desc = below1 ? t.below1d : (t.descs[step] || '');
+    full = !below1 && step && jma_rank(step) >= jma_rank('4');
+    tileClass = 'd-tile' + (full ? ' outline' : '');
+  }
+  const b = curStep ? dBand(curStep) : null;
+  panel.style.background = full ? b.bg : '';
+  panel.style.color = full ? b.fg : '';
+  dEl('dPLabel').textContent = plabel;
+  tile.className = tileClass + (tileHtml.length > 6 ? ' small-n' : '');
+  tile.innerHTML = tileHtml;
+  tile.style.background = (!full && curStep) ? b.bg : '';
+  tile.style.color = full ? b.fg : ((!full && curStep) ? b.fg : '');
+  dEl('dName').textContent = name;
+  dEl('dDesc').textContent = desc;
+  // strongest elsewhere
+  let chip = '';
+  if (active) {
+    const mp = st.max_place, mx = (mp && mp.step) || st.jma_max;
+    if (mx && (!curStep || jma_rank(mx) > jma_rank(curStep))) {
+      chip = (mp && mp.name && st.phase === 'measured') ? t.strongest(dStepText(mx), mp.name) : (st.phase === 'eew' ? t.strongestF(dStepText(mx)) : t.strongest(dStepText(mx), ''));
+      if (mode === 'wait' && st.phase === 'eew') chip = chip.replace(' · weaker here', '').replace(' · ここはより小さい', '');
+    }
+  }
+  dEl('dChip').textContent = chip;
+  dEl('dTsu').textContent = active && st.tsunami_warning ? (currentLang === 'ja' ? `津波情報: ${st.tsunami_warning}` : `TSUNAMI: ${st.tsunami_warning}`) : '';
+  // scale bars: always all nine levels
+  const bars = dEl('dBars'), bl = dEl('dBarLabels');
+  bars.innerHTML = ''; bl.innerHTML = '';
+  D_STEPS.forEach((s, i) => {
+    const el = document.createElement('div'); el.className = 'd-bar'; el.style.setProperty('--i', i);
+    el.style.height = `calc(${14 + 4.5 * i} * var(--u))`;
+    const cur = s === curStep;
+    const col = full ? b.fg : dBand(s).bg;
+    el.style.background = col; el.style.opacity = cur ? '1' : '0.35';
+    if (cur) el.style.boxShadow = `0 0 0 calc(3 * var(--u)) ${full ? b.fg : '#f2f1ec'}`;
+    bars.appendChild(el);
+    const sp = document.createElement('span'); sp.textContent = dStepText(s); bl.appendChild(sp);
+  });
+
+  // --- map header ---
+  const epi = (mode === 'eew' || mode === 'wait' || mode === 'alert') ? dEpiText(st) : null;
+  let h1 = '', h2 = '', h3 = '', h1small = false;
+  if (mode === 'standby' || mode === 'cancelled') { h1 = currentHomeName || ''; h2 = t.watchMap; h1small = true; }
+  else if (mode === 'prelim') { h1 = t.epiWait; h1small = true; if (st.magnitude != null) h3 = `M${st.magnitude.toFixed(1)}`; }
+  else if (mode === 'final') { h1 = st.hypocenter || ''; h1small = true; h2 = (st.magnitude != null ? `M${st.magnitude.toFixed(1)}` : '') + (st.origin_time ? ` · ${dTimeText(st.origin_time)}` : ''); }
+  else { h1 = epi || (st.hypocenter || ''); h2 = `${t.estimate}${st.hypocenter ? ' · ' + st.hypocenter : ''}`; if (st.magnitude != null) h3 = `M${st.magnitude.toFixed(1)}`; }
+  const m1 = dEl('dMh1'); m1.textContent = h1; m1.classList.toggle('small', h1small);
+  dEl('dMh2').textContent = h2; dEl('dMh3').textContent = h3;
+
+  // --- footer ---
+  dEl('dDetailsBtn').textContent = dashDetailsOpen ? t.detailsHide : t.details;
+  dEl('dDetailsBtn').style.display = active ? '' : 'none';
+  dEl('dDismissBtn').textContent = t.dismiss;
+  dEl('dDismissBtn').style.display = (mode === 'prelim' || mode === 'final') ? '' : 'none';
+  dEl('dCitiesBtn').textContent = t.cities;
+  dEl('dCitiesBtn').style.display = devOn && (mode === 'final' || mode === 'prelim' || (st && st.series_recent)) ? '' : 'none';
+  dEl('dNotice').innerHTML = '';
+  [t.notice, t.credit].forEach((x) => { const d = document.createElement('div'); d.textContent = x; dEl('dNotice').appendChild(d); });
+  dEl('dMon').innerHTML = els.locationLabel.innerHTML;
+  const det = dEl('dDetails');
+  det.classList.toggle('open', dashDetailsOpen && active);
+  if (active) {
+    const rows = [[t.magnitude, st.magnitude != null ? st.magnitude.toFixed(1) : '–'], [t.depth, st.depth_km != null ? `${st.depth_km} km` : '–'], [t.time, st.origin_time ? dTimeText(st.origin_time) : '–'],
+      [t.tsunami, st.tsunami_warning || (st.tsunami_clear ? t.none : '–')]];
+    det.innerHTML = rows.map((r) => `<span><b>${r[0]}</b>${String(r[1]).replace(/</g, '&lt;')}</span>`).join('');
+  }
+
+  // --- full-screen alert ---
+  if (mode === 'alert') {
+    const ab = dBand(topStep);
+    dash.style.background = ab.bg; dash.style.color = ab.fg;
+    dEl('dAlLab').textContent = t.alertLab;
+    dEl('dAlLab').style.whiteSpace = 'pre-line';
+    dEl('dAlH').textContent = t.protect;
+    dEl('dAlSub').textContent = t.away;
+    dEl('dAlNum').innerHTML = dStepHtml(topStep);
+    dEl('dAlCap').textContent = t.expected(dStepText(topStep));
+    dash.querySelector('.d-al-icon').style.cssText = `border:calc(3 * var(--u)) solid ${ab.fg}`;
+  } else { dash.style.background = ''; dash.style.color = ''; }
+
+  dashMap(st, mode, step);
+  if (play) {
+    dash.classList.add('play');
+    clearTimeout(dashPlayTimer);
+    dashPlayTimer = setTimeout(() => dash.classList.remove('play'), 2200);
+  }
+  dashClock();
+}
+function dashToggleDetails() { dashDetailsOpen = !dashDetailsOpen; dashRender(false); }
+window.dashToggleDetails = dashToggleDetails;
+function dashClock() {
+  if (!dEl('dDate')) return;
+  dEl('dDate').textContent = (() => { const n = new Date(); return currentLang === 'ja' ? n.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' }) : n.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); })();
+  dEl('dTime').textContent = els.timeEl.textContent;
+  if (dashLangSeen !== currentLang || dashFmtSeen !== currentTimeFormat) { dashLangSeen = currentLang; dashFmtSeen = currentTimeFormat; if (dEl('dash').classList.contains('show')) dashRender(false); }
+}
+let dashLangSeen = null, dashFmtSeen = null;
+
+// ---- Dashboard map (town outlines from MLIT, via the app's own data) ----
+let dMapHome = null, dMapHomeKey = null, dMapPending = false, dMapReqKey = null, dMapTowns = null, dMapTownsKey = null;
+const dPathCache = new Map(); let dPathKey = null;
+function dashEnsureHome() {
+  if (dMapHomeKey === currentHomeName || dMapPending || !window.pywebview || !window.pywebview.api.get_map) return false;
+  dMapPending = true; const key = currentHomeName;
+  window.pywebview.api.get_map().then((res) => {
+    dMapPending = false; dMapHomeKey = key; dMapHome = res && res.ok ? new Set(res.home) : new Set();
+    dMapTowns = null; dMapTownsKey = null; dPathCache.clear();
+    if (dashState) dashRender(false);
+  }).catch(() => { dMapPending = false; dMapHomeKey = key; dMapHome = new Set(); });
+  return false;
+}
+function dashView(st, mode, aspect) {
+  // Projection: kilometres from the saved place (x east, y south), flat-earth around it.
+  const lat0 = st.home_lat, lon0 = st.home_lon, kx = 111.32 * Math.cos(lat0 * Math.PI / 180), ky = 110.57;
+  const proj = (lon, lat) => [(lon - lon0) * kx, -(lat - lat0) * ky];
+  let W, cx = 0, cy = 0;
+  if (mode === 'final' && dMapHome && dMapHome.size && dMapTowns) {
+    let bb = [1e9, 1e9, -1e9, -1e9];
+    dMapTowns.forEach((t) => { if (dMapHome.has(t.c)) { const b = dTownBox(t, proj); bb = [Math.min(bb[0], b[0]), Math.min(bb[1], b[1]), Math.max(bb[2], b[2]), Math.max(bb[3], b[3])]; } });
+    if (bb[0] < 1e8) { const w = bb[2] - bb[0], h = bb[3] - bb[1]; cx = (bb[0] + bb[2]) / 2; cy = (bb[1] + bb[3]) / 2; W = Math.max(w * 2.4, h * 2.4 * aspect, 40) / 2; }
+  }
+  if (W == null) {
+    W = 160;
+    if ((mode === 'eew' || mode === 'wait' || mode === 'alert') && st.epi_lat != null) {
+      const [ex, ey] = proj(st.epi_lon, st.epi_lat);
+      W = Math.max(W, Math.abs(ex) / 0.82, Math.abs(ey) * aspect / 0.82);
+    }
+    W = Math.min(W, 450);
+  }
+  const H = W / aspect;
+  return { proj, W, H, cx, cy, kx, ky, lat0, lon0 };
+}
+function dTownBox(t, proj) {
+  let b = [1e9, 1e9, -1e9, -1e9];
+  t.g.forEach((poly) => poly.forEach((ring) => ring.forEach((c) => { const q = proj(c[0], c[1]); b = [Math.min(b[0], q[0]), Math.min(b[1], q[1]), Math.max(b[2], q[0]), Math.max(b[3], q[1])]; })));
+  return b;
+}
+function dashMap(st, mode, step) {
+  const svg = dEl('dSvg'), box = dEl('dMap');
+  if (!st || st.home_lat == null || st.home_lon == null) { svg.innerHTML = ''; return; }
+  if (dMapHomeKey !== currentHomeName) { dashEnsureHome(); }
+  const w = box.clientWidth, h = box.clientHeight;
+  if (!w || !h) return;
+  const aspect = w / h;
+  const v = dashView(st, mode, aspect);
+  const pk = st.home_lat + ',' + st.home_lon; if (dPathKey !== pk) { dPathKey = pk; dPathCache.clear(); }
+  const x0 = v.cx - v.W, y0 = v.cy - v.H, ppu = w / (2 * v.W);
+  // towns for this view: ask the backend once per view window
+  const bboxLon0 = v.lon0 + (x0 / v.kx), bboxLon1 = v.lon0 + ((v.cx + v.W) / v.kx), bboxLat1 = v.lat0 - (y0 / v.ky), bboxLat0 = v.lat0 - ((v.cy + v.H) / v.ky);
+  const reqKey = [currentHomeName, bboxLon0, bboxLat0, bboxLon1, bboxLat1].map((x) => typeof x === 'number' ? x.toFixed(2) : x).join('|');
+  if (dMapTownsKey !== reqKey && dMapReqKey !== reqKey && window.pywebview && window.pywebview.api.get_region) {
+    dMapReqKey = reqKey;
+    window.pywebview.api.get_region(bboxLon0, bboxLat0, bboxLon1, bboxLat1).then((res) => {
+      if (dMapReqKey !== reqKey) return;
+      dMapTowns = res && res.ok ? res.towns : []; dMapTownsKey = reqKey; dMapReqKey = null;
+      if (dashState) dashRender(false);
+    }).catch(() => { dMapReqKey = null; });
+  }
+  const px = (n) => (n / ppu).toFixed(3);
+  const homeSet = dMapHome || new Set();
+  const felt = (mode === 'prelim' || mode === 'final') && step ? dBand(step).bg : ((mode === 'eew' || mode === 'wait' || mode === 'alert') && step ? dBand(step).bg : null);
+  let paths = '', homePath = '';
+  (dMapTowns || []).forEach((t) => {
+    let d = dPathCache.get(t.c);
+    if (!d) {
+      d = '';
+      t.g.forEach((poly) => poly.forEach((ring) => { d += 'M' + ring.map((c) => { const q = v.proj(c[0], c[1]); return q[0].toFixed(2) + ' ' + q[1].toFixed(2); }).join('L') + 'Z'; }));
+      dPathCache.set(t.c, d);
+    }
+    if (homeSet.has(t.c)) homePath += d; else paths += `<path d="${d}"/>`;
+  });
+  const standbyFill = mode === 'standby' || mode === 'cancelled';
+  const fill = felt || (standbyFill ? '#2E2E2E' : '#2E2E2E');
+  let out = `<rect x="${x0}" y="${y0}" width="${2 * v.W}" height="${2 * v.H}" fill="#0F0F0F"/>`;
+  out += `<g class="d-zoomg" style="transform-origin:${v.cx}px ${v.cy}px"><g fill="#1E1E1E" stroke="#363636" stroke-width="1" stroke-linejoin="round" vector-effect="non-scaling-stroke">${paths.replace(/<path /g, '<path vector-effect="non-scaling-stroke" ')}</g>`;
+  if (homePath) out += `<path class="d-fill" d="${homePath}" fill="${fill}" stroke="#F2F1EC" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+  out += '</g>';
+  const hasEpi = (mode === 'eew' || mode === 'wait' || mode === 'alert') && st.epi_lat != null;
+  if (hasEpi) {
+    const ringCols = ['#7FD9A0', '#A59CF2', '#E79AC6'];
+    [50, 100, 150].forEach((r, i) => {
+      out += `<circle class="d-ring r${i + 1}" cx="0" cy="0" r="${r}" fill="none" stroke="${ringCols[i]}" stroke-width="2.5" stroke-dasharray="7 6" vector-effect="non-scaling-stroke" opacity="0.9"/>`;
+      const fs = 22 / ppu;
+      out += `<text class="d-rlab r${i + 1}" x="${(r * 0.7071 + 4 / ppu).toFixed(2)}" y="${(-r * 0.7071 - 6 / ppu).toFixed(2)}" fill="${ringCols[i]}" font-size="${fs.toFixed(2)}" font-weight="800" font-family="DM Sans, sans-serif">${r} km</text>`;
+    });
+    let [ex, ey] = v.proj(st.epi_lon, st.epi_lat);
+    const mx = v.W * 0.94, my = v.H * 0.94, ox = v.cx, oy = v.cy;
+    ex = Math.max(ox - mx, Math.min(ox + mx, ex)); ey = Math.max(oy - my, Math.min(oy + my, ey));
+    const s = 15 / ppu;
+    out += `<line class="d-epiline" x1="0" y1="0" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" stroke="#F2F1EC" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity="0.8"/>`;
+    out += `<g class="d-epix"><path d="M${ex - s} ${ey - s}L${ex + s} ${ey + s}M${ex + s} ${ey - s}L${ex - s} ${ey + s}" stroke="#111" stroke-width="10" stroke-linecap="round" vector-effect="non-scaling-stroke" fill="none"/><path d="M${ex - s} ${ey - s}L${ex + s} ${ey + s}M${ex + s} ${ey - s}L${ex - s} ${ey + s}" stroke="#fff" stroke-width="5" stroke-linecap="round" vector-effect="non-scaling-stroke" fill="none"/></g>`;
+  }
+  svg.setAttribute('viewBox', `${x0} ${y0} ${2 * v.W} ${2 * v.H}`);
+  svg.innerHTML = out;
+}
+
+// ---- Settings: standby style and developer features ----
+function setStandbyStyle(v) { standbyStyle = v === 'dashboard' ? 'dashboard' : 'minimal'; if (window.pywebview) window.pywebview.api.set_standby_style(standbyStyle); applyStandbyButtons(); dashRender(false); }
+window.setStandbyStyle = setStandbyStyle;
+function applyStandbyButtons() {
+  const a = document.getElementById('standbyMinBtn'), b = document.getElementById('standbyDashBtn');
+  if (a) a.classList.toggle('active', standbyStyle === 'minimal');
+  if (b) b.classList.toggle('active', standbyStyle === 'dashboard');
+}
+window.applyStandbyStyleOnly = function (v) { standbyStyle = v === 'dashboard' ? 'dashboard' : 'minimal'; applyStandbyButtons(); dashRender(false); };
+function devRefresh() {
+  const nav = document.querySelector('.nav-row[data-page="dev"]');
+  if (nav) nav.style.display = devAvailable ? '' : 'none';
+  const on = document.getElementById('devOnBtn'), off = document.getElementById('devOffBtn');
+  if (on) on.classList.toggle('active', devOn);
+  if (off) off.classList.toggle('active', !devOn);
+  // Developer-only controls on other pages
+  ['followTitle', 'followHelp'].forEach((k) => { const e = document.querySelector(`[data-i18n="${k}"]`); if (e) e.style.display = devOn ? '' : 'none'; });
+  const fg = document.getElementById('followGroup'); if (fg) { fg.style.display = devOn ? '' : 'none'; const sep = fg.previousElementSibling && fg.previousElementSibling.previousElementSibling; if (sep && sep.classList.contains('yours-sep')) sep.style.display = devOn ? '' : 'none'; }
+}
+function setDevFeatures(v) {
+  if (!devAvailable) return;
+  devOn = v === 'on'; devRefresh(); dashRender(false);
+  if (window.pywebview) window.pywebview.api.set_dev_features(v);
+}
+window.setDevFeatures = setDevFeatures;
+window.applyDevFeaturesOnly = function (available, enabled) { devAvailable = !!available; devOn = !!available && !!enabled; devRefresh(); if (!devOn) els.citiesBtn.style.display = 'none'; dashRender(false); };
+function dashSyncFlags(state) {
+  if (state && state.dev_available !== undefined) { const a = !!state.dev_available, o = a && state.dev_features === 'on'; if (a !== devAvailable || o !== devOn) { devAvailable = a; devOn = o; devRefresh(); } }
+}
+
 window.applyState = applyState;
 
 function showSetupScreen() {
+  dashSetupHidden = true; dashRender(false);
   els.screen.style.display = 'none';
   els.setup.style.display = 'flex';
 }
@@ -2365,9 +3233,11 @@ function showMainScreen(homeName) {
   geo = null; geoKey = null; mapBuilt = false;
   els.setup.style.display = 'none';
   els.screen.style.display = 'flex';
+  dashSetupHidden = false;
   els.locationLabel.textContent = `${STRINGS[currentLang].monitoring}: ${homeName}`;
   els.currentLocValue.textContent = homeName;
   renderIdle();
+  dashRender(false);
 }
 window.showMainScreen = showMainScreen;
 
@@ -2647,7 +3517,8 @@ applyTimeFormatButtons();
 applyTextScaleButtons();
 renderIdle();
 updateClock();
-setInterval(updateClock, 1000);
+applyStandbyButtons(); devRefresh();
+setInterval(() => { updateClock(); dashClock(); }, 1000);
 
 // pywebview's JS<->Python bridge (window.pywebview.api) is injected
 // asynchronously, it is not guaranteed to exist the instant the page
