@@ -2982,7 +2982,7 @@ function dashRender(allowPlay) {
   const waitStep = mode === 'wait' && st.phase === 'eew' ? (st.pref_max || st.jma_max || null) : null;
   let plabel = t.yourStation, name = '', desc = '', tileHtml = '', tileClass = 'd-tile empty', full = false, curStep = null;
   if (mode === 'standby' || mode === 'cancelled') { name = t.watching; }
-  else if (mode === 'wait' && !waitStep) { plabel = t.waitArea; name = t.waitName; desc = t.waitDesc; }
+  else if (mode === 'wait' && !waitStep) { plabel = t.waitArea; name = t.waitName; desc = t.waitDesc; tileHtml = '?'; tileClass = 'd-tile outline'; }
   else {
     const pstep = mode === 'wait' ? waitStep : step;
     curStep = pstep;
