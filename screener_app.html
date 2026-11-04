@@ -3171,18 +3171,25 @@ function dashMap(st, mode, step) {
   if (homePath) out += `<path class="d-fill" d="${homePath}" fill="${fill}" stroke="#F2F1EC" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
   out += '</g>';
   const hasEpi = (mode === 'eew' || mode === 'wait' || mode === 'alert') && st.epi_lat != null;
+  // The line and rings lock onto the saved town itself (centre of its largest piece), not onto a raw coordinate.
+  let ax = 0, ay = 0;
+  if (hasEpi && homeSet.size) {
+    let best = null, bestA = 0;
+    (dMapTowns || []).forEach((t) => { if (!homeSet.has(t.c)) return; t.g.forEach((poly) => { const ring = poly[0].map((c) => v.proj(c[0], c[1])); let a = 0, gx = 0, gy = 0; for (let i = 0; i < ring.length; i++) { const p = ring[i], q = ring[(i + 1) % ring.length], f = p[0] * q[1] - q[0] * p[1]; a += f; gx += (p[0] + q[0]) * f; gy += (p[1] + q[1]) * f; } if (Math.abs(a) > bestA && a) { bestA = Math.abs(a); best = [gx / (3 * a), gy / (3 * a)]; } }); });
+    if (best) { ax = best[0]; ay = best[1]; }
+  }
   if (hasEpi) {
     const ringCols = ['#7FD9A0', '#A59CF2', '#E79AC6'];
     [50, 100, 150].forEach((r, i) => {
-      out += `<circle class="d-ring r${i + 1}" cx="0" cy="0" r="${r}" fill="none" stroke="${ringCols[i]}" stroke-width="2.5" stroke-dasharray="7 6" vector-effect="non-scaling-stroke" opacity="0.9"/>`;
+      out += `<circle class="d-ring r${i + 1}" cx="${ax.toFixed(2)}" cy="${ay.toFixed(2)}" r="${r}" fill="none" stroke="${ringCols[i]}" stroke-width="2.5" stroke-dasharray="7 6" vector-effect="non-scaling-stroke" opacity="0.9"/>`;
       const fs = 22 / ppu;
-      out += `<text class="d-rlab r${i + 1}" x="${(r * 0.7071 + 4 / ppu).toFixed(2)}" y="${(-r * 0.7071 - 6 / ppu).toFixed(2)}" fill="${ringCols[i]}" font-size="${fs.toFixed(2)}" font-weight="800" font-family="DM Sans, sans-serif">${r} km</text>`;
+      out += `<text class="d-rlab r${i + 1}" x="${(ax + r * 0.7071 + 4 / ppu).toFixed(2)}" y="${(ay - r * 0.7071 - 6 / ppu).toFixed(2)}" fill="${ringCols[i]}" font-size="${fs.toFixed(2)}" font-weight="800" font-family="DM Sans, sans-serif">${r} km</text>`;
     });
     let [ex, ey] = v.proj(st.epi_lon, st.epi_lat);
     const mx = v.W * 0.94, my = v.H * 0.94, ox = v.cx, oy = v.cy;
     ex = Math.max(ox - mx, Math.min(ox + mx, ex)); ey = Math.max(oy - my, Math.min(oy + my, ey));
     const s = 15 / ppu;
-    out += `<line class="d-epiline" x1="0" y1="0" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" stroke="#F2F1EC" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity="0.8"/>`;
+    out += `<line class="d-epiline" x1="${ax.toFixed(2)}" y1="${ay.toFixed(2)}" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" stroke="#F2F1EC" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity="0.8"/>`;
     out += `<g class="d-epix"><path d="M${ex - s} ${ey - s}L${ex + s} ${ey + s}M${ex + s} ${ey - s}L${ex - s} ${ey + s}" stroke="#111" stroke-width="10" stroke-linecap="round" vector-effect="non-scaling-stroke" fill="none"/><path d="M${ex - s} ${ey - s}L${ex + s} ${ey + s}M${ex + s} ${ey - s}L${ex - s} ${ey + s}" stroke="#fff" stroke-width="5" stroke-linecap="round" vector-effect="non-scaling-stroke" fill="none"/></g>`;
   }
   svg.setAttribute('viewBox', `${x0} ${y0} ${2 * v.W} ${2 * v.H}`);
