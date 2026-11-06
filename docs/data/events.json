@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-05T22:27:29Z",
- "count": 284,
+ "updated_at": "2026-11-06T02:42:15Z",
+ "count": 285,
  "events": [
+  {
+   "id": "20261106090630",
+   "time": "2026-11-06T09:06:00+09:00",
+   "location_ja": "相模湾",
+   "lat": 35.2,
+   "lon": 139.5,
+   "depth_km": 140.0,
+   "magnitude": 3.7,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261106030553",
    "time": "2026-11-06T03:05:00+09:00",
