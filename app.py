@@ -74,6 +74,7 @@ EEW_NOTICE_RADIUS_KM = 300    # show early warnings for quakes this close even w
 FOLLOW_NEAR_KM = 100          # follow-the-quake keeps the saved place when the epicenter is this close to it
 HOME_CHANGE_REPLAY_MINUTES = 10  # re-show a recent quake against a newly chosen location, see recheck_last_events
 CHECK_INTERVAL_SECONDS = 15
+WS_STAT_SECONDS = 1800        # how often each feed writes its "still alive" line to the diagnostic log
 ACTIVE_POLL_INTERVAL_SECONDS = 3
 IDLE_POLL_INTERVAL_SECONDS = 8
 
@@ -1468,7 +1469,20 @@ class Listener:
     def handle_measured(self, msg):
         info = jma_sources.parse_p2p_quake(msg, self.home_info)
         if not info:
+            diag_log("p2p_received", decision="ignored_type",
+                     report_type=(msg.get("issue") or {}).get("type"),
+                     hypocenter=((msg.get("earthquake") or {}).get("hypocenter") or {}).get("name") or None)
             return
+        # What this message was and what the app decided, with no place name: only JMA's own
+        # fields, the kind of reading found for the saved place, and the decision.
+        _rd = info.get("reading") or {}
+        _seen = {"report_type": info["report_type"], "hypocenter": info["hypocenter"], "magnitude": info["magnitude"],
+                 "max_scale": info["jma_max_measured"], "points": len(msg.get("points") or []),
+                 "origin": info["origin_time"].isoformat() if info["origin_time"] else None,
+                 "reading_source": _rd.get("source"), "reading_step": _rd.get("step"),
+                 "felt": bool(info["felt_near_user"])}
+        def note(decision):
+            diag_log("p2p_received", decision=decision, **_seen)
         # Cached before the "felt near you" check below, for the same
         # reason as handle_eew: a location change needs the raw message
         # to re-parse against the new nearest station, even when today's
@@ -1486,6 +1500,7 @@ class Listener:
                     info = jma_sources.parse_p2p_quake(msg, self.home_info) or info
             if not same:
                 if not info["felt_near_user"]:
+                    note("quiet_not_felt")
                     return  # not felt at the user's nearest station: stay quiet
                 key = info["origin_time"].isoformat() if info["origin_time"] else self.now_iso()
                 self.event = {"key": key, "origin_time": info["origin_time"]}
@@ -1499,6 +1514,7 @@ class Listener:
             if mp and (ev.get("max_point") is None or jma_sources.rank(mp["step"]) >= jma_sources.rank(ev["max_point"]["step"])):
                 ev["max_point"] = mp
             if ev.get("reading") is None:
+                note("no_reading")
                 return  # e.g. a destination-only report with nothing for this location yet
             ev.update(phase="measured", serial=None,
                       maturity="measured_detail" if info["report_type"] == "DetailScale" else "measured_quick",
@@ -1530,6 +1546,7 @@ class Listener:
                 own = jma_sources.parse_p2p_quake(msg, jma_sources.locate_home(self.base_home, self.stations))
                 if own and own.get("felt_near_user") and own.get("reading"):
                     self.record_felt_event(dict(ev, reading=own["reading"]), home=self.base_home)
+            note("shown_new" if not same else "shown_update")
             self.push(self.build_state())
 
     def record_felt_event(self, ev, home=None):
@@ -1569,34 +1586,56 @@ class Listener:
 
     # ------------------------------------------------------------ connections
 
-    def _ws_loop(self, url, handler, accept):
+    def _ws_loop(self, url, handler, accept, name="ws"):
+        # Connection record for eew_diagnostics.jsonl: when each feed connects and drops, and a
+        # periodic "still alive" line with the number of frames received, so a feed that stays
+        # open but delivers nothing can be told apart from one that was never connected.
+        up = False
+        frames = 0
+        last_frame = None
+        last_stat = time.time()
         while True:
             try:
                 with ws_client.connect(url, open_timeout=10) as ws:
+                    diag_log("ws_connected", name=name)
+                    up = True
                     while True:
                         self.check_idle_timeout()
+                        if time.time() - last_stat >= WS_STAT_SECONDS:
+                            diag_log("ws_alive", name=name, frames=frames,
+                                     last_frame_age_s=round(time.time() - last_frame) if last_frame else None)
+                            frames, last_stat = 0, time.time()
                         try:
                             message = ws.recv(timeout=CHECK_INTERVAL_SECONDS)
                         except TimeoutError:
                             continue
+                        frames += 1
+                        last_frame = time.time()
                         try:
                             payload = json.loads(message)
                         except json.JSONDecodeError:
                             continue
                         if isinstance(payload, dict) and accept(payload):
                             handler(payload)
-            except (websockets.exceptions.ConnectionClosed, OSError):
+            except (websockets.exceptions.ConnectionClosed, OSError) as e:
+                if up:
+                    diag_log("ws_disconnected", name=name, error=type(e).__name__)
+                    up = False
                 time.sleep(5)
-            except Exception:
+            except Exception as e:
+                # A handler error ends this connection (and the reconnect below loses anything
+                # sent meanwhile), so it is recorded with its type and message.
+                diag_log("ws_error", name=name, error=type(e).__name__, detail=str(e)[:200])
+                up = False
                 traceback.print_exc()
                 time.sleep(5)
 
     def run(self):
         threading.Thread(
             target=self._ws_loop, daemon=True,
-            args=(P2P_WS_URL, self.handle_measured, lambda p: p.get("code") == 551),
+            args=(P2P_WS_URL, self.handle_measured, lambda p: p.get("code") == 551, "p2p"),
         ).start()
-        self._ws_loop(WOLFX_JMA_EEW_URL, self.handle_eew, lambda p: p.get("type") != "heartbeat")
+        self._ws_loop(WOLFX_JMA_EEW_URL, self.handle_eew, lambda p: p.get("type") != "heartbeat", "wolfx")
 
 
 def main():
