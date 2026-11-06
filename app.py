@@ -75,6 +75,13 @@ FOLLOW_NEAR_KM = 100          # follow-the-quake keeps the saved place when the 
 HOME_CHANGE_REPLAY_MINUTES = 10  # re-show a recent quake against a newly chosen location, see recheck_last_events
 CHECK_INTERVAL_SECONDS = 15
 WS_STAT_SECONDS = 1800        # how often each feed writes its "still alive" line to the diagnostic log
+# Backup for a dropped report: the live P2P feed has no replay, so after each (re)connect and every
+# CATCHUP_POLL_SECONDS the app also reads P2P's own recent-report list (the same server and the same
+# JMA data) and handles any report it has not already seen.
+P2P_HISTORY_URL = "https://api.p2pquake.net/v2/history?codes=551&limit=10"
+CATCHUP_POLL_SECONDS = 900
+CATCHUP_MAX_AGE_MINUTES = 120   # older reports are not looked at
+CATCHUP_SHOW_MINUTES = 10       # a missed report newer than this is shown like a live one; older ones are only logged
 ACTIVE_POLL_INTERVAL_SECONDS = 3
 IDLE_POLL_INTERVAL_SECONDS = 8
 
@@ -962,6 +969,7 @@ class Listener:
         self.beta_ticked = set() # event keys that already played the beta wood tick
         self.viewing = False     # True while the user has picked a city in the Cities panel
         self.lock = threading.Lock()
+        self._p2p_seen = {}      # id of every P2P report already handled, so the backup read never repeats one
         # Mutated directly by the Api set_alert_* methods when the user
         # changes a setting, so a change takes effect on the very next
         # push without needing to restart the listener threads.
@@ -1549,6 +1557,74 @@ class Listener:
             note("shown_new" if not same else "shown_update")
             self.push(self.build_state())
 
+    # ------------------------------------------------------------ backup read of missed P2P reports
+
+    def on_p2p_live(self, msg):
+        self._mark_p2p_seen(msg)
+        self.handle_measured(msg)
+
+    def _mark_p2p_seen(self, msg):
+        mid = msg.get("id")
+        if mid:
+            self._p2p_seen[mid] = time.time()
+            if len(self._p2p_seen) > 500:
+                for k in sorted(self._p2p_seen, key=self._p2p_seen.get)[:250]:
+                    self._p2p_seen.pop(k, None)
+
+    def _report_age_minutes(self, msg):
+        issued = jma_sources._parse_jst((msg.get("issue") or {}).get("time"))
+        return (datetime.now(timezone.utc) - issued).total_seconds() / 60 if issued else None
+
+    def _catch_up_log_only(self, msg):
+        """An old missed report: no screen, no sound. If it shows the saved place felt it, it goes in the felt log."""
+        ref = self.base_home or self._home
+        info = jma_sources.parse_p2p_quake(msg, jma_sources.locate_home(ref, self.stations))
+        if not info:
+            return False
+        felt = bool(info["felt_near_user"] and info.get("reading") and info["origin_time"])
+        diag_log("p2p_received", decision="catchup_logged" if felt else "catchup_quiet", report_type=info["report_type"],
+                 hypocenter=info["hypocenter"], magnitude=info["magnitude"], max_scale=info["jma_max_measured"],
+                 points=len(msg.get("points") or []), reading_source=(info["reading"] or {}).get("source"),
+                 reading_step=(info["reading"] or {}).get("step"), felt=felt)
+        if not felt:
+            return False
+        ev = {"key": info["origin_time"].isoformat(), "origin_time": info["origin_time"], "reading": info["reading"],
+              "hypocenter": info["hypocenter"], "magnitude": info["magnitude"]}
+        with self.lock:
+            self.record_felt_event(ev, home=ref)
+        return True
+
+    def p2p_catch_up(self, reason):
+        """Reads P2P's recent-report list and handles every report the live feed did not deliver."""
+        shown = logged = fetched = 0
+        error = None
+        try:
+            req = urllib.request.Request(P2P_HISTORY_URL, headers={"User-Agent": "ShindoScreener"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                rows = json.loads(resp.read().decode("utf-8"))
+            fetched = len(rows)
+            rows = [m for m in rows if isinstance(m, dict) and m.get("code") == 551]
+            rows.sort(key=lambda m: (m.get("issue") or {}).get("time") or "")
+            for m in rows:
+                if m.get("id") in self._p2p_seen:
+                    continue
+                age = self._report_age_minutes(m)
+                if age is None or age > CATCHUP_MAX_AGE_MINUTES:
+                    continue
+                self._mark_p2p_seen(m)
+                try:
+                    if age <= CATCHUP_SHOW_MINUTES:
+                        self.handle_measured(m)
+                        shown += 1
+                    elif self._catch_up_log_only(m):
+                        logged += 1
+                except Exception as e:
+                    error = f"{type(e).__name__}: {e}"[:200]
+        except Exception as e:
+            error = f"{type(e).__name__}: {e}"[:200]
+        if reason == "connect" or shown or logged or error:
+            diag_log("p2p_catchup", reason=reason, fetched=fetched, shown=shown, logged_only=logged, error=error)
+
     def record_felt_event(self, ev, home=None):
         """Adds or updates this event's entry in the local "felt this"
         log (see FELT_LOG_PATH), for the Settings > History export. Not
@@ -1586,7 +1662,7 @@ class Listener:
 
     # ------------------------------------------------------------ connections
 
-    def _ws_loop(self, url, handler, accept, name="ws"):
+    def _ws_loop(self, url, handler, accept, name="ws", on_connect=None, periodic=None, periodic_s=0):
         # Connection record for eew_diagnostics.jsonl: when each feed connects and drops, and a
         # periodic "still alive" line with the number of frames received, so a feed that stays
         # open but delivers nothing can be told apart from one that was never connected.
@@ -1594,13 +1670,19 @@ class Listener:
         frames = 0
         last_frame = None
         last_stat = time.time()
+        last_poll = time.time()
         while True:
             try:
                 with ws_client.connect(url, open_timeout=10) as ws:
                     diag_log("ws_connected", name=name)
                     up = True
+                    if on_connect:
+                        threading.Thread(target=on_connect, daemon=True).start()
                     while True:
                         self.check_idle_timeout()
+                        if periodic and time.time() - last_poll >= periodic_s:
+                            last_poll = time.time()
+                            threading.Thread(target=periodic, daemon=True).start()
                         if time.time() - last_stat >= WS_STAT_SECONDS:
                             diag_log("ws_alive", name=name, frames=frames,
                                      last_frame_age_s=round(time.time() - last_frame) if last_frame else None)
@@ -1633,7 +1715,9 @@ class Listener:
     def run(self):
         threading.Thread(
             target=self._ws_loop, daemon=True,
-            args=(P2P_WS_URL, self.handle_measured, lambda p: p.get("code") == 551, "p2p"),
+            args=(P2P_WS_URL, self.on_p2p_live, lambda p: p.get("code") == 551, "p2p"),
+            kwargs={"on_connect": lambda: self.p2p_catch_up("connect"),
+                    "periodic": lambda: self.p2p_catch_up("poll"), "periodic_s": CATCHUP_POLL_SECONDS},
         ).start()
         self._ws_loop(WOLFX_JMA_EEW_URL, self.handle_eew, lambda p: p.get("type") != "heartbeat", "wolfx")
 
