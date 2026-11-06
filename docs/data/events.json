@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-06T02:42:15Z",
- "count": 285,
+ "updated_at": "2026-11-06T17:02:01Z",
+ "count": 288,
  "events": [
+  {
+   "id": "20261106224305",
+   "time": "2026-11-06T22:43:00+09:00",
+   "location_ja": "淡路島付近",
+   "lat": 34.2,
+   "lon": 134.8,
+   "depth_km": 10.0,
+   "magnitude": 3.1,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261106220433",
+   "time": "2026-11-06T22:04:00+09:00",
+   "location_ja": "北海道北西沖",
+   "lat": 44.7,
+   "lon": 141.6,
+   "depth_km": 10.0,
+   "magnitude": 3.3,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261106193937",
+   "time": "2026-11-06T19:39:00+09:00",
+   "location_ja": "関東東方沖",
+   "lat": 35.0,
+   "lon": 142.2,
+   "depth_km": 10.0,
+   "magnitude": 6.1,
+   "max_shindo": "3",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261106090630",
    "time": "2026-11-06T09:06:00+09:00",
