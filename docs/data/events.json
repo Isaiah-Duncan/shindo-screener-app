@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-08T23:18:13Z",
- "count": 307,
+ "updated_at": "2026-11-09T10:38:50Z",
+ "count": 310,
  "events": [
+  {
+   "id": "20261109183532",
+   "time": "2026-11-09T18:35:00+09:00",
+   "location_ja": "長野県南部",
+   "lat": 35.8,
+   "lon": 137.5,
+   "depth_km": 10.0,
+   "magnitude": 2.3,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261109140157",
+   "time": "2026-11-09T14:01:00+09:00",
+   "location_ja": "茨城県沖",
+   "lat": 36.3,
+   "lon": 141.7,
+   "depth_km": 40.0,
+   "magnitude": 4.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261109135259",
+   "time": "2026-11-09T13:52:00+09:00",
+   "location_ja": "茨城県沖",
+   "lat": 36.2,
+   "lon": 142.2,
+   "depth_km": 10.0,
+   "magnitude": 5.9,
+   "max_shindo": "3",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261109051637",
    "time": "2026-11-09T05:16:00+09:00",
