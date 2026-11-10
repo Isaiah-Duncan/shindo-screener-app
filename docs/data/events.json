@@ -1,8 +1,56 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-10T03:31:17Z",
- "count": 312,
+ "updated_at": "2026-11-10T11:45:05Z",
+ "count": 316,
  "events": [
+  {
+   "id": "20261110165302",
+   "time": "2026-11-10T16:52:00+09:00",
+   "location_ja": "愛媛県南予",
+   "lat": 33.4,
+   "lon": 132.4,
+   "depth_km": 40.0,
+   "magnitude": 3.0,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261110161430",
+   "time": "2026-11-10T16:14:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.2,
+   "lon": 130.5,
+   "depth_km": 10.0,
+   "magnitude": 2.3,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261110153654",
+   "time": "2026-11-10T15:36:00+09:00",
+   "location_ja": "房総半島南方沖",
+   "lat": 34.3,
+   "lon": 140.2,
+   "depth_km": 20.0,
+   "magnitude": 4.5,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
+  {
+   "id": "20261110142013",
+   "time": "2026-11-10T14:20:00+09:00",
+   "location_ja": "茨城県沖",
+   "lat": 36.3,
+   "lon": 141.6,
+   "depth_km": 30.0,
+   "magnitude": 4.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261110061614",
    "time": "2026-11-10T06:16:00+09:00",
