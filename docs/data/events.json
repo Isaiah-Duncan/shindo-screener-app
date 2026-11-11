@@ -1,8 +1,32 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-11T11:35:35Z",
- "count": 321,
+ "updated_at": "2026-11-11T18:52:21Z",
+ "count": 323,
  "events": [
+  {
+   "id": "20261112021536",
+   "time": "2026-11-12T02:15:00+09:00",
+   "location_ja": "青森県東方沖",
+   "lat": 41.0,
+   "lon": 142.0,
+   "depth_km": 60.0,
+   "magnitude": 3.6,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261111211353",
+   "time": "2026-11-11T21:13:00+09:00",
+   "location_ja": "橘湾",
+   "lat": 32.7,
+   "lon": 130.1,
+   "depth_km": 10.0,
+   "magnitude": 2.3,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": null
+  },
   {
    "id": "20261111152156",
    "time": "2026-11-11T15:21:00+09:00",
