@@ -20,3 +20,6 @@ alert-samples/
 .DS_Store
 Thumbs.db
 dev_build.flag
+
+# images and texts written by scripts/social_post.py
+out/
