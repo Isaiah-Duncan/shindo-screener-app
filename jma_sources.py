@@ -43,6 +43,10 @@ _SHINDO_TEXT = {"5弱": "5-", "5強": "5+", "6弱": "6-", "6強": "6+",
 
 NEARBY_RADIUS_KM = 25     # stations further than this don't count as "near you"
 NEARBY_LIMIT = 12
+# "Nearby earthquakes": the stations next to the user's own. Counted in stations, not in distance
+# to the epicenter, because what a person understands is "the next town over felt it".
+NEIGHBOR_LIMIT = 10       # the 10 stations nearest the user's own station
+NEIGHBOR_MAX_KM = 50      # but never one further away than this (sparse areas, islands)
 
 
 def normalize_shindo(value):
@@ -86,7 +90,8 @@ def locate_home(home, stations, radius_km=NEARBY_RADIUS_KM, limit=NEARBY_LIMIT):
     if not ranked:
         return {"area": None, "stations": []}
     near = [s for s in ranked if s["distance_km"] <= radius_km][:limit] or ranked[:1]
-    return {"area": ranked[0]["area"], "stations": near}
+    neighbors = [s for s in ranked[1:1 + NEIGHBOR_LIMIT] if s["distance_km"] <= NEIGHBOR_MAX_KM]
+    return {"area": ranked[0]["area"], "stations": near, "neighbors": neighbors}
 
 
 # Prefecture maximum shown beside the user's area (a plain "highest of the
@@ -217,7 +222,9 @@ def parse_p2p_quake(msg, home):
     # station's reading is kept only as context, never as "your" reading.
     nearest = home["stations"][0] if home["stations"] else None
     nearby_max = None
-    for s in home["stations"]:
+    # Strongest JMA reading among the user's station and its neighbours; on a tie the closer one.
+    around = {s["name"]: s for s in list(home.get("neighbors") or []) + list(home["stations"])}
+    for s in sorted(around.values(), key=lambda s: s["distance_km"]):
         if s["name"] in by_name and (nearby_max is None or rank(by_name[s["name"]]) > rank(nearby_max["step"])):
             nearby_max = {"station": s["name"], "station_km": round(s["distance_km"], 1), "step": by_name[s["name"]]}
     if nearest and nearest["name"] in by_name:

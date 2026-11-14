@@ -55,6 +55,7 @@ QUIET_IDLE_MINUTES = 1        # Shindo 0-2 readings (see QUIET_STEPS) clear afte
                                # 10-minute bucket below: it's the least significant reading the
                                # app shows, so it shouldn't sit on screen the longest.
 QUIET_STEPS = {"0", "1", "2"}
+NEARBY_IDLE_MINUTES = 3       # a "felt nearby, not at your station" card stays this long
 # Personalization for the quiet tier (Settings > Alerts > "Sensitivity").
 # Replaces the old binary "Don't light up for" opt-out with a single
 # dial: how long the brief bright flash is held before the 30s(-ish)
@@ -78,10 +79,11 @@ WS_STAT_SECONDS = 1800        # how often each feed writes its "still alive" lin
 # Backup for a dropped report: the live P2P feed has no replay, so after each (re)connect and every
 # CATCHUP_POLL_SECONDS the app also reads P2P's own recent-report list (the same server and the same
 # JMA data) and handles any report it has not already seen.
-P2P_HISTORY_URL = "https://api.p2pquake.net/v2/history?codes=551&limit=10"
+P2P_HISTORY_URL = "https://api.p2pquake.net/v2/history?codes=551&limit=20"
 CATCHUP_POLL_SECONDS = 900
 CATCHUP_MAX_AGE_MINUTES = 120   # older reports are not looked at
 CATCHUP_SHOW_MINUTES = 10       # a missed report newer than this is shown like a live one; older ones are only logged
+EEW_MAX_AGE_MINUTES = 10        # an early warning older than this is ignored (a feed can replay its last one on connect)
 ACTIVE_POLL_INTERVAL_SECONDS = 3
 IDLE_POLL_INTERVAL_SECONDS = 8
 
@@ -232,15 +234,13 @@ def load_series():
 
 def save_series(rows):
     try:
-        with open(SERIES_PATH, "w", encoding="utf-8") as f:
-            json.dump(rows, f, ensure_ascii=False)
+        write_json_safely(SERIES_PATH, rows, ensure_ascii=False)
     except OSError:
         pass
 
 
 def save_felt_log(entries):
-    with open(FELT_LOG_PATH, "w", encoding="utf-8") as f:
-        json.dump(entries, f)
+    write_json_safely(FELT_LOG_PATH, entries)
 
 
 # Local diagnostic record of the early-warning messages this app received
@@ -304,6 +304,7 @@ SETTINGS_DEFAULTS = {
     "quiet_hours": alert.DEFAULT_QUIET_HOURS,
     "alert_voice": alert.DEFAULT_ALERT_VOICE,
     "sensitivity": "normal",
+    "nearby_quakes": "on",   # show (and softly chime for) a quake felt at a neighbouring station but not at the user's own
     "standby_style": "minimal",   # "minimal" (the quiet black screen) or "dashboard" (quiet dashboard)
     "dev_features": "off",   # only honored in a dev build, see dev_available()
     "follow_quake": "off",   # beta: switch the monitored place to the one nearest each quake's epicenter
@@ -326,9 +327,24 @@ def merged_settings(existing, **changes):
     return data
 
 
+def write_json_safely(path, data, **dump_args):
+    """Writes to a temporary file first and then swaps it in, so a crash or power loss in the
+    middle of a write can never leave a half-written (unreadable) file behind."""
+    tmp = path + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, **dump_args)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except OSError:
+        # The swap can fail when another program holds the file open: fall back to a plain write.
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, **dump_args)
+
+
 def save_settings(data):
-    with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
-        json.dump(data, f)
+    write_json_safely(SETTINGS_PATH, data)
 
 
 def search_locations(city_name, lang="en"):
@@ -751,6 +767,16 @@ class Api:
             listener.quiet_hours = value == "on"
         return {"ok": True}
 
+    def set_nearby_quakes(self, value):
+        value = "on" if value == "on" else "off"
+        existing = load_settings()
+        if existing:
+            save_settings(merged_settings(existing, nearby_quakes=value))
+        listener = self._get_listener()
+        if listener is not None:
+            listener.nearby_quakes = value == "on"
+        return {"ok": True}
+
     def set_alert_voice(self, value):
         if value not in alert.VALID_ALERT_VOICE:
             return {"ok": False, "error": f"Not a voice setting: {value}"}
@@ -947,8 +973,10 @@ class Listener:
     def __init__(self, window, home, alert_min_step=alert.DEFAULT_ALERT_MIN_STEP,
                  alert_wake_screen=True, alert_volume=alert.DEFAULT_ALERT_VOLUME,
                  sensitivity="normal", quiet_hours=True, alert_voice=alert.DEFAULT_ALERT_VOICE,
-                 follow_quake=False):
+                 follow_quake=False, nearby_quakes=True):
         self.window = window
+        self.nearby_quakes = nearby_quakes
+        self.nearby_chimed = set()   # event keys that already played the "nearby" chime
         self.stations = jma_sources.load_stations(resource_path(STATIONS_JSON_RELATIVE_PATH))
         self._home = None
         self.home_info = {"area": None, "stations": []}
@@ -986,6 +1014,10 @@ class Listener:
 
     @home.setter
     def home(self, value):
+        # A newly saved place ends "follow the quake" and city viewing: without this, the next
+        # restore would put the previous saved place back.
+        self.base_home = None
+        self.viewing = False
         self._home = value
         self.home_info = jma_sources.locate_home(value, self.stations)
         self.recheck_last_events()
@@ -1269,6 +1301,10 @@ class Listener:
                 lang=(load_settings() or {}).get("language", "en"),
             )
             self.beta_ticked.add(key)
+        elif (state.get("nearby_only") and not is_test and key and key not in self.nearby_chimed
+                and state.get("status") == "active"):
+            self.nearby_chimed.add(key)
+            alert.trigger_nearby(self.window, resource_path, quiet_hours=self.quiet_hours)
         elif (self.follow_quake and not is_test and key and key not in self.beta_ticked
                 and state.get("status") == "active"):
             self.beta_ticked.add(key)
@@ -1307,6 +1343,8 @@ class Listener:
                 return
             if st.get("phase") == "eew":
                 limit = EEW_IDLE_MINUTES
+            elif st.get("nearby_only"):
+                limit = NEARBY_IDLE_MINUTES
             elif st.get("display_step") in QUIET_STEPS:
                 limit = QUIET_IDLE_MINUTES
             else:
@@ -1360,6 +1398,8 @@ class Listener:
             nm = ev.get("nearby_max")
             if nm and jma_sources.rank(nm["step"]) > jma_sources.rank(r["step"]):
                 s["nearby_max"] = nm
+            # Felt at a neighbouring station but below Shindo 1 at the user's own.
+            s["nearby_only"] = bool(ev.get("nearby_only") and s.get("nearby_max"))
         elif ev.get("area_forecast"):
             af = ev["area_forecast"]
             s.update(display_step=af["from"], display_source="area_warning", area_forecast=af,
@@ -1410,6 +1450,11 @@ class Listener:
         if not info:
             diag_log("eew_ignored", reason="training, wrong type, or no EventID", **seen)
             return
+        if info["kind"] == "eew" and info["origin_time"] is not None:
+            age_min = (datetime.now(timezone.utc) - info["origin_time"]).total_seconds() / 60
+            if age_min > EEW_MAX_AGE_MINUTES:
+                diag_log("eew_ignored", reason="older than %d minutes" % EEW_MAX_AGE_MINUTES, **seen)
+                return
         if info["kind"] == "eew":
             # Cached before the relevance check below, on purpose: a
             # location change later needs to re-run this exact payload
@@ -1432,6 +1477,7 @@ class Listener:
                     or jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"]))):
                 self.restore_home()
                 info = jma_sources.parse_eew(payload, self.home_info.get("area")) or info
+            before_follow = (self._home, self.home_info, self.base_home)
             if self.follow_quake and info["lat"] is not None and not (
                     self.event and (self.event.get("eew_id") == info["event_id"]
                                     or jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"]))):
@@ -1444,6 +1490,8 @@ class Listener:
             if not same:
                 if not relevant:
                     diag_log("eew_not_relevant", dist_km=dist, **seen)
+                    # Nothing is shown, so a "follow the quake" switch made above is undone.
+                    self._home, self.home_info, self.base_home = before_follow
                     return
                 self.event = {"key": info["event_id"], "origin_time": info["origin_time"]}
             if self.event.get("phase") == "measured":
@@ -1503,16 +1551,25 @@ class Listener:
             if not same and self.viewing:
                 self.restore_home()
                 info = jma_sources.parse_p2p_quake(msg, self.home_info) or info
+            before_follow = (self._home, self.home_info, self.base_home)
             if not same and self.follow_quake and info.get("lat") is not None:
                 if self.follow_epicenter(info["lat"], info["lon"]):
                     info = jma_sources.parse_p2p_quake(msg, self.home_info) or info
             if not same:
-                if not info["felt_near_user"]:
+                # "Nearby earthquakes": JMA's detailed report shows the user's own station below
+                # Shindo 1, but a neighbouring station measured Shindo 1 or more.
+                nearby = bool(self.nearby_quakes and info.get("nearby_max") and info.get("reading")
+                              and info["reading"]["source"] == "station_below_1")
+                if not info["felt_near_user"] and not nearby:
                     note("quiet_not_felt")
+                    # Nothing is shown, so a "follow the quake" switch made above is undone.
+                    self._home, self.home_info, self.base_home = before_follow
                     return  # not felt at the user's nearest station: stay quiet
                 key = info["origin_time"].isoformat() if info["origin_time"] else self.now_iso()
-                self.event = {"key": key, "origin_time": info["origin_time"]}
+                self.event = {"key": key, "origin_time": info["origin_time"], "nearby_only": not info["felt_near_user"]}
             ev = self.event
+            if info["felt_near_user"]:
+                ev["nearby_only"] = False   # a later report shows the user's own station felt it
             # a station reading (detailed report) outranks an area reading (quick report)
             if info["reading"] and not (ev.get("reading", {}).get("source") in ("station", "station_below_1")
                                         and info["reading"]["source"] == "area"):
@@ -1554,7 +1611,7 @@ class Listener:
                 own = jma_sources.parse_p2p_quake(msg, jma_sources.locate_home(self.base_home, self.stations))
                 if own and own.get("felt_near_user") and own.get("reading"):
                     self.record_felt_event(dict(ev, reading=own["reading"]), home=self.base_home)
-            note("shown_new" if not same else "shown_update")
+            note(("shown_nearby" if ev.get("nearby_only") else "shown_new") if not same else "shown_update")
             self.push(self.build_state())
 
     # ------------------------------------------------------------ backup read of missed P2P reports
@@ -1722,7 +1779,32 @@ class Listener:
         self._ws_loop(WOLFX_JMA_EEW_URL, self.handle_eew, lambda p: p.get("type") != "heartbeat", "wolfx")
 
 
+_instance_mutex = None
+
+
+def already_running():
+    """True when another copy of Shindo Screener (public or developer build) is running on this
+    PC. Two copies would play every alert twice and write the same log files at once."""
+    global _instance_mutex
+    if sys.platform != "win32":
+        return False
+    try:
+        import ctypes
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        _instance_mutex = kernel32.CreateMutexW(None, False, "ShindoScreener.SingleInstance")
+        return ctypes.get_last_error() == 183   # ERROR_ALREADY_EXISTS
+    except Exception:
+        return False   # never block the app from starting over this check
+
+
 def main():
+    if already_running():
+        try:
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(None, "Shindo Screener is already running.", "Shindo Screener", 0x40)
+        except Exception:
+            pass
+        return
     html_path = resource_path("screener_app.html")
     icon_path = resource_path("icon.ico")
 
@@ -1744,6 +1826,7 @@ def main():
             quiet_hours=settings.get("quiet_hours", alert.DEFAULT_QUIET_HOURS) == "on",
             alert_voice=settings.get("alert_voice", alert.DEFAULT_ALERT_VOICE),
             follow_quake=settings.get("follow_quake", "off") == "on" and dev_enabled(settings),
+            nearby_quakes=settings.get("nearby_quakes", "on") == "on",
         )
         listener_holder["instance"] = listener
         threading.Thread(target=listener.run, daemon=True).start()
@@ -1784,6 +1867,7 @@ def main():
             window.evaluate_js(f"window.applyAlertVolumeOnly({json.dumps(alert_volume)})")
             window.evaluate_js(f"window.applySensitivityOnly({json.dumps(sensitivity)})")
             window.evaluate_js(f"window.applyQuietHoursOnly({json.dumps(quiet_hours)})")
+            window.evaluate_js(f"window.applyNearbyQuakesOnly({json.dumps(settings.get('nearby_quakes', 'on'))})")
             window.evaluate_js(f"window.applyAlertVoiceOnly({json.dumps(alert_voice)})")
             window.evaluate_js(f"window.applyStandbyStyleOnly({json.dumps(settings.get('standby_style', 'minimal'))})")
             window.evaluate_js(f"window.applyDevFeaturesOnly({json.dumps(dev_available())}, {json.dumps(dev_enabled(settings))})")

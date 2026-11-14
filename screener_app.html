@@ -669,7 +669,7 @@
   .d-btn.icon { width: calc(52 * var(--u) * var(--tsb)); height: calc(52 * var(--u) * var(--tsb)); padding: 0; display: flex; align-items: center; justify-content: center; }
   .d-btn.icon svg { width: 60%; height: 60%; }
   .d-notice { font-size: calc(22 * var(--u) * var(--tsb)); font-weight: 600; opacity: 0.62; flex: 1; min-width: 0; line-height: 1.35; }
-  .d-mon { font-size: calc(30 * var(--u) * var(--tsb)); font-weight: 900; text-align: right; flex: none; max-width: 42%; }
+  .d-mon { font-size: calc(40 * var(--u) * var(--tsb)); font-weight: 900; text-align: right; flex: none; max-width: 50%; }
   .d-mon .follow-tag { display: block; font-size: calc(24 * var(--u) * var(--tsb)); font-weight: 700; opacity: 0.7; }
   .d-details { position: absolute; left: calc(52 * var(--u)); right: calc(52 * var(--u)); bottom: calc(96 * var(--u)); background: #1c1c1c; border-radius: calc(14 * var(--u)); padding: calc(16 * var(--u)) calc(24 * var(--u)); font-size: calc(28 * var(--u) * var(--tsm)); font-weight: 700; display: none; gap: calc(34 * var(--u)); flex-wrap: wrap; z-index: 3; }
   .d-details.open { display: flex; }
@@ -719,6 +719,8 @@
 
   .dev-row { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
   .dev-row + .dev-row { border-top: 1px solid rgba(245, 245, 240, 0.1); }
+  /* While the master switch is Off the developer controls do nothing, so they must not look usable. */
+  body:not(.dev-on) #page-dev .dev-row { opacity: 0.35; pointer-events: none; }
   .d-btn-dev { font: inherit; color: inherit; background: transparent; border: 1.5px solid rgba(245,245,240,0.4); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
   #citiesBtn.cities-btn { display: none; position: fixed; left: calc(5vw + 104px); bottom: 4vh; z-index: 6; height: 40px; padding: 0 14px; margin: 0; align-items: center; border: 1.5px solid currentColor; border-radius: 11px; text-decoration: none; opacity: 0.55; font-size: 14px; font-weight: 700; background: none; }
   body.dev-on #citiesBtn.cities-btn { display: flex !important; }
@@ -729,6 +731,15 @@
   .dash.alerting .d-foot, .dash.alerting .d-details { visibility: visible; position: relative; z-index: 6; }
   .dash.alerting .d-details { position: absolute; }
   .dash.alerting .d-notice, .dash.alerting .d-mon, .dash.alerting #dDismissBtn { visibility: hidden; }
+
+  /* The saved place: a pin and the name (the word "Monitoring" is gone). */
+  .location-label::before, .d-mon::before { content: ''; display: inline-block; width: 0.82em; height: 0.82em; margin-right: 0.28em; vertical-align: -0.08em; background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.6A2.6 2.6 0 1 1 12 6.4a2.6 2.6 0 0 1 0 5.2z'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.6A2.6 2.6 0 1 1 12 6.4a2.6 2.6 0 0 1 0 5.2z'/%3E%3C/svg%3E") center / contain no-repeat; }
+  .d-epihalo { transform-box: fill-box; transform-origin: center; animation: dHalo 1.8s ease-in-out infinite; }
+  @keyframes dHalo { 0%, 100% { transform: scale(0.75); opacity: 0.34; } 50% { transform: scale(1.15); opacity: 0.10; } }
+  body.nomotion .d-epihalo { animation: none; }
+  @media (prefers-reduced-motion: reduce) { .d-epihalo { animation: none; } }
 </style>
 </head>
 <body>
@@ -998,6 +1009,10 @@
           <div class="yours-title" data-i18n="quietHours">Quiet hours (22:00 to 07:00)</div>
           <div class="seg-group" id="quietGroup"></div>
           <div class="yours-help" data-i18n="quietHelp">Below Shindo 5-, alerts use a soft chime that fades in, with no voice and no screen wake. Strong warnings always sound at full level.</div>
+          <div class="yours-sep"></div>
+          <div class="yours-title" data-i18n="nearbyTitle">Nearby earthquakes</div>
+          <div class="seg-group" id="nearbyGroup"></div>
+          <div class="yours-help" data-i18n="nearbyHelp">Shows a quake that a station next to yours felt, even when your own station stayed below Shindo 1. One soft chime, silent in quiet hours. It is not added to your felt history.</div>
           <div class="yours-sep"></div>
           <div class="yours-title" data-i18n="alertVoice">Spoken message</div>
           <div class="seg-group" id="voiceGroup"></div>
@@ -1592,6 +1607,7 @@ const NEW_STRINGS = {
     quietHours: "Quiet hours (22:00 to 07:00)",
     quietHelp: "Below Shindo 5-, alerts use a soft chime that fades in, with no voice and no screen wake. Strong warnings always sound at full level.",
     quietOn: "On", quietOff: "Off",
+    nearbyTitle: "Nearby earthquakes", nearbyHelp: "Shows a quake that a station next to yours felt, even when your own station stayed below Shindo 1. One soft chime, silent in quiet hours. It is not added to your felt history.",
     alertVoice: "Spoken message",
     voiceHelp: "A short spoken line after the chime. Warnings only is the default. This app does not replace your phone's warning.",
     voiceWarning: "Warnings only", voiceAll: "All alerts", voiceOff: "Off",
@@ -1662,6 +1678,7 @@ const NEW_STRINGS = {
     quietHours: "静かな時間帯（22:00〜7:00）",
     quietHelp: "震度5弱未満では、音が少しずつ大きくなる小さなチャイムのみで、音声と画面の自動点灯はありません。強い警報は常に通常の音量で鳴ります。",
     quietOn: "オン", quietOff: "オフ",
+    nearbyTitle: "近くの地震", nearbyHelp: "あなたの観測点が震度1未満でも、隣接する観測点で揺れを観測した地震を表示します。やわらかいチャイムが1回鳴ります(静かな時間帯は無音)。体感の履歴には追加されません。",
     alertVoice: "音声メッセージ",
     voiceHelp: "チャイムのあとに短い音声で知らせます。初期設定は「警報のみ」です。このアプリは携帯電話の警報の代わりにはなりません。",
     voiceWarning: "警報のみ", voiceAll: "すべての通知", voiceOff: "オフ",
@@ -1819,7 +1836,7 @@ function applyLanguage() {
   document.getElementById('settingsLangEnBtn').classList.toggle('active', currentLang === 'en');
   document.getElementById('settingsLangJaBtn').classList.toggle('active', currentLang === 'ja');
   if (currentHomeName) {
-    els.locationLabel.textContent = `${s.monitoring}: ${currentHomeName}`;
+    els.locationLabel.textContent = `${currentHomeName}`;
   }
   // A reading already on screen was rendered in whichever language was
   // active at the time; re-render it now so switching languages mid-event
@@ -2040,6 +2057,9 @@ function renderAlertsPage() {
   document.getElementById('quietGroup').innerHTML = ['on', 'off'].map((v) => (
     `<button class="seg${v === currentQuietHours ? ' active' : ''}" onclick="setQuietHours('${v}')">${s['quiet' + (v === 'on' ? 'On' : 'Off')]}</button>`
   )).join('');
+  document.getElementById('nearbyGroup').innerHTML = ['on', 'off'].map((v) => (
+    `<button class="seg${v === currentNearbyQuakes ? ' active' : ''}" onclick="setNearbyQuakes('${v}')">${s['quiet' + (v === 'on' ? 'On' : 'Off')]}</button>`
+  )).join('');
   document.getElementById('followGroup').innerHTML = ['on', 'off'].map((v) => (
     `<button class="seg${v === currentFollowQuake ? ' active' : ''}" onclick="setFollowQuake('${v}')">${s['follow' + (v === 'on' ? 'On' : 'Off')]}</button>`
   )).join('');
@@ -2108,6 +2128,10 @@ window.applyFollowQuakeOnly = function (v) { currentFollowQuake = v === 'on' ? '
 function setQuietHours(v) { currentQuietHours = v; if (window.pywebview) window.pywebview.api.set_quiet_hours(v); renderAlertsPage(); }
 function setAlertVoice(v) { currentAlertVoice = v; if (window.pywebview) window.pywebview.api.set_alert_voice(v); renderAlertsPage(); }
 window.setQuietHours = setQuietHours; window.setAlertVoice = setAlertVoice;
+let currentNearbyQuakes = 'on';
+function setNearbyQuakes(v) { currentNearbyQuakes = v; if (window.pywebview) window.pywebview.api.set_nearby_quakes(v); renderAlertsPage(); }
+window.setNearbyQuakes = setNearbyQuakes;
+window.applyNearbyQuakesOnly = function (v) { currentNearbyQuakes = v === 'off' ? 'off' : 'on'; renderAlertsPage(); };
 window.applyQuietHoursOnly = function (v) { currentQuietHours = v === 'off' ? 'off' : 'on'; renderAlertsPage(); };
 window.applyAlertVoiceOnly = function (v) { currentAlertVoice = ['warning', 'all', 'off'].includes(v) ? v : 'warning'; renderAlertsPage(); };
 
@@ -2833,7 +2857,7 @@ window.citiesCopyText = citiesCopyText; window.citiesSaveImage = citiesSaveImage
 
 function followLabel(following, viewing) {
   const s = STRINGS[currentLang];
-  els.locationLabel.textContent = `${s.monitoring}: ${currentHomeName}`;
+  els.locationLabel.textContent = `${currentHomeName}`;
   if (following || viewing) {
     const tag = document.createElement('span');
     tag.className = 'follow-tag';
@@ -2879,6 +2903,9 @@ const D_STR = {
     finalLabel: 'JMA FINAL REPORT', noTsu: ' · NO TSUNAMI', finalHead: (n) => `Shindo ${n} felt here.`, finalPanel: 'FELT AT YOUR STATION (FINAL)',
     below1: 'Below Shindo 1', below1d: 'Not felt at your station.',
     expected: (n) => `Shindo ${n} expected`, strongest: (n, p) => `Strongest: Shindo ${n}${p ? ' in ' + p : ''} · weaker here`, strongestF: (n) => `Strongest forecast: Shindo ${n} · weaker here`,
+    nearbyHead: 'Felt nearby. Not at your station.', nearbyName: (s) => `Shindo ${s} nearby`,
+    nearbyDesc: (s, n, km) => `JMA measured Shindo ${s} at ${n}, about ${km} km from you. Your own station stayed below Shindo 1.`,
+    epicenter: 'EPICENTER',
     estimate: 'Estimate', epiWait: "Epicenter: waiting for JMA's final report", watchMap: 'Waiting for JMA reports',
     details: 'Details', detailsHide: 'Hide details', dismiss: 'Dismiss', cities: 'Cities',
     notice: 'No new message does not mean you are safe. Source: JMA.', credit: 'Map: 「国土数値情報（行政区域データ）」（国土交通省）を加工して作成',
@@ -2898,6 +2925,9 @@ const D_STR = {
     finalLabel: '気象庁 確定情報', noTsu: ' · 津波の心配なし', finalHead: (n) => `ここでは震度${n}を観測。`, finalPanel: 'あなたの観測点の震度(確定)',
     below1: '震度1未満', below1d: 'あなたの観測点では感じませんでした。',
     expected: (n) => `震度${n}の予想`, strongest: (n, p) => `最大: 震度${n}${p ? '(' + p + ')' : ''} · ここはより小さい`, strongestF: (n) => `最大予想: 震度${n} · ここはより小さい`,
+    nearbyHead: '近くで揺れを観測。あなたの観測点は震度1未満です。', nearbyName: (s) => `近くで震度${s}`,
+    nearbyDesc: (s, n, km) => `${n}(約${km}km)で震度${s}を観測しました。あなたの観測点は震度1未満でした。`,
+    epicenter: '震源',
     estimate: '推定', epiWait: '震源: 気象庁の確定情報を待っています', watchMap: '気象庁の発表を待っています',
     details: '詳細', detailsHide: '詳細を閉じる', dismiss: '閉じる', cities: '都市',
     notice: '新しい情報がないことは、安全を意味しません。出典: 気象庁', credit: '地図: 「国土数値情報（行政区域データ）」（国土交通省）を加工して作成',
@@ -2988,6 +3018,8 @@ function dashRender(allowPlay) {
   const active = mode !== 'standby' && mode !== 'cancelled';
   const step = active && st.display_step && st.display_step !== '0' ? st.display_step : null;
   const below1 = active && (st.display_source === 'station_below_1' || st.display_step === '0');
+  // Felt at a neighbouring station, below Shindo 1 at the user's own (Settings > Alerts > Nearby earthquakes).
+  const nearby = below1 && st.nearby_only && st.nearby_max ? st.nearby_max : null;
   const af = st && st.area_forecast;
   const topStep = mode === 'alert' ? ((af && (af.to || af.from)) || st.display_step) : null;
   dash.classList.toggle('alerting', mode === 'alert');
@@ -3004,7 +3036,7 @@ function dashRender(allowPlay) {
     label = t.prelimLabel; headline = t.prelimHead(dStepText(step)); iconKind = 'step'; band = dBand(step);
   } else if (mode === 'final') {
     label = t.finalLabel + (st.tsunami_clear && !st.tsunami_warning ? t.noTsu : '');
-    headline = below1 ? t.below1 + '.' : t.finalHead(dStepText(step)); iconKind = 'step'; band = dBand(step || '0');
+    headline = nearby ? t.nearbyHead : (below1 ? t.below1 + '.' : t.finalHead(dStepText(step))); iconKind = 'step'; band = dBand(nearby ? nearby.step : (step || '0'));
   }
   dEl('dLabel').textContent = label;
   dEl('dHeadline').textContent = headline;
@@ -3037,6 +3069,7 @@ function dashRender(allowPlay) {
       name = below1 ? t.below1 : t.names[pstep];
     }
     desc = mode === 'wait' ? `${t.waitName} ${t.waitDesc}` : (below1 ? t.below1d : (t.descs[pstep] || ''));
+    if (nearby && mode === 'final') { name = t.nearbyName(dStepText(nearby.step)); desc = t.nearbyDesc(dStepText(nearby.step), nearby.station, Math.max(1, Math.round(nearby.station_km))); }
     full = !below1 && pstep && jma_rank(pstep) >= jma_rank('5-');
     tileClass = 'd-tile outline';
   }
@@ -3055,7 +3088,8 @@ function dashRender(allowPlay) {
   let chip = '';
   if (active && !waitStep) {
     const mp = st.max_place, mx = (mp && mp.step) || st.jma_max;
-    if (mx && (!curStep || jma_rank(mx) > jma_rank(curStep))) {
+    const sameAsNearby = nearby && mp && mp.name === nearby.station;   // already said in the text above
+    if (mx && !sameAsNearby && (!curStep || jma_rank(mx) > jma_rank(curStep))) {
       chip = (mp && mp.name && st.phase === 'measured') ? t.strongest(dStepText(mx), mp.name) : (st.phase === 'eew' ? t.strongestF(dStepText(mx)) : t.strongest(dStepText(mx), ''));
       if (mode === 'wait' && st.phase === 'eew') chip = chip.replace(' · weaker here', '').replace(' · ここはより小さい', '');
     }
@@ -3233,18 +3267,30 @@ function dashMap(st, mode, step) {
     if (best) { ax = best[0]; ay = best[1]; }
   }
   if (hasEpi) {
-    const ringCols = ['#7FD9A0', '#A59CF2', '#E79AC6'];
-    [50, 100, 150].forEach((r, i) => {
-      out += `<circle class="d-ring r${i + 1}" cx="${ax.toFixed(2)}" cy="${ay.toFixed(2)}" r="${r}" fill="none" stroke="${ringCols[i]}" stroke-width="2.5" stroke-dasharray="7 6" vector-effect="non-scaling-stroke" opacity="0.9"/>`;
-      const fs = 22 / ppu;
-      out += `<text class="d-rlab r${i + 1}" x="${(ax + r * 0.7071 + 4 / ppu).toFixed(2)}" y="${(ay - r * 0.7071 - 6 / ppu).toFixed(2)}" fill="${ringCols[i]}" font-size="${fs.toFixed(2)}" font-weight="800" font-family="DM Sans, sans-serif">${r} km</text>`;
-    });
+    // No distance rings: rings around the user's town read as spreading waves. One line from the
+    // town to the epicenter, with the distance written on it, says the same thing without that.
     let [ex, ey] = v.proj(st.epi_lon, st.epi_lat);
-    const mx = v.W * 0.94, my = v.H * 0.94, ox = v.cx, oy = v.cy;
+    const mx = v.W * 0.90, my = v.H * 0.86, ox = v.cx, oy = v.cy;
     ex = Math.max(ox - mx, Math.min(ox + mx, ex)); ey = Math.max(oy - my, Math.min(oy + my, ey));
-    const s = 15 / ppu;
-    out += `<line class="d-epiline" x1="${ax.toFixed(2)}" y1="${ay.toFixed(2)}" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" stroke="#F2F1EC" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity="0.8"/>`;
-    out += `<g class="d-epix"><path d="M${ex - s} ${ey - s}L${ex + s} ${ey + s}M${ex + s} ${ey - s}L${ex - s} ${ey + s}" stroke="#111" stroke-width="10" stroke-linecap="round" vector-effect="non-scaling-stroke" fill="none"/><path d="M${ex - s} ${ey - s}L${ex + s} ${ey + s}M${ex + s} ${ey - s}L${ex - s} ${ey + s}" stroke="#fff" stroke-width="5" stroke-linecap="round" vector-effect="non-scaling-stroke" fill="none"/></g>`;
+    out += `<line class="d-epiline" x1="${ax.toFixed(2)}" y1="${ay.toFixed(2)}" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" stroke="#F2F1EC" stroke-width="3.5" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity="0.9"/>`;
+    const fam = 'DM Sans, Noto Sans JP, sans-serif';
+    if (st.home_lat != null) {
+      const km = Math.max(5, Math.round(dKm(st.home_lat, st.home_lon, st.epi_lat, st.epi_lon) / 5) * 5);
+      const txt = `${km} km`, fs = 34 / ppu, w = (txt.length * 0.62 + 1.1) * fs, h = fs * 1.55;
+      const lx = (ax + ex) / 2, ly = (ay + ey) / 2;
+      out += `<g class="d-epiline"><rect x="${(lx - w / 2).toFixed(2)}" y="${(ly - h / 2).toFixed(2)}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" rx="${(h / 2).toFixed(2)}" fill="#F2F1EC"/>` +
+             `<text x="${lx.toFixed(2)}" y="${(ly + fs * 0.35).toFixed(2)}" text-anchor="middle" fill="#0b0b0b" font-size="${fs.toFixed(2)}" font-weight="900" font-family="${fam}">${txt}</text></g>`;
+    }
+    // Epicenter: a red disc with a white cross and a pulsing halo, and its name beside it.
+    const r = 30 / ppu, c = r * 0.48, lfs = 26 / ppu;
+    const lab = D_STR[currentLang].epicenter, lw = (lab.length * (currentLang === 'ja' ? 1.05 : 0.68) + 1.2) * lfs, lh = lfs * 1.6;
+    const right = ex + r + lw + 8 / ppu < ox + v.W;   // put the label on the side that has room
+    const tx = right ? ex + r + 8 / ppu : ex - r - 8 / ppu - lw;
+    out += `<g class="d-epix"><circle class="d-epihalo" cx="${ex.toFixed(2)}" cy="${ey.toFixed(2)}" r="${(r * 1.7).toFixed(2)}" fill="#E8402F" opacity="0.28"/>` +
+           `<circle cx="${ex.toFixed(2)}" cy="${ey.toFixed(2)}" r="${r.toFixed(2)}" fill="#E8402F" stroke="#fff" stroke-width="3.5" vector-effect="non-scaling-stroke"/>` +
+           `<path d="M${ex - c} ${ey - c}L${ex + c} ${ey + c}M${ex + c} ${ey - c}L${ex - c} ${ey + c}" stroke="#fff" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke" fill="none"/>` +
+           `<rect x="${tx.toFixed(2)}" y="${(ey - lh / 2).toFixed(2)}" width="${lw.toFixed(2)}" height="${lh.toFixed(2)}" rx="${(lh / 2).toFixed(2)}" fill="#E8402F"/>` +
+           `<text x="${(tx + lw / 2).toFixed(2)}" y="${(ey + lfs * 0.36).toFixed(2)}" text-anchor="middle" fill="#fff" font-size="${lfs.toFixed(2)}" font-weight="900" font-family="${fam}">${lab}</text></g>`;
   }
   svg.setAttribute('viewBox', `${x0} ${y0} ${2 * v.W} ${2 * v.H}`);
   svg.innerHTML = out;
@@ -3278,7 +3324,7 @@ function setDevFeatures(v) {
 window.setDevFeatures = setDevFeatures;
 window.applyDevFeaturesOnly = function (available, enabled) { devAvailable = !!available; devOn = !!available && !!enabled; devRefresh(); if (!devOn) els.citiesBtn.style.display = 'none'; dashRender(false); };
 function dashSyncFlags(state) {
-  if (state && state.dev_available !== undefined) { const a = !!state.dev_available, o = a && state.dev_features === 'on'; if (a !== devAvailable || o !== devOn) { devAvailable = a; devOn = o; devRefresh(); } }
+  if (state && state.dev_available !== undefined) { const a = !!state.dev_available, o = a && (state.dev_features === true || state.dev_features === 'on'); if (a !== devAvailable || o !== devOn) { devAvailable = a; devOn = o; devRefresh(); } }
 }
 
 // ---- Developer page: sample screens built in the page itself (no sound, nothing is sent anywhere) ----
@@ -3344,7 +3390,7 @@ function showMainScreen(homeName) {
   els.setup.style.display = 'none';
   els.screen.style.display = 'flex';
   dashSetupHidden = false;
-  els.locationLabel.textContent = `${STRINGS[currentLang].monitoring}: ${homeName}`;
+  els.locationLabel.textContent = `${homeName}`;
   els.currentLocValue.textContent = homeName;
   renderIdle();
   dashRender(false);
@@ -3446,7 +3492,7 @@ async function saveSelected(context) {
     if (result.ok) {
       currentHomeName = result.name;
       els.currentLocValue.textContent = result.name;
-      els.locationLabel.textContent = `${STRINGS[currentLang].monitoring}: ${result.name}`;
+      els.locationLabel.textContent = `${result.name}`;
       dashLocationChanged(result.name);
       if (isSetup) {
         showMainScreen(result.name);
