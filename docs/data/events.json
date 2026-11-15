@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-15T07:11:05Z",
- "count": 343,
+ "updated_at": "2026-11-15T14:43:40Z",
+ "count": 344,
  "events": [
+  {
+   "id": "20261115162317",
+   "time": "2026-11-15T16:23:00+09:00",
+   "location_ja": "熊本県熊本地方",
+   "lat": 32.5,
+   "lon": 130.6,
+   "depth_km": 10.0,
+   "magnitude": 3.1,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261115140024",
    "time": "2026-11-15T14:00:00+09:00",
