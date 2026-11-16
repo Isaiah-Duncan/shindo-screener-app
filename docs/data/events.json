@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-16T11:06:17Z",
- "count": 350,
+ "updated_at": "2026-11-16T20:59:02Z",
+ "count": 351,
  "events": [
+  {
+   "id": "20261117014549",
+   "time": "2026-11-17T01:45:00+09:00",
+   "location_ja": "宮古島近海",
+   "lat": 24.3,
+   "lon": 125.2,
+   "depth_km": 30.0,
+   "magnitude": 3.9,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261116132858",
    "time": "2026-11-16T13:28:00+09:00",
