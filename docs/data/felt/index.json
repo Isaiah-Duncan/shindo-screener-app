@@ -1,0 +1,15 @@
+{
+ "source": "JMA detailed intensity reports, relayed by P2P地震情報 (https://www.p2pquake.net/)",
+ "months": [
+  {
+   "month": "2026-10",
+   "file": "2026-10.json",
+   "count": 28
+  },
+  {
+   "month": "2026-11",
+   "file": "2026-11.json",
+   "count": 82
+  }
+ ]
+}

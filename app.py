@@ -21,12 +21,14 @@ next to the executable, so they survive app updates and work
 correctly even when PyInstaller unpacks to a temp directory at runtime.
 """
 
+import gzip
 import json
 import os
 import sys
 import threading
 import time
 import traceback
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -83,6 +85,13 @@ P2P_HISTORY_URL = "https://api.p2pquake.net/v2/history?codes=551&limit=20"
 CATCHUP_POLL_SECONDS = 900
 CATCHUP_MAX_AGE_MINUTES = 120   # older reports are not looked at
 CATCHUP_SHOW_MINUTES = 10       # a missed report newer than this is shown like a live one; older ones are only logged
+# Calendar backfill: once per start, the app reads all of P2P's recent-report list (about three
+# weeks of JMA reports) and adds every quake the saved place's own station felt while the app was
+# closed, asleep or offline. Nothing is shown or played for these; they only fill the felt history.
+P2P_BACKFILL_URL = "https://api.p2pquake.net/v2/history?codes=551&limit=100&offset=%d"
+BACKFILL_MAX_PAGES = 5
+# Our own archive of every reported place per quake (docs/data/felt on shindoscreener.com), one file per month.
+FELT_ARCHIVE_URL = "https://shindoscreener.com/data/felt/%s.json"
 EEW_MAX_AGE_MINUTES = 10        # an early warning older than this is ignored (a feed can replay its last one on connect)
 ACTIVE_POLL_INTERVAL_SECONDS = 3
 IDLE_POLL_INTERVAL_SECONDS = 8
@@ -304,6 +313,7 @@ SETTINGS_DEFAULTS = {
     "quiet_hours": alert.DEFAULT_QUIET_HOURS,
     "alert_voice": alert.DEFAULT_ALERT_VOICE,
     "sensitivity": "normal",
+    "history_from": None,    # set when the saved place changes: the calendar backfill never reaches before it
     "nearby_quakes": "on",   # show (and softly chime for) a quake felt at a neighbouring station but not at the user's own
     "standby_style": "minimal",   # "minimal" (the quiet black screen) or "dashboard" (quiet dashboard)
     "dev_features": "off",   # only honored in a dev build, see dev_available()
@@ -663,7 +673,12 @@ class Api:
         since we already have exact coordinates from the search step.
         """
         existing = load_settings()
-        save_settings(merged_settings(existing, name=name, lat=lat, lon=lon))
+        changes = {"name": name, "lat": lat, "lon": lon}
+        if existing and existing.get("name") and existing.get("name") != name:
+            # A different place from now on: readings from before this moment belong to the old
+            # place, so the calendar backfill must not add the new place's readings for that time.
+            changes["history_from"] = datetime.now(timezone.utc).isoformat()
+        save_settings(merged_settings(existing, **changes))
         listener = self._get_listener()
         if listener is not None:
             listener.home = {"name": name, "lat": lat, "lon": lon}
@@ -998,6 +1013,7 @@ class Listener:
         self.viewing = False     # True while the user has picked a city in the Cities panel
         self.lock = threading.Lock()
         self._p2p_seen = {}      # id of every P2P report already handled, so the backup read never repeats one
+        self._backfilled = False # the calendar backfill runs once per start
         # Mutated directly by the Api set_alert_* methods when the user
         # changes a setting, so a change takes effect on the very next
         # push without needing to restart the listener threads.
@@ -1558,8 +1574,13 @@ class Listener:
             if not same:
                 # "Nearby earthquakes": JMA's detailed report shows the user's own station below
                 # Shindo 1, but a neighbouring station measured Shindo 1 or more.
-                nearby = bool(self.nearby_quakes and info.get("nearby_max") and info.get("reading")
-                              and info["reading"]["source"] == "station_below_1")
+                if not info["felt_near_user"] and self.base_home is not None and before_follow[2] is None:
+                    # "Follow the quake" moved the view to another town and that town did not feel it.
+                    # "Nearby earthquakes" is for the saved place only, so go back to it and judge there.
+                    self._home, self.home_info, self.base_home = before_follow
+                    info = jma_sources.parse_p2p_quake(msg, self.home_info) or info
+                nearby = bool(self.nearby_quakes and not info["felt_near_user"] and info.get("nearby_max")
+                              and info.get("reading") and info["reading"]["source"] == "station_below_1")
                 if not info["felt_near_user"] and not nearby:
                     note("quiet_not_felt")
                     # Nothing is shown, so a "follow the quake" switch made above is undone.
@@ -1620,13 +1641,30 @@ class Listener:
         self._mark_p2p_seen(msg)
         self.handle_measured(msg)
 
+    @staticmethod
+    def _p2p_keys(msg):
+        """Two ways to recognise a report: its id, and its content. The live feed and the history list do not
+        always carry the same id field, so the content key (type, issue time, quake time, place) is the safe one."""
+        eq = msg.get("earthquake") or {}
+        iss = msg.get("issue") or {}
+        keys = []
+        for name in ("id", "_id"):
+            if msg.get(name):
+                keys.append(("id", msg[name]))
+        keys.append(("fp", msg.get("code"), iss.get("type"), iss.get("time"), eq.get("time"),
+                     (eq.get("hypocenter") or {}).get("name"), eq.get("maxScale")))
+        return keys
+
+    def _p2p_is_seen(self, msg):
+        return any(k in self._p2p_seen for k in self._p2p_keys(msg))
+
     def _mark_p2p_seen(self, msg):
-        mid = msg.get("id")
-        if mid:
-            self._p2p_seen[mid] = time.time()
-            if len(self._p2p_seen) > 500:
-                for k in sorted(self._p2p_seen, key=self._p2p_seen.get)[:250]:
-                    self._p2p_seen.pop(k, None)
+        now = time.time()
+        for k in self._p2p_keys(msg):
+            self._p2p_seen[k] = now
+        if len(self._p2p_seen) > 1000:
+            for k in sorted(self._p2p_seen, key=self._p2p_seen.get)[:500]:
+                self._p2p_seen.pop(k, None)
 
     def _report_age_minutes(self, msg):
         issued = jma_sources._parse_jst((msg.get("issue") or {}).get("time"))
@@ -1651,6 +1689,109 @@ class Listener:
             self.record_felt_event(ev, home=ref)
         return True
 
+    def p2p_on_connect(self):
+        if not self._backfilled:
+            self._backfilled = True
+            self.p2p_backfill()
+        self.p2p_catch_up("connect")
+
+    def _archive_rows(self, not_before, now):
+        """Quakes from our own archive for the months between not_before and now, or None when the archive
+        cannot be read at all (the caller then asks P2P directly). A month with no file is just a month
+        without quakes yet."""
+        jst = timezone(timedelta(hours=9))
+        months, cur = [], not_before.astimezone(jst).replace(day=1)
+        end = now.astimezone(jst)
+        while (cur.year, cur.month) <= (end.year, end.month):
+            months.append(cur.strftime("%Y-%m"))
+            cur = (cur.replace(day=28) + timedelta(days=4)).replace(day=1)
+        rows, reached = [], False
+        for mo in months:
+            req = urllib.request.Request(FELT_ARCHIVE_URL % mo, headers={"User-Agent": "ShindoScreener", "Accept-Encoding": "gzip"})
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    raw = resp.read()
+                    if resp.headers.get("Content-Encoding") == "gzip":
+                        raw = gzip.decompress(raw)
+                data = json.loads(raw.decode("utf-8"))
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    continue
+                return None
+            except Exception:
+                return None
+            reached = True
+            rows.extend(m for m in (data.get("quakes") or []) if isinstance(m, dict) and m.get("code") == 551)
+        return rows if reached else None
+
+    def p2p_backfill(self):
+        """Fills the felt history with quakes the saved place's station felt while the app was not
+        listening. Reads P2P's whole recent-report list; no screen, no sound."""
+        now = datetime.now(timezone.utc)
+        fetched = logged = 0
+        error = None
+        source = "archive"
+        try:
+            not_before = now - timedelta(days=FELT_LOG_RETENTION_DAYS)
+            try:
+                since = datetime.fromisoformat((load_settings() or {}).get("history_from") or "")
+                not_before = max(not_before, since)
+            except ValueError:
+                pass
+            rows = self._archive_rows(not_before, now)
+            if rows is None:                      # archive not reachable: fall back to P2P's own recent list
+                source = "p2p"
+                rows = []
+                for page in range(BACKFILL_MAX_PAGES):
+                    req = urllib.request.Request(P2P_BACKFILL_URL % (page * 100), headers={"User-Agent": "ShindoScreener"})
+                    with urllib.request.urlopen(req, timeout=30) as resp:
+                        part = json.loads(resp.read().decode("utf-8"))
+                    if not part:
+                        break
+                    rows.extend(m for m in part if isinstance(m, dict) and m.get("code") == 551)
+                    if len(part) < 100:
+                        break
+            fetched = len(rows)
+            ref = self.base_home or self._home
+            ref_info = jma_sources.locate_home(ref, self.stations)
+            rows.sort(key=lambda m: (m.get("issue") or {}).get("time") or "")
+            for m in rows:
+                if self._p2p_is_seen(m):
+                    continue
+                age = self._report_age_minutes(m)
+                if age is None or age <= CATCHUP_SHOW_MINUTES:
+                    continue                      # fresh: the normal backup read shows it
+                self._mark_p2p_seen(m)
+                info = jma_sources.parse_p2p_quake(m, ref_info)
+                # Only a station reading from JMA's detailed report counts here: a quick report gives
+                # an area-wide value, and the user's own station may still have stayed below Shindo 1.
+                if (not info or not info["origin_time"] or not info.get("reading")
+                        or info["reading"]["source"] != "station"):
+                    continue
+                if info["origin_time"] < not_before:
+                    continue
+                probe = {"felt_at": info["origin_time"].astimezone(timezone.utc).isoformat(),
+                         "hypocenter": info["hypocenter"], "magnitude": info["magnitude"]}
+                key = info["origin_time"].isoformat()
+                with self.lock:
+                    def same(e):
+                        try:   # same origin time (within two minutes) is the same quake, whatever else was revised
+                            near = abs((datetime.fromisoformat(e["felt_at"]) - info["origin_time"]).total_seconds()) <= 120
+                        except (KeyError, TypeError, ValueError):
+                            near = False
+                        return near or e.get("event_key") == key or _same_logged_quake(e, probe)
+                    if any(same(e) for e in load_felt_log()):
+                        continue                  # already in the history
+                    self.record_felt_event({"key": key, "origin_time": info["origin_time"], "reading": info["reading"],
+                                            "hypocenter": info["hypocenter"], "magnitude": info["magnitude"]}, home=ref)
+                logged += 1
+                diag_log("p2p_received", decision="backfill_logged", report_type=info["report_type"],
+                         hypocenter=info["hypocenter"], magnitude=info["magnitude"], origin=key,
+                         reading_source=info["reading"]["source"], reading_step=info["reading"]["step"], felt=True)
+        except Exception as e:
+            error = f"{type(e).__name__}: {e}"[:200]
+        diag_log("p2p_backfill", source=source, fetched=fetched, logged=logged, error=error)
+
     def p2p_catch_up(self, reason):
         """Reads P2P's recent-report list and handles every report the live feed did not deliver."""
         shown = logged = fetched = 0
@@ -1663,7 +1804,7 @@ class Listener:
             rows = [m for m in rows if isinstance(m, dict) and m.get("code") == 551]
             rows.sort(key=lambda m: (m.get("issue") or {}).get("time") or "")
             for m in rows:
-                if m.get("id") in self._p2p_seen:
+                if self._p2p_is_seen(m):
                     continue
                 age = self._report_age_minutes(m)
                 if age is None or age > CATCHUP_MAX_AGE_MINUTES:
@@ -1773,7 +1914,7 @@ class Listener:
         threading.Thread(
             target=self._ws_loop, daemon=True,
             args=(P2P_WS_URL, self.on_p2p_live, lambda p: p.get("code") == 551, "p2p"),
-            kwargs={"on_connect": lambda: self.p2p_catch_up("connect"),
+            kwargs={"on_connect": self.p2p_on_connect,
                     "periodic": lambda: self.p2p_catch_up("poll"), "periodic_s": CATCHUP_POLL_SECONDS},
         ).start()
         self._ws_loop(WOLFX_JMA_EEW_URL, self.handle_eew, lambda p: p.get("type") != "heartbeat", "wolfx")

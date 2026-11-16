@@ -3,10 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <title>Shindo Screener</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700;800&family=DM+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
+  /* Bundled fonts (no network). DM Sans: clock and Shindo scale. Source Sans 3: explanations and headlines. Inter: epicenter distance. Japanese text uses the Windows system fonts. */
+  @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/dm-sans-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/dm-sans-latin-500-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/dm-sans-latin-600-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/dm-sans-latin-700-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 800; font-display: swap; src: url('fonts/dm-sans-latin-800-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 900; font-display: swap; src: url('fonts/dm-sans-latin-900-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Source Sans 3'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/source-sans-3-latin-400-normal.woff2') format('woff2');  size-adjust: 106%; }
+  @font-face { font-family: 'Source Sans 3'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/source-sans-3-latin-600-normal.woff2') format('woff2');  size-adjust: 106%; }
+  @font-face { font-family: 'Source Sans 3'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/source-sans-3-latin-700-normal.woff2') format('woff2');  size-adjust: 106%; }
+  @font-face { font-family: 'Source Sans 3'; font-style: normal; font-weight: 800; font-display: swap; src: url('fonts/source-sans-3-latin-800-normal.woff2') format('woff2');  size-adjust: 106%; }
+  @font-face { font-family: 'Source Sans 3'; font-style: normal; font-weight: 900; font-display: swap; src: url('fonts/source-sans-3-latin-900-normal.woff2') format('woff2');  size-adjust: 106%; }
+  @font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/inter-latin-500-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/inter-latin-600-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/inter-latin-700-normal.woff2') format('woff2'); }
+  :root { --f-num: 'DM Sans', 'Yu Gothic UI', 'Meiryo', 'Bahnschrift', Arial, sans-serif; --f-body: 'Source Sans 3', 'Yu Gothic UI', 'Meiryo', Arial, sans-serif; --f-dist: 'Inter', 'Yu Gothic UI', 'Meiryo', Arial, sans-serif; }
   :root { --text-scale: 1; }
   * { box-sizing: border-box; }
   html, body {
@@ -16,7 +29,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'DM Sans', 'Bahnschrift', Arial, Helvetica, sans-serif;
+    font-family: var(--f-body);
     overflow: hidden;
   }
   .screen {
@@ -90,7 +103,7 @@
      .datum-tile just adds the padding that makes the background read as
      a card instead of a stray rectangle hugging the text. */
   .readout.datum-tile { padding: 3vh 3vw; }
-  .code { font-family: 'Barlow', 'DM Sans', sans-serif; font-size: 14vw; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+  .code { font-family: var(--f-num); font-size: 14vw; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
   .code.code-range { font-size: 9vw; }
   .code.code-msg { font-size: 3.6vw; line-height: 1.25; letter-spacing: 0; max-width: 62vw; }
   .readout-sub { font-size: max(15px, 1.9vw); font-weight: 600; opacity: 0.88; margin-bottom: 1vw; max-width: 80vw; }
@@ -309,7 +322,7 @@
     align-items: center;
     justify-content: center;
     gap: 16px;
-    font-family: 'DM Sans', 'Bahnschrift', Arial, Helvetica, sans-serif;
+    font-family: var(--f-body);
     text-align: center;
     padding: 0 10vw;
   }
@@ -406,7 +419,7 @@
     color: #f5f5f0;
     display: none;
     flex-direction: row;
-    font-family: 'DM Sans', 'Bahnschrift', Arial, Helvetica, sans-serif;
+    font-family: var(--f-body);
     z-index: 30;
     overflow: hidden;
   }
@@ -533,8 +546,8 @@
   .pd-pill { font-size: calc(12.5px * var(--text-scale)); padding: 5px 11px; border-radius: 20px; background: rgba(245, 245, 240, 0.08); display: inline-block; }
   .pd-pill.key { background: rgba(245, 245, 240, 0.18); font-weight: 700; }
   .alert-preview { width: 100%; min-height: calc(330px * var(--text-scale)); border-radius: 28px; border: 2px solid rgba(245, 245, 240, 0.15); box-sizing: border-box; padding: 26px 28px; display: flex; flex-direction: column; position: relative; transition: background 300ms ease, color 300ms ease; }
-  .ap-tile { border-radius: 16px; padding: 14px 26px; font-size: calc(72px * var(--text-scale)); font-weight: 700; font-family: 'Barlow', 'DM Sans', sans-serif; line-height: 1; align-self: flex-start; }
-  .ap-big { font-size: calc(120px * var(--text-scale)); font-weight: 700; font-family: 'Barlow', 'DM Sans', sans-serif; line-height: 1; }
+  .ap-tile { border-radius: 16px; padding: 14px 26px; font-size: calc(72px * var(--text-scale)); font-weight: 700; font-family: var(--f-num); line-height: 1; align-self: flex-start; }
+  .ap-big { font-size: calc(120px * var(--text-scale)); font-weight: 700; font-family: var(--f-num); line-height: 1; }
   .ap-label { font-size: calc(15px * var(--text-scale)); margin-top: 16px; opacity: 0.9; }
   .ap-explain { font-size: calc(13px * var(--text-scale)); margin-top: 8px; opacity: 0.8; max-width: 440px; line-height: 1.45; }
   .ap-blank { font-size: calc(13px * var(--text-scale)); opacity: 0.55; text-align: center; }
@@ -550,7 +563,7 @@
   .chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin: 16px 0 8px; }
   .chip {
     flex: 1 1 0; min-width: calc(40px * var(--text-scale)); height: calc(54px * var(--text-scale)); border-radius: 12px; border: none; position: relative; cursor: pointer;
-    font-family: 'Barlow', 'DM Sans', sans-serif; font-size: calc(14px * var(--text-scale)); font-weight: 700; outline-offset: 2px;
+    font-family: var(--f-num); font-size: calc(14px * var(--text-scale)); font-weight: 700; outline-offset: 2px;
   }
   .chip.sel { outline: 2px solid #f5f5f0; }
   .chip.rest { border: 1px dashed rgba(245, 245, 240, 0.45); }
@@ -585,7 +598,7 @@
   .day-detail { margin-top: 22px; padding: 16px 18px; min-height: 92px; }
   .dd-title { font-size: calc(13.5px * var(--text-scale)); font-weight: 700; margin-bottom: 8px; }
   .dd-row { display: flex; gap: 12px; align-items: center; padding: 5px 0; font-size: calc(13.5px * var(--text-scale)); }
-  .dd-step { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Barlow', 'DM Sans', sans-serif; font-weight: 700; font-size: calc(14px * var(--text-scale)); flex: 0 0 auto; }
+  .dd-step { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--f-num); font-weight: 700; font-size: calc(14px * var(--text-scale)); flex: 0 0 auto; }
   .dd-empty { font-size: calc(13px * var(--text-scale)); opacity: 0.68; }
   .calendar-empty-note { margin-top: 14px; font-size: calc(12.5px * var(--text-scale)); opacity: 0.68; }
 
@@ -622,7 +635,7 @@
     --d-bg: #0a0a0a; --d-panel: #141414; --d-text: #f2f1ec; --d-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
     position: fixed; inset: 0; z-index: 25; display: none;
     background: var(--d-bg); color: var(--d-text);
-    font-family: 'DM Sans', 'Noto Sans JP', 'Bahnschrift', Arial, sans-serif;
+    font-family: var(--f-body);
   }
   .dash.show { display: block; }
   .dash * { box-sizing: border-box; }
@@ -672,6 +685,20 @@
   .d-mon { font-size: calc(40 * var(--u) * var(--tsb)); font-weight: 900; text-align: right; flex: none; max-width: 50%; }
   .d-mon .follow-tag { display: block; font-size: calc(24 * var(--u) * var(--tsb)); font-weight: 700; opacity: 0.7; }
   .d-details { position: absolute; left: calc(52 * var(--u)); right: calc(52 * var(--u)); bottom: calc(96 * var(--u)); background: #1c1c1c; border-radius: calc(14 * var(--u)); padding: calc(16 * var(--u)) calc(24 * var(--u)); font-size: calc(28 * var(--u) * var(--tsm)); font-weight: 700; display: none; gap: calc(34 * var(--u)); flex-wrap: wrap; z-index: 3; }
+
+  /* font roles */
+  .d-clock, .d-tile, .d-name, .d-barlabels span, .d-al-num, .d-al-cap { font-family: var(--f-num); }
+  .datetime, .datetime .date { font-family: var(--f-num); }
+  .location-label, .d-mon { font-family: var(--f-body); }
+  .d-mh1.dist, .d-mh3 { font-family: var(--f-dist); }
+  /* quiet standby: lighter weight and dimmer text until something happens */
+  .dash.quiet .d-headline { font-weight: 600; opacity: 0.82; }
+  .dash.quiet .d-name { font-weight: 600; opacity: 0.8; }
+  .dash.quiet .d-mh1 { font-weight: 700; opacity: 0.85; }
+  .dash.quiet .d-label, .dash.quiet .d-plabel { opacity: 0.6; }
+  .dash.quiet .d-clock, .dash.quiet .d-mon { opacity: 0.78; }
+  /* classic standby corners: same dimming as the quiet dashboard so the two match */
+  .datetime, .location-label { opacity: 0.78; }
   .d-details.open { display: flex; }
   .d-details span b { opacity: 0.6; font-weight: 700; margin-right: calc(8 * var(--u)); }
   /* Full-screen alert: forecast Shindo 4 or above */
@@ -740,6 +767,40 @@
   @keyframes dHalo { 0%, 100% { transform: scale(0.75); opacity: 0.34; } 50% { transform: scale(1.15); opacity: 0.10; } }
   body.nomotion .d-epihalo { animation: none; }
   @media (prefers-reduced-motion: reduce) { .d-epihalo { animation: none; } }
+  /* ===== Footer buttons: one size and one place in BOTH standby styles (classic and dashboard) ===== */
+  :root {
+    --u: min(calc(100vw / 1920), calc(100vh / 1080));
+    --tsb: calc(1 + (var(--text-scale) - 1) * 0.35);
+    --foot-btn: calc(52 * var(--u) * var(--tsb));
+    --foot-gap: calc(18 * var(--u));
+    --foot-left: calc(52 * var(--u));
+    --foot-bottom: calc(34 * var(--u));
+  }
+  .d-foot > .d-btn { align-self: flex-end; }
+  .d-btn { height: var(--foot-btn); padding: 0 calc(20 * var(--u)); display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; box-sizing: border-box; }
+  .d-btn.icon { width: var(--foot-btn); padding: 0; }
+  .gear-btn, .recent-btn, #citiesBtn.cities-btn { position: fixed; bottom: var(--foot-bottom); z-index: 6; box-sizing: border-box; height: var(--foot-btn); margin: 0; border: calc(2 * var(--u)) solid currentColor; border-radius: calc(12 * var(--u)); }
+  .gear-btn, .recent-btn, #citiesBtn.cities-btn { opacity: 1; border-color: rgba(242, 241, 236, 0.42); }
+  .gear-btn:hover, .recent-btn:hover, #citiesBtn.cities-btn:hover { background: rgba(242, 241, 236, 0.1); }
+  .gear-btn, .recent-btn { width: var(--foot-btn); padding: 0; }
+  .gear-btn svg, .recent-btn svg { width: 60%; height: 60%; }
+  .gear-btn { left: var(--foot-left); }
+  .recent-btn { left: calc(var(--foot-left) + var(--foot-btn) + var(--foot-gap)); }
+  #citiesBtn.cities-btn { left: calc(var(--foot-left) + 2 * (var(--foot-btn) + var(--foot-gap))); padding: 0 calc(20 * var(--u)); font-size: calc(28 * var(--u) * var(--tsb)); font-weight: 800; white-space: nowrap; }
+  /* the buttons no longer sit in the row, so keep the status text clear of them */
+  .bottom-row .meta-wrap { margin-left: calc(2 * (var(--foot-btn) + var(--foot-gap))); }
+  body.dev-on .bottom-row .meta-wrap { margin-left: calc(3 * (var(--foot-btn) + var(--foot-gap)) + 9 * var(--u) * var(--tsb)); }
+  /* ===== Corners: same margins, clock and location text in BOTH standby styles ===== */
+  :root { --tsm: calc(1 + (var(--text-scale) - 1) * 0.7); }
+  .screen { padding: calc(46 * var(--u)) calc(52 * var(--u)) calc(34 * var(--u)); }
+  .datetime { line-height: 1.05; letter-spacing: 0; }
+  .datetime .date { font-size: calc(30 * var(--u) * var(--tsm)); font-weight: 700; opacity: 0.85; margin-bottom: 0; line-height: 1.2; }
+  .datetime .time { display: block; font-size: calc(56 * var(--u) * var(--tsb)); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .location-label { font-size: calc(40 * var(--u) * var(--tsb)); font-weight: 900; letter-spacing: 0; }
+  .location-label .follow-tag { font-size: calc(24 * var(--u) * var(--tsb)); font-weight: 700; letter-spacing: 0; }
+  .d-foot > .d-mon { align-self: flex-end; }
+  .d-clock .dd { line-height: 1.2; }
+  .d-head > .d-clock { align-self: flex-start; }
 </style>
 </head>
 <body>
@@ -1075,6 +1136,7 @@
       <div class="card info-card">
         <div class="info-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8v.01"/></svg><span data-i18n="aboutData">About the data</span></div>
         <div class="info-text" data-i18n="dataSourceShort">Every reading is the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報).</div>
+        <div class="info-text" data-i18n="mapCredit">Map: 「国土数値情報（行政区域データ）」（国土交通省）を加工して作成</div>
         <div class="info-warn" data-i18n="dataSourceWarn">Delivery may be delayed or incomplete, and a report can stop arriving partway through. For the most current information, also check the JMA website, TV or radio.</div>
       </div>
       <div class="row-title" id="bugReportLabel" data-i18n="bugReportLabel">Report a bug</div>
@@ -1618,6 +1680,7 @@ const NEW_STRINGS = {
     testPlaying: "Playing the {vol} alarm once.",
     supportSub: "Data sources and bug reports.",
     aboutData: "About the data",
+    mapCredit: "Map: 「国土数値情報（行政区域データ）」（国土交通省）を加工して作成",
     dataSourceShort: "All readings are from the Japan Meteorological Agency (JMA). Wolfx and P2P地震情報 relay them. Town outlines: MLIT National Land Numerical Information (administrative areas), simplified by SmartNews.",
     dataSourceWarn: "Delivery can be late or incomplete. For current information, also check the JMA website, TV or radio.",
     sampleData: "Sample data",
@@ -1689,6 +1752,7 @@ const NEW_STRINGS = {
     testPlaying: "{vol}の音量で1回再生中です。",
     supportSub: "データの提供元と不具合の報告です。",
     aboutData: "データについて",
+    mapCredit: "地図: 「国土数値情報（行政区域データ）」（国土交通省）を加工して作成",
     dataSourceShort: "観測値はすべて気象庁のものです。Wolfx、P2P地震情報が中継します。市区町村の境界: 国土交通省 国土数値情報（行政区域）をスマートニュースが簡素化したデータを加工して作成。",
     dataSourceWarn: "配信が遅れたり不完全になることがあります。最新の情報は気象庁のサイト、テレビ、ラジオでも確認してください。",
     sampleData: "サンプル",
@@ -1894,6 +1958,7 @@ function setTextScale(scale) {
   currentTextScale = scale;
   applyTextScaleButtons();
   applyTextScaleValue();
+  setTimeout(fitDashPanel, 60);
   if (window.pywebview) window.pywebview.api.set_text_scale(scale);
 }
 
@@ -2900,11 +2965,11 @@ const D_STR = {
     light: 'Light shaking is on the way.', shaking: 'Shaking is on the way.', detected: 'An earthquake was detected.',
     waitArea: 'YOUR AREA · WAITING FOR JMA', fcPref: (p) => `FORECAST · ${p}`, fcJapan: 'FORECAST · STRONGEST IN JAPAN', waitName: "Waiting for JMA's value for your area.", waitDesc: 'This usually takes 2 to 3 minutes.',
     prelimLabel: 'JMA PRELIMINARY REPORT · AREA LEVEL', prelimHead: (n) => `Shindo ${n} expected in your area.`, prelimPanel: (a) => `YOUR AREA · ${a} (PRELIMINARY)`,
-    finalLabel: 'JMA FINAL REPORT', noTsu: ' · NO TSUNAMI', finalHead: (n) => `Shindo ${n} felt here.`, finalPanel: 'FELT AT YOUR STATION (FINAL)',
+    finalLabel: 'JMA FINAL REPORT', noTsu: ' · NO TSUNAMI', finalHead: (n) => `Shindo ${n} felt here.`, finalPanel: 'FELT AT YOUR STATION (FINAL)', yourStationFinal: 'YOUR STATION (FINAL)',
     below1: 'Below Shindo 1', below1d: 'Not felt at your station.',
     expected: (n) => `Shindo ${n} expected`, strongest: (n, p) => `Strongest: Shindo ${n}${p ? ' in ' + p : ''} · weaker here`, strongestF: (n) => `Strongest forecast: Shindo ${n} · weaker here`,
     nearbyHead: 'Felt nearby. Not at your station.', nearbyName: (s) => `Shindo ${s} nearby`,
-    nearbyDesc: (s, n, km) => `JMA measured Shindo ${s} at ${n}, about ${km} km from you. Your own station stayed below Shindo 1.`,
+    nearbyDesc: (s, n, km) => `JMA measured Shindo ${s} at ${n}, about ${km} km away.`,
     epicenter: 'EPICENTER',
     estimate: 'Estimate', epiWait: "Epicenter: waiting for JMA's final report", watchMap: 'Waiting for JMA reports',
     details: 'Details', detailsHide: 'Hide details', dismiss: 'Dismiss', cities: 'Cities',
@@ -2922,11 +2987,11 @@ const D_STR = {
     light: '弱い揺れが近づいています。', shaking: '揺れが近づいています。', detected: '地震を検知しました。',
     waitArea: 'あなたの地域 · 気象庁の発表待ち', fcPref: (p) => `予報 · ${p}`, fcJapan: '予報 · 全国の最大', waitName: '地域の震度を待っています。', waitDesc: '通常2〜3分かかります。',
     prelimLabel: '気象庁 震度速報 · 地域の震度', prelimHead: (n) => `あなたの地域は震度${n}の予想。`, prelimPanel: (a) => `あなたの地域 · ${a}(速報)`,
-    finalLabel: '気象庁 確定情報', noTsu: ' · 津波の心配なし', finalHead: (n) => `ここでは震度${n}を観測。`, finalPanel: 'あなたの観測点の震度(確定)',
+    finalLabel: '気象庁 確定情報', noTsu: ' · 津波の心配なし', finalHead: (n) => `ここでは震度${n}を観測。`, finalPanel: 'あなたの観測点の震度(確定)', yourStationFinal: 'あなたの観測点(確定)',
     below1: '震度1未満', below1d: 'あなたの観測点では感じませんでした。',
     expected: (n) => `震度${n}の予想`, strongest: (n, p) => `最大: 震度${n}${p ? '(' + p + ')' : ''} · ここはより小さい`, strongestF: (n) => `最大予想: 震度${n} · ここはより小さい`,
-    nearbyHead: '近くで揺れを観測。あなたの観測点は震度1未満です。', nearbyName: (s) => `近くで震度${s}`,
-    nearbyDesc: (s, n, km) => `${n}(約${km}km)で震度${s}を観測しました。あなたの観測点は震度1未満でした。`,
+    nearbyHead: '近くで揺れを観測。ここは震度1未満。', nearbyName: (s) => `近くで震度${s}`,
+    nearbyDesc: (s, n, km) => `${n}(約${km}km)で震度${s}を観測しました。`,
     epicenter: '震源',
     estimate: '推定', epiWait: '震源: 気象庁の確定情報を待っています', watchMap: '気象庁の発表を待っています',
     details: '詳細', detailsHide: '詳細を閉じる', dismiss: '閉じる', cities: '都市',
@@ -2993,6 +3058,21 @@ function dTimeText(iso) {
 }
 
 let devHome = null;
+// When the description is long (large text sizes, small windows), shrink it until the whole Shindo panel fits.
+function fitDashPanel() {
+  const panel = document.getElementById('dPanel'), desc = document.getElementById('dDesc');
+  if (!panel || !desc || !panel.clientHeight) return;
+  const chip = document.getElementById('dChip');
+  desc.style.fontSize = ''; if (chip) chip.style.fontSize = '';
+  const base = parseFloat(getComputedStyle(desc).fontSize);
+  const chipBase = chip ? parseFloat(getComputedStyle(chip).fontSize) : 0;
+  if (!base) return;
+  for (const k of [1, 0.9, 0.8, 0.72, 0.64, 0.56]) {
+    if (k !== 1) { desc.style.fontSize = (base * k) + 'px'; if (chipBase) chip.style.fontSize = (chipBase * Math.max(k, 0.72)) + 'px'; }
+    if (panel.scrollHeight <= panel.clientHeight + 1) break;
+  }
+}
+window.addEventListener('resize', () => fitDashPanel());
 function dashApply(st) {
   dashState = st;
   if (st && st.home_lat != null) devHome = { lat: st.home_lat, lon: st.home_lon };
@@ -3023,6 +3103,7 @@ function dashRender(allowPlay) {
   const af = st && st.area_forecast;
   const topStep = mode === 'alert' ? ((af && (af.to || af.from)) || st.display_step) : null;
   dash.classList.toggle('alerting', mode === 'alert');
+  dash.classList.toggle('quiet', mode === 'standby' || mode === 'cancelled');
   dash.classList.toggle('final', mode === 'final');
 
   // --- header ---
@@ -3065,11 +3146,11 @@ function dashRender(allowPlay) {
       const rng = af && af.to && af.to !== af.from ? `${dStepText(af.from)}${currentLang === 'ja' ? '〜' : ' to '}${dStepText(af.to)}${af.or_more ? (currentLang === 'ja' ? '以上' : ' or more') : ''}` : dStepText(step);
       name = t.expected(rng);
     } else {
-      plabel = mode === 'prelim' ? t.prelimPanel(st.area || st.home_area || currentHomeName) : t.finalPanel;
+      plabel = mode === 'prelim' ? t.prelimPanel(st.area || st.home_area || currentHomeName) : (below1 ? t.yourStationFinal : t.finalPanel);
       name = below1 ? t.below1 : t.names[pstep];
     }
     desc = mode === 'wait' ? `${t.waitName} ${t.waitDesc}` : (below1 ? t.below1d : (t.descs[pstep] || ''));
-    if (nearby && mode === 'final') { name = t.nearbyName(dStepText(nearby.step)); desc = t.nearbyDesc(dStepText(nearby.step), nearby.station, Math.max(1, Math.round(nearby.station_km))); }
+    if (nearby && mode === 'final') { desc = t.nearbyDesc(dStepText(nearby.step), nearby.station, Math.max(1, Math.round(nearby.station_km))); }
     full = !below1 && pstep && jma_rank(pstep) >= jma_rank('5-');
     tileClass = 'd-tile outline';
   }
@@ -3084,6 +3165,7 @@ function dashRender(allowPlay) {
   dEl('dName').textContent = name;
   dEl('dDesc').textContent = desc;
   dEl('dDesc').classList.toggle('action', mode === 'wait');
+  requestAnimationFrame(fitDashPanel);
   // strongest elsewhere
   let chip = '';
   if (active && !waitStep) {
@@ -3117,7 +3199,7 @@ function dashRender(allowPlay) {
   else if (mode === 'prelim') { h1 = t.epiWait; h1small = true; if (st.magnitude != null) h3 = `M${st.magnitude.toFixed(1)}`; }
   else if (mode === 'final') { h1 = st.hypocenter || ''; h1small = true; h2 = (st.magnitude != null ? `M${st.magnitude.toFixed(1)}` : '') + (st.origin_time ? ` · ${dTimeText(st.origin_time)}` : ''); }
   else { h1 = epi || (st.hypocenter || ''); h2 = `${t.estimate}${st.hypocenter ? ' · ' + st.hypocenter : ''}`; if (st.magnitude != null) h3 = `M${st.magnitude.toFixed(1)}`; }
-  const m1 = dEl('dMh1'); m1.textContent = h1; m1.classList.toggle('small', h1small);
+  const m1 = dEl('dMh1'); m1.textContent = h1; m1.classList.toggle('small', h1small); m1.classList.toggle('dist', !!epi);
   dEl('dMh2').textContent = h2; dEl('dMh3').textContent = h3;
 
   // --- footer ---
@@ -3128,7 +3210,7 @@ function dashRender(allowPlay) {
   dEl('dCitiesBtn').textContent = t.cities;
   dEl('dCitiesBtn').style.display = devOn ? '' : 'none';
   dEl('dNotice').innerHTML = '';
-  [t.notice, t.credit].forEach((x) => { const d = document.createElement('div'); d.textContent = x; dEl('dNotice').appendChild(d); });
+  [t.notice].forEach((x) => { const d = document.createElement('div'); d.textContent = x; dEl('dNotice').appendChild(d); });
   dEl('dMon').innerHTML = els.locationLabel.innerHTML;
   const det = dEl('dDetails');
   det.classList.toggle('open', dashDetailsOpen && active);
@@ -3261,6 +3343,7 @@ function dashMap(st, mode, step) {
   const hasEpi = (mode === 'eew' || mode === 'wait' || mode === 'alert') && st.epi_lat != null;
   // The line and rings lock onto the saved town itself (centre of its largest piece), not onto a raw coordinate.
   let ax = 0, ay = 0;
+  if (hasEpi && st.home_lat != null) { const hp = v.proj(st.home_lon, st.home_lat); ax = hp[0]; ay = hp[1]; }
   if (hasEpi && homeSet.size) {
     let best = null, bestA = 0;
     (dMapTowns || []).forEach((t) => { if (!homeSet.has(t.c)) return; t.g.forEach((poly) => { const ring = poly[0].map((c) => v.proj(c[0], c[1])); let a = 0, gx = 0, gy = 0; for (let i = 0; i < ring.length; i++) { const p = ring[i], q = ring[(i + 1) % ring.length], f = p[0] * q[1] - q[0] * p[1]; a += f; gx += (p[0] + q[0]) * f; gy += (p[1] + q[1]) * f; } if (Math.abs(a) > bestA && a) { bestA = Math.abs(a); best = [gx / (3 * a), gy / (3 * a)]; } }); });
@@ -3273,24 +3356,43 @@ function dashMap(st, mode, step) {
     const mx = v.W * 0.90, my = v.H * 0.86, ox = v.cx, oy = v.cy;
     ex = Math.max(ox - mx, Math.min(ox + mx, ex)); ey = Math.max(oy - my, Math.min(oy + my, ey));
     out += `<line class="d-epiline" x1="${ax.toFixed(2)}" y1="${ay.toFixed(2)}" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" stroke="#F2F1EC" stroke-width="3.5" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity="0.9"/>`;
-    const fam = 'DM Sans, Noto Sans JP, sans-serif';
+    const fam = (getComputedStyle(document.documentElement).getPropertyValue('--f-dist') || 'Inter, sans-serif').replace(/"/g, "'");
+    const R = 22 / ppu;                                  // half-size of the epicenter cross
+    // Distance chip on the line: only when the line is long enough that the chip clears the epicenter
+    // mark; otherwise the header line ("10 km north") already says it.
     if (st.home_lat != null) {
       const km = Math.max(5, Math.round(dKm(st.home_lat, st.home_lon, st.epi_lat, st.epi_lon) / 5) * 5);
-      const txt = `${km} km`, fs = 34 / ppu, w = (txt.length * 0.62 + 1.1) * fs, h = fs * 1.55;
-      const lx = (ax + ex) / 2, ly = (ay + ey) / 2;
-      out += `<g class="d-epiline"><rect x="${(lx - w / 2).toFixed(2)}" y="${(ly - h / 2).toFixed(2)}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" rx="${(h / 2).toFixed(2)}" fill="#F2F1EC"/>` +
-             `<text x="${lx.toFixed(2)}" y="${(ly + fs * 0.35).toFixed(2)}" text-anchor="middle" fill="#0b0b0b" font-size="${fs.toFixed(2)}" font-weight="900" font-family="${fam}">${txt}</text></g>`;
+      const txt = `${km} km`, fs = 26 / ppu, w = (txt.length * 0.58 + 1.3) * fs, h = fs * 1.6;
+      const L = Math.hypot(ex - ax, ey - ay);
+      if (L > 2 * R + w + 24 / ppu) {
+        const lx = (ax + ex) / 2, ly = (ay + ey) / 2;
+        out += `<g class="d-epiline"><rect x="${(lx - w / 2).toFixed(2)}" y="${(ly - h / 2).toFixed(2)}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" rx="${(4 / ppu).toFixed(2)}" fill="#0F0F0F" fill-opacity="0.88" stroke="#F2F1EC" stroke-opacity="0.45" stroke-width="1" vector-effect="non-scaling-stroke"/>` +
+               `<text x="${lx.toFixed(2)}" y="${(ly + fs * 0.35).toFixed(2)}" text-anchor="middle" fill="#F2F1EC" font-size="${fs.toFixed(2)}" font-weight="700" font-family="${fam}">${txt}</text></g>`;
+      }
     }
-    // Epicenter: a red disc with a white cross and a pulsing halo, and its name beside it.
-    const r = 30 / ppu, c = r * 0.48, lfs = 26 / ppu;
-    const lab = D_STR[currentLang].epicenter, lw = (lab.length * (currentLang === 'ja' ? 1.05 : 0.68) + 1.2) * lfs, lh = lfs * 1.6;
-    const right = ex + r + lw + 8 / ppu < ox + v.W;   // put the label on the side that has room
-    const tx = right ? ex + r + 8 / ppu : ex - r - 8 / ppu - lw;
-    out += `<g class="d-epix"><circle class="d-epihalo" cx="${ex.toFixed(2)}" cy="${ey.toFixed(2)}" r="${(r * 1.7).toFixed(2)}" fill="#E8402F" opacity="0.28"/>` +
-           `<circle cx="${ex.toFixed(2)}" cy="${ey.toFixed(2)}" r="${r.toFixed(2)}" fill="#E8402F" stroke="#fff" stroke-width="3.5" vector-effect="non-scaling-stroke"/>` +
-           `<path d="M${ex - c} ${ey - c}L${ex + c} ${ey + c}M${ex + c} ${ey - c}L${ex - c} ${ey + c}" stroke="#fff" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke" fill="none"/>` +
-           `<rect x="${tx.toFixed(2)}" y="${(ey - lh / 2).toFixed(2)}" width="${lw.toFixed(2)}" height="${lh.toFixed(2)}" rx="${(lh / 2).toFixed(2)}" fill="#E8402F"/>` +
-           `<text x="${(tx + lw / 2).toFixed(2)}" y="${(ey + lfs * 0.36).toFixed(2)}" text-anchor="middle" fill="#fff" font-size="${lfs.toFixed(2)}" font-weight="900" font-family="${fam}">${lab}</text></g>`;
+    // Epicenter: a red cross with a white outline (the symbol JMA and most seismology maps use), no
+    // pulsing halo (a pulse reads as a spreading wave), and a small plain label on the side away from the line.
+    const lab = D_STR[currentLang].epicenter, lfs = 21 / ppu;
+    const lw = (lab.length * (currentLang === 'ja' ? 1.0 : 0.66) + 1.4) * lfs, lh = lfs * 1.7, gap = 10 / ppu;
+    const dx = ex - ax, dy = ey - ay;
+    const roomR = ex + R + gap + lw < ox + v.W, roomL = ex - R - gap - lw > ox - v.W;
+    let right = Math.abs(dx) >= Math.abs(dy) * 0.6 ? dx >= 0 : (ox + v.W - ex) >= (ex - (ox - v.W));
+    if (right && !roomR && roomL) right = false; else if (!right && !roomL && roomR) right = true;
+    // The label goes on the side away from the line. When only the line side has room (the mark sits at the
+    // map edge), put the label above or below the mark instead, so it never covers the line or the distance chip.
+    const awaySide = Math.abs(dx) >= Math.abs(dy) * 0.6 ? (dx >= 0 ? roomR : roomL) : true;
+    const stack = Math.abs(dx) >= Math.abs(dy) * 0.6 && !awaySide;
+    let tx = right ? ex + R + gap : ex - R - gap - lw;
+    let lyTop = ey - lh / 2;
+    if (stack) {
+      tx = Math.max(ox - v.W + 4 / ppu, Math.min(ox + v.W - lw - 4 / ppu, ex - lw / 2));
+      lyTop = (ey - R - gap - lh >= oy - v.H) ? ey - R - gap - lh : ey + R + gap;
+    }
+    const cross = `M${ex - R} ${ey - R}L${ex + R} ${ey + R}M${ex + R} ${ey - R}L${ex - R} ${ey + R}`;
+    out += `<g class="d-epix"><path d="${cross}" stroke="#F2F1EC" stroke-width="11" stroke-linecap="butt" vector-effect="non-scaling-stroke" fill="none"/>` +
+           `<path d="${cross}" stroke="#E8402F" stroke-width="6" stroke-linecap="butt" vector-effect="non-scaling-stroke" fill="none"/>` +
+           `<rect x="${tx.toFixed(2)}" y="${lyTop.toFixed(2)}" width="${lw.toFixed(2)}" height="${lh.toFixed(2)}" rx="${(4 / ppu).toFixed(2)}" fill="#0F0F0F" fill-opacity="0.88" stroke="#F2F1EC" stroke-opacity="0.45" stroke-width="1" vector-effect="non-scaling-stroke"/>` +
+           `<text x="${(tx + lw / 2).toFixed(2)}" y="${(lyTop + lh / 2 + lfs * 0.36).toFixed(2)}" text-anchor="middle" fill="#F2F1EC" font-size="${lfs.toFixed(2)}" font-weight="700" letter-spacing="${(lfs * 0.08).toFixed(2)}" font-family="${fam}">${lab}</text></g>`;
   }
   svg.setAttribute('viewBox', `${x0} ${y0} ${2 * v.W} ${2 * v.H}`);
   svg.innerHTML = out;
