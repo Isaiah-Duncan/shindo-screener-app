@@ -212,9 +212,11 @@ def parse_p2p_quake(msg, home):
 
     reading = None
     by_name = {}
+    pref_of = {}
     for p in points:
         step = P2P_SCALE.get(p.get("scale"))
         if step and not p.get("isArea"):
+            pref_of[p.get("addr")] = p.get("pref")
             by_name[p.get("addr")] = max(by_name.get(p.get("addr"), step), step, key=rank)
     # Only the station nearest the user speaks for the user's location. JMA's
     # detailed report lists every station that measured Shindo 1 or more, so
@@ -271,7 +273,7 @@ def parse_p2p_quake(msg, home):
         "nearby_max": nearby_max,
         # Strongest station in the whole report (JMA's own reading, named as JMA names it), for the
         # dashboard's "strongest elsewhere" chip.
-        "max_point": ({"name": max(by_name, key=lambda k: rank(by_name[k])), "step": max(by_name.values(), key=rank)} if by_name else None),
+        "max_point": ({"name": max(by_name, key=lambda k: rank(by_name[k])), "pref": pref_of.get(max(by_name, key=lambda k: rank(by_name[k]))), "step": max(by_name.values(), key=rank)} if by_name else None),
         "felt_near_user": reading is not None and reading["source"] != "station_below_1",
     }
 

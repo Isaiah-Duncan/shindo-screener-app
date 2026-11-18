@@ -258,6 +258,9 @@
   .city-chip.none { background: #2a2a27; color: #f5f5f0; font-size: 14px; font-weight: 600; }
   .cities-note { font-size: 13px; opacity: 0.65; line-height: 1.45; }
   .cities-tabs { display: flex; gap: 8px; }
+  .cities-card.wide { width: min(1180px, 100%); }
+  .rep-holder { display: flex; justify-content: center; }
+  .rep-holder canvas { width: 100%; max-width: 100%; max-height: calc(100vh - 290px); aspect-ratio: 16 / 9; height: auto; object-fit: contain; border-radius: 10px; display: block; }
   .after-row { display: grid; grid-template-columns: 74px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 10px; background: #1f1f1c; }
   .after-time { font-size: 15px; opacity: 0.75; }
   .after-main { font-size: 17px; font-weight: 700; }
@@ -661,7 +664,8 @@
   .d-desc { font-size: calc(44 * var(--u) * var(--tsb)); font-weight: 800; line-height: 1.16; margin-top: calc(24 * var(--u)); }
   .d-desc.action { font-size: calc(34 * var(--u) * var(--tsm)); }
   .d-chip { align-self: flex-start; margin-top: calc(22 * var(--u)); background: #2a2a2a; color: #f2f1ec; border-radius: calc(12 * var(--u)); padding: calc(8 * var(--u)) calc(16 * var(--u)); font-size: calc(28 * var(--u) * var(--tsm)); font-weight: 800; }
-  .d-chip:empty, .d-tsu:empty { display: none; }
+  .d-station { margin-top: calc(16 * var(--u)); font-size: calc(26 * var(--u) * var(--tsm)); font-weight: 600; opacity: 0.72; }
+  .d-station:empty, .d-chip:empty, .d-tsu:empty { display: none; }
   .d-tsu { margin-top: calc(18 * var(--u)); align-self: flex-start; border: calc(3 * var(--u)) solid currentColor; border-radius: calc(12 * var(--u)); padding: calc(8 * var(--u)) calc(16 * var(--u)); font-size: calc(26 * var(--u) * var(--tsm)); font-weight: 900; }
   .d-spacer { flex: 1; min-height: calc(10 * var(--u)); }
   .d-bars { display: flex; align-items: flex-end; gap: calc(8 * var(--u)); height: calc(70 * var(--u)); }
@@ -870,6 +874,7 @@
       <button type="button" class="seg active" id="tabCities" onclick="setCitiesTab('cities')"></button>
       <button type="button" class="seg" id="tabAfter" onclick="setCitiesTab('after')"></button>
     </div>
+    <div class="rep-holder" id="citiesReport" style="display:none;"></div>
     <div class="cities-list" id="citiesList"></div>
     <div class="cities-note" id="citiesNote"></div>
     <div class="cities-actions">
@@ -917,6 +922,7 @@
         <div class="d-plabel" id="dPLabel"></div>
         <div class="d-tilerow"><div class="d-tile" id="dTile"></div><div class="d-name" id="dName"></div></div>
         <div class="d-desc" id="dDesc"></div>
+        <div class="d-station" id="dStation"></div>
         <div class="d-chip" id="dChip"></div>
         <div class="d-tsu" id="dTsu"></div>
         <div class="d-spacer"></div>
@@ -1673,8 +1679,8 @@ const NEW_STRINGS = {
     alertVoice: "Spoken message",
     voiceHelp: "A short spoken line after the chime. Warnings only is the default. This app does not replace your phone's warning.",
     voiceWarning: "Warnings only", voiceAll: "All alerts", voiceOff: "Off",
-    citiesBtn: "Cities", citiesTitle: "Nearest big cities", citiesNone: "No measured report yet. JMA usually sends one within a few minutes of the quake.", citiesOld: "The latest quake is too old to list.",
-    citiesBelow: "Below 1", citiesNoReport: "No report", citiesBack: "Back to my location", citiesCopy: "Copy post text", citiesSave: "Save images (日本語 + English)", citiesTabCities: "Cities", citiesTabAfter: "Aftershocks", afterNone: "No aftershocks reported yet near this quake.", afterNoMain: "No strong quake in the last 3 days.", afterNote: "Quakes JMA reported within 80 km of the strongest recent quake, after it. Cities show JMA's measured value at their nearest station.", afterNoCity: "no big city reported", citiesCopied: "Copied. Paste it into your post.", citiesSaved: "Image saved to", citiesFail: "Could not do that.", citiesNote: "Each value is JMA's measured intensity at the city's nearest station. \"Below 1\" means JMA listed no Shindo 1 or more there. Tap a city to show it on the main screen.", viewTag: "viewing this city", citiesKm: "km from epicenter",
+    citiesBtn: "Report", citiesReportTitle: "Quake report", citiesTitle: "Nearest big cities", citiesNone: "No measured report yet. JMA usually sends one within a few minutes of the quake.", citiesOld: "The latest quake is too old to list.",
+    citiesBelow: "Below 1", citiesNoReport: "No report", citiesBack: "Back to my location", citiesCopy: "Copy post text", citiesSave: "Save images (日本語 + English)", citiesTabCities: "Cities", citiesTabAfter: "Aftershocks", afterNone: "No aftershocks reported yet near this quake.", afterNoMain: "No strong quake in the last 3 days.", afterNote: "Quakes JMA reported within 80 km of the strongest recent quake, after it. Cities show JMA's measured value at their nearest station.", afterNoCity: "no big city reported", citiesCopied: "Copied. Paste it into your post.", citiesSaved: "Image saved to", citiesFail: "Could not do that.", citiesNote: "Each value is JMA's measured intensity at the city's nearest station. \"Below 1\" means JMA listed no Shindo 1 or more there.", viewTag: "viewing this city", citiesKm: "km from epicenter",
     followTitle: "Follow the quake (beta)", followOn: "On", followOff: "Off", followTag: "following the quake",
     followHelp: "For testing. When a quake happens, the screen shows the place nearest its epicenter instead of your saved place, with a wood tick, then returns. Your saved place does not change.",
     testPlaying: "Playing the {vol} alarm once.",
@@ -1745,8 +1751,8 @@ const NEW_STRINGS = {
     alertVoice: "音声メッセージ",
     voiceHelp: "チャイムのあとに短い音声で知らせます。初期設定は「警報のみ」です。このアプリは携帯電話の警報の代わりにはなりません。",
     voiceWarning: "警報のみ", voiceAll: "すべての通知", voiceOff: "オフ",
-    citiesBtn: "都市", citiesTitle: "震源に近い大都市", citiesNone: "観測した震度の発表はまだありません。通常、地震の数分後に届きます。", citiesOld: "最新の地震が古いため表示できません。",
-    citiesBelow: "震度1未満", citiesNoReport: "発表なし", citiesBack: "登録地点に戻る", citiesCopy: "投稿文をコピー", citiesSave: "画像を保存(日本語 + English)", citiesTabCities: "都市", citiesTabAfter: "余震", afterNone: "この地震の近くで、報告された余震はまだありません。", afterNoMain: "直近3日間に強い地震はありません。", afterNote: "直近で最も強い地震の後、80km以内で気象庁が発表した地震です。都市は最寄りの観測点で気象庁が観測した震度です。", afterNoCity: "大都市の発表なし", citiesCopied: "コピーしました。投稿に貼り付けてください。", citiesSaved: "画像を保存しました:", citiesFail: "できませんでした。", citiesNote: "各値は、その都市に最も近い観測点で気象庁が観測した震度です。「震度1未満」は、気象庁が震度1以上を発表していないことを表します。都市をタップすると、メイン画面にその都市を表示します。", viewTag: "この都市を表示中", citiesKm: "km(震源から)",
+    citiesBtn: "レポート", citiesReportTitle: "地震レポート", citiesTitle: "震源に近い大都市", citiesNone: "観測した震度の発表はまだありません。通常、地震の数分後に届きます。", citiesOld: "最新の地震が古いため表示できません。",
+    citiesBelow: "震度1未満", citiesNoReport: "発表なし", citiesBack: "登録地点に戻る", citiesCopy: "投稿文をコピー", citiesSave: "画像を保存(日本語 + English)", citiesTabCities: "都市", citiesTabAfter: "余震", afterNone: "この地震の近くで、報告された余震はまだありません。", afterNoMain: "直近3日間に強い地震はありません。", afterNote: "直近で最も強い地震の後、80km以内で気象庁が発表した地震です。都市は最寄りの観測点で気象庁が観測した震度です。", afterNoCity: "大都市の発表なし", citiesCopied: "コピーしました。投稿に貼り付けてください。", citiesSaved: "画像を保存しました:", citiesFail: "できませんでした。", citiesNote: "各値は、その都市に最も近い観測点で気象庁が観測した震度です。「震度1未満」は、気象庁が震度1以上を発表していないことを表します。", viewTag: "この都市を表示中", citiesKm: "km(震源から)",
     followTitle: "地震を追う(ベータ)", followOn: "オン", followOff: "オフ", followTag: "震源に最も近い地点",
     followHelp: "テスト用です。地震が起きると、登録した地点ではなく震源に最も近い地点を表示し、木の音で知らせたあと元に戻ります。登録した地点は変わりません。",
     testPlaying: "{vol}の音量で1回再生中です。",
@@ -1814,6 +1820,9 @@ const BUG_REPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbyaELlLmHuC
 
 let currentLang = 'en';
 let currentTimeFormat = '24h';
+// English names for JMA's epicenter regions (same table as docs/data/region-names-en.json). Japanese stays the fallback.
+const REGION_EN = {"アフリカ中部":"Central Africa","アフリカ東部":"Eastern Africa","アフリカ西部":"Western Africa","アリューシャン列島":"Aleutian Islands","インドシナ半島付近":"Adjacent Indochina Peninsula","インドネシア付近":"Adjacent Indonesia","インド付近":"Adjacent India","インド洋":"Indian Ocean","ウラジオストク付近":"Adjacent Vladivostok","オホーツク海南部":"Southern Sea of Okhotsk","オーストラリア付近":"Adjacent Australia","カムチャツカ半島付近":"Adjacent Kamchatka Peninsula","グアム付近":"Adjacent Guam","サハリン南部付近":"Adjacent Southern Sakhalin","サハリン西方沖":"Off the west coast of Sakhalin","サハリン近海":"Near Sakhalin","シベリア付近":"Adjacent Siberia","シベリア南部":"Southern Siberia","トカラ列島近海":"Near Tokara Islands","ニューギニア付近":"Adjacent New Guinea","ニュージーランド付近":"Adjacent New Zealand","フィリピン付近":"Adjacent Philippines","マリアナ諸島":"Mariana Islands","ヨーロッパ中部":"Central Europe","ヨーロッパ東部":"Eastern Europe","ヨーロッパ西部":"Western Europe","ロシア中部":"Central Russia","ロシア東部":"Eastern Russia","ロシア西部":"Western Russia","三宅島近海":"Near Miyakejima Island","三河湾":"Mikawa Bay","三重県中部":"Central Mie Prefecture","三重県北部":"Northern Mie Prefecture","三重県南東沖":"Off the southeast coast of Mie Prefecture","三重県南部":"Southern Mie Prefecture","三陸沖":"Off the coast of Sanriku","上川地方中部":"Central Kamikawa Region, Hokkaido","上川地方北部":"Northern Kamikawa Region, Hokkaido","上川地方南部":"Southern Kamikawa Region, Hokkaido","与那国島近海":"Near Yonagunijima Island","中国中部":"Central China","中国地方":"Chugoku Region","中国東北部":"Northeastern China","中国東部":"Eastern China","中国西部":"Western China","中央アジア":"Central Asia","中東":"Middle East","中米":"Central America","九州地方":"Kyushu Region","九州地方南東沖":"Off the southeast coast of Kyushu","五島列島近海":"Near Goto Islands","京都府北部":"Northern Kyoto Prefecture","京都府南部":"Southern Kyoto Prefecture","京都府沖":"Off the coast of Kyoto Prefecture","伊予灘":"Iyonada Sea","伊勢湾":"Ise Bay","伊豆半島東方沖":"Off the east coast of Izu Peninsula","伊豆大島近海":"Near Izu-Oshima Island","佐渡付近":"Adjacent Sado","佐賀県北部":"Northern Saga Prefecture","佐賀県南部":"Southern Saga Prefecture","八丈島東方沖":"Off the east coast of Hachijojima Island","八丈島近海":"Near Hachijojima Island","兵庫県北方沖":"Off the north coast of Hyogo Prefecture","兵庫県北部":"Northern Hyogo Prefecture","兵庫県南東部":"Southeastern Hyogo Prefecture","兵庫県南西部":"Southwestern Hyogo Prefecture","内浦湾":"Uchiura Bay","北大西洋":"North Atlantic Ocean","北東太平洋":"Northeast Pacific Ocean","北極付近":"Near the North Pole","北海道北西沖":"Off the northwest coast of Hokkaido","北海道南東沖":"Off the southeast coast of Hokkaido","北海道南西沖":"Off the southwest coast of Hokkaido","北海道地方":"Hokkaido Region","北海道東方沖":"Off the east coast of Hokkaido","北海道西方沖":"Off the west coast of Hokkaido","北米中部":"Central North America","北米東部":"Eastern North America","北米西部":"Western North America","北西太平洋":"Northwest Pacific Ocean","北見地方":"Kitami Region, Hokkaido","北陸地方":"Hokuriku Region","十勝地方中部":"Central Tokachi Region, Hokkaido","十勝地方北部":"Northern Tokachi Region, Hokkaido","十勝地方南部":"Southern Tokachi Region, Hokkaido","十勝沖":"Off the coast of Tokachi","千島列島":"Kurile Islands","千島列島南東沖":"Off the southeast coast of Kurile Islands","千葉県北東部":"Northeastern Chiba Prefecture","千葉県北西部":"Northwestern Chiba Prefecture","千葉県南東沖":"Off the southeast coast of Chiba Prefecture","千葉県南部":"Southern Chiba Prefecture","千葉県東方沖":"Off the east coast of Chiba Prefecture","南大東島近海":"Near Minami-Daitojima Island","南大西洋":"South Atlantic Ocean","南太平洋":"South Pacific Ocean","南極付近":"Near the South Pole","南海道南方沖":"Off the south coast of Nankaido","南米中部":"Central South America","南米東部":"Eastern South America","南米西部":"Western South America","台湾付近":"the vicinity of Taiwan","周防灘":"Suonada Sea","和歌山県北部":"Northern Wakayama Prefecture","和歌山県南方沖":"Off the south coast of Wakayama Prefecture","和歌山県南部":"Southern Wakayama Prefecture","四国地方":"Shikoku Region","四国沖":"Off the coast of Shikoku","国後島付近":"Adjacent Kunashiri Island","土佐湾":"Tosa Bay","地中海":"Mediterranean","埼玉県北部":"Northern Saitama Prefecture","埼玉県南部":"Southern Saitama Prefecture","埼玉県秩父地方":"Chichibu Region, Saitama Prefecture","壱岐・対馬近海":"Near Ikishima Island and Tsushima Island","大分県中部":"Central Oita Prefecture","大分県北部":"Northern Oita Prefecture","大分県南部":"Southern Oita Prefecture","大分県西部":"Western Oita Prefecture","大阪府北部":"Northern Osaka Prefecture","大阪府南部":"Southern Osaka Prefecture","大阪湾":"Osaka Bay","大隅半島東方沖":"Off the east coast of Osumi Peninsula","天草灘":"Amakusanada Sea","奄美大島北東沖":"Off the northeast coast of Amami-Oshima Island","奄美大島北西沖":"Off the northwest coast of Amami-Oshima Island","奄美大島近海":"Near Amami-Oshima Island","奈良県":"Nara Prefecture","安芸灘":"Akinada Sea","宗谷地方北部":"Northern Soya Region, Hokkaido","宗谷地方南部":"Southern Soya Region, Hokkaido","宗谷東方沖":"Off the east coast of Soya","宗谷海峡":"Soya Strait","宮古島北西沖":"Off the northwest coast of Miyakojima Island","宮古島近海":"Near Miyakojima Island","宮城県中部":"Central Miyagi Prefecture","宮城県北部":"Northern Miyagi Prefecture","宮城県南部":"Southern Miyagi Prefecture","宮城県沖":"Off the coast of Miyagi Prefecture","宮崎県北部山沿い":"Area along Mountains of Northern Miyazaki Prefecture","宮崎県北部平野部":"Plain Area of Northern Miyazaki Prefecture","宮崎県南部山沿い":"Area along Mountains of Southern Miyazaki Prefecture","宮崎県南部平野部":"Plain Area of Southern Miyazaki Prefecture","富山湾":"Toyama Bay","富山県東部":"Eastern Toyama Prefecture","富山県西部":"Western Toyama Prefecture","小笠原地方":"Ogasawara Region","小笠原諸島東方沖":"Off the east coast of Ogasawara Islands","小笠原諸島西方沖":"Off the west coast of Ogasawara Islands","山口県中部":"Central Yamaguchi Prefecture","山口県北西沖":"Off the northwest coast of Yamaguchi Prefecture","山口県北部":"Northern Yamaguchi Prefecture","山口県東部":"Eastern Yamaguchi Prefecture","山口県西部":"Western Yamaguchi Prefecture","山形県庄内地方":"Shonai Region, Yamagata Prefecture","山形県最上地方":"Mogami Region, Yamagata Prefecture","山形県村山地方":"Murayama Region, Yamagata Prefecture","山形県沖":"Off the coast of Yamagata Prefecture","山形県置賜地方":"Okitama Region, Yamagata Prefecture","山梨県中・西部":"Central and Western Yamanashi Prefecture","山梨県東部・富士五湖":"Eastern Yamanashi Prefecture and Fuji Five Lakes","岐阜県美濃中西部":"Central and western Mino, Gifu Prefecture","岐阜県美濃東部":"Eastern Mino, Gifu Prefecture","岐阜県飛騨地方":"Hida, Gifu Prefecture","岡山県北部":"Northern Okayama Prefecture","岡山県南部":"Southern Okayama Prefecture","岩手県内陸北部":"Northern Inland of Iwate Prefecture","岩手県内陸南部":"Southern Inland of Iwate Prefecture","岩手県沖":"Off the coast of Iwate Prefecture","岩手県沿岸北部":"Northern Coast of Iwate Prefecture","岩手県沿岸南部":"Southern Coast of Iwate Prefecture","島根県東部":"Eastern Shimane Prefecture","島根県沖":"Off the coast of Shimane Prefecture","島根県西部":"Western Shimane Prefecture","広島県北部":"Northern Hiroshima Prefecture","広島県南東部":"Southeastern Hiroshima Prefecture","広島県南西部":"Southwestern Hiroshima Prefecture","後志地方北部":"Northern Shiribeshi Region, Hokkaido","後志地方東部":"Eastern Shiribeshi Region, Hokkaido","後志地方西部":"Western Shiribeshi Region, Hokkaido","徳島県北部":"Northern Tokushima Prefecture","徳島県南部":"Southern Tokushima Prefecture","愛媛県中予":"Chuyo, Ehime Prefecture","愛媛県南予":"Nanyo, Ehime Prefecture","愛媛県東予":"Toyo, Ehime Prefecture","愛知県東部":"Eastern Aichi Prefecture","愛知県西部":"Western Aichi Prefecture","房総半島南方沖":"Off the south coast of Boso Peninsula","択捉島付近":"Adjacent Etorofu Island","択捉島南東沖":"Off the southeast coast of Etorofu Island","播磨灘":"Harimanada Sea","新島・神津島近海":"Near Niijima Island, Kozushima Island","新潟県上中越沖":"Off the coast of Joetsu and Chuetsu, Niigata Prefecture","新潟県上越地方":"Joetsu, Niigata Prefecture","新潟県下越地方":"Kaetsu, Niigata Prefecture","新潟県下越沖":"Off the coast of Kaetsu, Niigata Prefecture","新潟県中越地方":"Chuetsu, Niigata Prefecture","日向灘":"Hyuganada Sea","日本海中部":"Central Sea of Japan","日本海北部":"Northern Sea of Japan","日本海西部":"Weatern Sea of Japan","日高地方中部":"Central Hidaka Region, Hokkaido","日高地方東部":"Eastern Hidaka Region, Hokkaido","日高地方西部":"Western Hidaka Region, Hokkaido","有明海":"Ariake Sea","朝鮮半島北部":"Northern Korean Peninsula","朝鮮半島南部":"Southern Korean Peninsula","本州南方沖":"Off the south coast of Honshu","東シナ海":"East China Sea","東京湾":"Tokyo Bay","東京都多摩東部":"Eastern Tama, Tokyo","東京都多摩西部":"Western Tama, Tokyo","東京都２３区":"23 wards, Tokyo","東北地方":"Tohoku Region","東北地方東方沖":"Off the east coast of Tohoku","東海地方":"Tokai Region","東海道南方沖":"Off the south coast of Tokaido","栃木県北部":"Northern Tochigi Prefecture","栃木県南部":"Southern Tochigi Prefecture","根室半島南東沖":"Off the southeast coast of the Nemuro Peninsula","根室地方中部":"Central Nemuro Region, Hokkaido","根室地方北部":"Northern Nemuro Region, Hokkaido","根室地方南部":"Southern Nemuro Region, Hokkaido","橘湾":"Tachibana Bay","檜山地方":"Hiyama Region, Hokkaido","沖縄地方":"Okinawa Region","沖縄本島北西沖":"Off the northwest coast of Okinawa Main Island","沖縄本島南方沖":"Off the south coast of Okinawa Main Island","沖縄本島近海":"Near Okinawa Main Island","津軽海峡":"Tsugaru Strait","浦河沖":"Off the coast of Urakawa","淡路島付近":"Adjacent Awajishima Island","渡島地方北部":"Northern Oshima Region, Hokkaido","渡島地方東部":"Eastern Oshima Region, Hokkaido","渡島地方西部":"Western Oshima Region, Hokkaido","滋賀県北部":"Northern Shiga Prefecture","滋賀県南部":"Southern Shiga Prefecture","瀬戸内海中部":"Central Setonaikai Sea","熊本県天草・芦北地方":"Amakusa and Ashikita Region, Kumamoto Prefecture","熊本県熊本地方":"Kumamoto Region, Kumamoto Prefecture","熊本県球磨地方":"Kuma Region, Kumamoto Prefecture","熊本県阿蘇地方":"Aso Region, Kumamoto Prefecture","父島近海":"Near Chichijima Island","留萌地方中北部":"Central and northern Rumoi Region, Hokkaido","留萌地方南部":"Southern Rumoi Region, Hokkaido","相模湾":"Sagami Bay","石垣島北西沖":"Off the northwest coast of Ishigakijima Island","石垣島南方沖":"Off the south coast of Ishigakijima Island","石垣島近海":"Near Ishigakijima Island","石川県加賀地方":"Kaga, Ishikawa Prefecture","石川県能登地方":"Noto, Ishikawa Prefecture","石川県西方沖":"Off the west coast of Ishikawa Prefecture","石狩地方中部":"Central Ishikari Region, Hokkaido","石狩地方北部":"Northern Ishikari Region, Hokkaido","石狩地方南部":"Southern Ishikari Region, Hokkaido","石狩湾":"Ishikari Bay","硫黄島近海":"Near Ioto Island","神奈川県東部":"Eastern Kanagawa Prefecture","神奈川県西部":"Western Kanagawa Prefecture","福井県嶺北":"Reihoku, Fukui Prefecture","福井県嶺南":"Reinan, Fukui Prefecture","福井県沖":"Off the coast of Fukui Prefecture","福岡県北九州地方":"Kitakyushu Region, Fukuoka Prefecture","福岡県北西沖":"Off the northwest coast of Fukuoka Prefecture","福岡県福岡地方":"Fukuoka Region, Fukuoka Prefecture","福岡県筑後地方":"Chikugo Region, Fukuoka Prefecture","福岡県筑豊地方":"Chikuho Region, Fukuoka Prefecture","福島県中通り":"Nakadori, Fukushima Prefecture","福島県会津":"Aizu, Fukushima Prefecture","福島県沖":"Off the coast of Fukushima Prefecture","福島県浜通り":"Hamadori, Fukushima Prefecture","秋田県内陸北部":"Northern Inland of Akita Prefecture","秋田県内陸南部":"Southern Inland of Akita Prefecture","秋田県沖":"Off the coast of Akita Prefecture","秋田県沿岸北部":"Northern Coast of Akita Prefecture","秋田県沿岸南部":"Southern Coast of Akita Prefecture","種子島南東沖":"Off the southeast coast of Tanegashima Island","種子島近海":"Near Tanegashima Island","空知地方中部":"Central Sorachi Region, Hokkaido","空知地方北部":"Northern Sorachi Region, Hokkaido","空知地方南部":"Southern Sorachi Region, Hokkaido","紀伊水道":"Kiisuido Strait","紋別地方":"Mombetsu Region, Hokkaido","網走地方":"Abashiri Region, Hokkaido","網走沖":"Off the coast of Abashiri","群馬県北部":"Northern Gunma Prefecture","群馬県南部":"Southern Gunma Prefecture","胆振地方中東部":"Central and eastern Iburi Region, Hokkaido","胆振地方西部":"Western Iburi Region, Hokkaido","能登半島沖":"Off the coast of Noto Peninsula","若狭湾":"Wakasa Bay","苫小牧沖":"Off the coast of Tomakomai","茨城県北部":"Northern Ibaraki Prefecture","茨城県南部":"Southern Ibaraki Prefecture","茨城県沖":"Off the coast of Ibaraki Prefecture","薩南諸島東方沖":"Off the east coast of Satsunan Islands","薩摩半島西方沖":"Off the west coast of Satsuma Peninsula","西表島付近":"Near Iriomotejima Island","豊後水道":"Bungosuido Strait","近畿地方":"Kinki Region","遠地":"Distant","遠州灘":"Enshunada Sea","釧路地方中南部":"Central and southern Kushiro Region, Hokkaido","釧路地方北部":"Northern Kushiro Region, Hokkaido","釧路沖":"Off the coast of Kushiro","長崎県北部":"Northern Nagasaki Prefecture","長崎県南西部":"Southwestern Nagasaki Prefecture","長崎県島原半島":"Shimabara Peninsula, Nagasaki Prefecture","長野県中部":"Central Nagano Prefecture","長野県北部":"Northern Nagano Prefecture","長野県南部":"Southern Nagano Prefecture","関東東方沖":"Off the east coast of Kanto","関東甲信地方":"Kanto Koushin Region","陸奥湾":"Mutsu Bay","隠岐島近海":"Near Oki Islands","青森県三八上北地方":"Sanpachi-Kamikita Region, Aomori Prefecture","青森県下北地方":"Shimokita Region, Aomori Prefecture","青森県東方沖":"Off the east coast of Aomori Prefecture","青森県津軽北部":"Northern Tsugaru, Aomori Prefecture","青森県津軽南部":"Southern Tsugaru, Aomori Prefecture","青森県西方沖":"Off the west coast of Aomori Prefecture","静岡県中部":"Central Shizuoka Prefecture","静岡県伊豆地方":"Izu, Shizuoka Prefecture","静岡県東部":"Eastern Shizuoka Prefecture","静岡県西部":"Western Shizuoka Prefecture","香川県東部":"Eastern Kagawa Prefecture","香川県西部":"Western Kagawa Prefecture","駿河湾":"Suruga Bay","駿河湾南方沖":"Off the south coast of Suruga Bay","高知県中部":"Central Kochi Prefecture","高知県東部":"Eastern Kochi Prefecture","高知県西部":"Western Kochi Prefecture","鳥取県中部":"Central Tottori Prefecture","鳥取県東部":"Eastern Tottori Prefecture","鳥取県沖":"Off the coast of Tottori Prefecture","鳥取県西部":"Western Tottori Prefecture","鳥島東方沖":"Off the east coast of Torishima Island","鳥島近海":"Near Torishima Island","鹿児島湾":"Kagoshima Bay","鹿児島県大隅地方":"Osumi Region, Kagoshima Prefecture","鹿児島県薩摩地方":"Satsuma Region, Kagoshima Prefecture","黄海":"Yellow Sea"};
+function hypoName(n, lang) { const L = lang || currentLang; return (L === 'en' && n && REGION_EN[n]) || n; }
 let currentHomeName = '';
 // The last state passed to renderActive(), so a language switch mid-reading
 // can re-render the same event in the new language instead of leaving it
@@ -2371,7 +2380,7 @@ function renderCalendar() {
   const title = dayDate.toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : 'en-US', { month: 'long', day: 'numeric', weekday: 'short' });
   const rows = (byDay[selectedCalDay] || []).slice().sort((a, b) => (a.felt_at < b.felt_at ? -1 : 1)).map((e) => {
     const mag = e.magnitude != null ? (currentLang === 'ja' ? `M${Number(e.magnitude).toFixed(1)}` : `M ${Number(e.magnitude).toFixed(1)}`) : '';
-    const text = [entryTime(e.felt_at), stepWord(e.display_step), e.hypocenter || '', mag].filter(Boolean).join('  ·  ');
+    const text = [entryTime(e.felt_at), stepWord(e.display_step), hypoName(e.hypocenter) || '', mag].filter(Boolean).join('  ·  ');
     return `<div class="dd-row"><span class="dd-step" style="background:${BANDS[e.display_step].bg};color:${BANDS[e.display_step].fg};">${stepShort(e.display_step)}</span><span></span></div>`.replace('<span></span>', `<span>${escapeHtml(text)}</span>`);
   }).join('');
   detail.innerHTML = `<div class="dd-title">${title}</div>` + (rows || `<div class="dd-empty">${s.dayNone}</div>`);
@@ -2576,7 +2585,7 @@ function renderActive(state) {
   els.rule.style.background = 'currentColor';
 
   const magStr = state.magnitude != null ? state.magnitude.toFixed(1) : '?';
-  els.eventSummaryLine.textContent = `M${magStr} — ${state.hypocenter || (ja ? '震源調査中' : 'Epicenter not yet known')}`;
+  els.eventSummaryLine.textContent = `M${magStr} — ${hypoName(state.hypocenter) || (ja ? '震源調査中' : 'Epicenter not yet known')}`;
 
   const max = state.jma_max;
   if (state.jma_max_kind === 'measured') {
@@ -2741,20 +2750,24 @@ function renderCitiesTab() {
   document.getElementById('tabCities').classList.toggle('active', citiesTab === 'cities');
   document.getElementById('tabAfter').classList.toggle('active', citiesTab === 'after');
   document.getElementById('citiesBack').style.display = (citiesData && citiesData.viewing && citiesTab === 'cities') ? 'inline-block' : 'none';
+  document.getElementById('citiesSave').textContent = citiesTab === 'cities' ? (ja ? '画像を保存' : 'Save image') : s.citiesSave;
   list.innerHTML = '';
+  const rep = document.getElementById('citiesReport');
+  rep.innerHTML = ''; rep.style.display = 'none'; list.style.display = '';
+  document.querySelector('.cities-card').classList.toggle('wide', citiesTab === 'cities' && !!(citiesData && citiesData.ok));
   document.getElementById('citiesTitle').textContent = citiesTab === 'after' ? s.citiesTabAfter : s.citiesTitle;
   if (citiesTab === 'after') {
     document.getElementById('citiesNote').textContent = s.afterNote;
     const d = afterData;
     if (!d || !d.ok) { document.getElementById('citiesSub').textContent = ''; list.textContent = s.afterNoMain; return; }
     document.getElementById('citiesSub').textContent =
-      `M${d.main.magnitude != null ? d.main.magnitude : '?'} ${d.main.hypocenter || ''} · ${d.main.time} JST · ${ja ? '最大震度' : 'max'} ${stepShort(d.main.max_step || '0')}`;
+      `M${d.main.magnitude != null ? d.main.magnitude : '?'} ${hypoName(d.main.hypocenter) || ''} · ${d.main.time} JST · ${ja ? '最大震度' : 'max'} ${stepShort(d.main.max_step || '0')}`;
     if (!d.rows.length) { list.textContent = s.afterNone; return; }
     d.rows.forEach((r) => {
       const row = document.createElement('div'); row.className = 'after-row';
       const t = document.createElement('div'); t.className = 'after-time'; t.textContent = r.time;
       const mid = document.createElement('div');
-      const m = document.createElement('div'); m.className = 'after-main'; m.textContent = `M${r.magnitude != null ? r.magnitude : '?'} ${r.hypocenter || ''}`;
+      const m = document.createElement('div'); m.className = 'after-main'; m.textContent = `M${r.magnitude != null ? r.magnitude : '?'} ${hypoName(r.hypocenter) || ''}`;
       const f = document.createElement('div'); f.className = 'after-felt';
       f.textContent = r.cities.length ? r.cities.map((c) => `${nameIn(c, currentLang)} ${stepShort(c.step)}`).join(ja ? '、' : ' · ') : s.afterNoCity;
       mid.appendChild(m); mid.appendChild(f);
@@ -2772,8 +2785,16 @@ function renderCitiesTab() {
     list.textContent = d && d.reason === 'old' ? s.citiesOld : s.citiesNone;
     return;
   }
+  // The report card: the same picture that gets saved, shown big so a screenshot of it is ready to post.
+  document.getElementById('citiesSub').textContent = '';
+  document.getElementById('citiesTitle').textContent = s.citiesReportTitle;
+  list.style.display = 'none'; rep.style.display = 'flex';
+  const showCard = () => { rep.innerHTML = ''; rep.appendChild(drawReportCanvas(d)); };
+  showCard();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (citiesTab === 'cities' && citiesData === d) showCard(); });
+  return;
   document.getElementById('citiesSub').textContent =
-    `M${d.magnitude != null ? d.magnitude : '?'} ${d.hypocenter || ''}` + (d.time ? ` · ${d.time} JST` : '') +
+    `M${d.magnitude != null ? d.magnitude : '?'} ${hypoName(d.hypocenter) || ''}` + (d.time ? ` · ${d.time} JST` : '') +
     (d.jma_max ? ` · ${ja ? '最大震度' : 'JMA max'} ${stepShort(d.jma_max)}` : '');
   d.cities.forEach((c) => {
     const b = document.createElement('button');
@@ -2810,21 +2831,21 @@ function postTextCities(lang) {
   const top = mp ? mp.step : d.jma_max;
   const rows = citiesForPost(d).map((c) => `${nameIn(c, lang)} ${valueWord(c, lang)}`).join(ja ? '、' : ' · ');
   if (ja) {
-    return `【最大震度${stepIn(top, 'ja')}】${d.hypocenter || ''} M${d.magnitude}\n` + (mp ? `最大: ${mp.pref || ''}${mp.station}\n` : '') +
-      `\n近くの大都市の震度: ${rows}\n\n数値はすべて気象庁の発表です。\nshindoscreener.com`;
+    return `【最大震度${stepIn(top, 'ja')}】${d.hypocenter || ''} M${d.magnitude}\n` + (mp ? `最大震度の観測点: ${mp.pref || ''}${mp.station}\n` : '') +
+      `\n近くの大都市の最寄り観測点の震度: ${rows}\n\n数値はすべて気象庁の発表です。\nshindoscreener.com`;
   }
-  return `Max Shindo ${top}, M${d.magnitude} ${d.hypocenter || ''} (${d.time} JST)\n` + (mp ? `Strongest: ${mp.pref || ''} ${mp.station}\n` : '') +
-    `\nBig cities near the epicenter: ${rows}\n\nAll values relayed from JMA.\nshindoscreener.com`;
+  return `Max Shindo ${top}, M${d.magnitude} ${hypoName(d.hypocenter, 'en') || ''} (${d.time} JST)\n` + (mp ? `Strongest: ${mp.label || ((mp.pref || '') + ' ' + mp.station)}\n` : '') +
+    `\nNearest-station readings at big cities: ${rows}\n\nAll values relayed from JMA.\nshindoscreener.com`;
 }
 function postTextAfter(lang) {
   const d = afterData; if (!d || !d.ok) return '';
   const ja = lang === 'ja';
   const lines = d.rows.map((r) => {
     const felt = r.cities.length ? ` (${r.cities.map((c) => `${nameIn(c, lang)} ${stepIn(c.step, lang)}`).join(ja ? '、' : ', ')})` : '';
-    return `${r.time.slice(6)} M${r.magnitude} ${r.hypocenter || ''} ${ja ? '最大震度' : 'max'} ${r.max_step ? stepIn(r.max_step, lang) : '-'}${felt}`;
+    return `${r.time.slice(6)} M${r.magnitude} ${hypoName(r.hypocenter, lang) || ''} ${ja ? '最大震度' : 'max'} ${r.max_step ? stepIn(r.max_step, lang) : '-'}${felt}`;
   });
   const head = ja ? `M${d.main.magnitude} ${d.main.hypocenter}(${d.main.time} JST)の余震(気象庁発表)${d.rows.length ? '' : ': まだありません'}`
-                  : `Aftershocks of the M${d.main.magnitude} ${d.main.hypocenter} quake (${d.main.time} JST), as reported by JMA${d.rows.length ? '' : ': none yet'}`;
+                  : `Aftershocks of the M${d.main.magnitude} ${hypoName(d.main.hypocenter, 'en')} quake (${d.main.time} JST), as reported by JMA${d.rows.length ? '' : ': none yet'}`;
   return head + (lines.length ? '\n\n' + lines.join('\n') : '') + (ja ? '\n\n数値はすべて気象庁の発表です。\nshindoscreener.com' : '\n\nAll values relayed from JMA.\nshindoscreener.com');
 }
 function citiesPostText(lang) { return citiesTab === 'after' ? postTextAfter(lang) : postTextCities(lang); }
@@ -2862,11 +2883,11 @@ function drawCitiesImage(lang) {
   const { W, H, cv, g } = imgBase();
   const top = d.max_place ? d.max_place.step : d.jma_max;
   drawStepBlock(g, 48, 40, 330, 230, top, ja ? '最大震度' : 'MAX SHINDO', lang);
-  g.fillStyle = '#f5f5f0'; g.font = `700 46px ${IMG_FONT}`; g.fillText(`M${d.magnitude}  ${d.hypocenter || ''}`, 412, 98);
+  g.fillStyle = '#f5f5f0'; g.font = `700 46px ${IMG_FONT}`; g.fillText(`M${d.magnitude}  ${hypoName(d.hypocenter, lang) || ''}`, 412, 98);
   g.font = `500 28px ${IMG_FONT}`; g.globalAlpha = 0.75; g.fillText(d.time ? `${d.time} JST` : '', 412, 140); g.globalAlpha = 1;
   if (d.max_place) {
     g.font = `600 24px ${IMG_FONT}`; g.globalAlpha = 0.65; g.fillText(ja ? '最も強く観測した地点' : 'Strongest reading', 412, 204); g.globalAlpha = 1;
-    g.font = `700 38px ${IMG_FONT}`; g.fillText(`${d.max_place.pref || ''} ${d.max_place.station}`.trim(), 412, 252);
+    g.font = `700 38px ${IMG_FONT}`; g.fillText((ja ? `${d.max_place.pref || ''} ${d.max_place.station}` : (d.max_place.label || `${d.max_place.pref || ''} ${d.max_place.station}`)).trim(), 412, 252, 740);
   }
   g.font = `600 26px ${IMG_FONT}`; g.globalAlpha = 0.7; g.fillText(ja ? '震源に近い大都市の震度' : 'Big cities near the epicenter', 48, 322); g.globalAlpha = 1;
   const list = citiesForPost(d), cols = 3, tw = 352, th = 118, gx = 24, gy = 20;
@@ -2888,7 +2909,7 @@ function drawAfterImage(lang) {
   const { W, H, cv, g } = imgBase();
   g.fillStyle = '#f5f5f0'; g.font = `800 54px ${IMG_FONT}`; g.fillText(ja ? '余震' : 'AFTERSHOCKS', 48, 84);
   g.font = `600 28px ${IMG_FONT}`; g.globalAlpha = 0.75;
-  g.fillText(`M${d.main.magnitude} ${d.main.hypocenter || ''}  ·  ${d.main.time} JST  ·  ${ja ? '最大震度' : 'max'} ${stepIn(d.main.max_step || '0', lang)}`, 48, 128); g.globalAlpha = 1;
+  g.fillText(`M${d.main.magnitude} ${hypoName(d.main.hypocenter, lang) || ''}  ·  ${d.main.time} JST  ·  ${ja ? '最大震度' : 'max'} ${stepIn(d.main.max_step || '0', lang)}`, 48, 128); g.globalAlpha = 1;
   const rows = d.rows.slice(0, 6), rh = 72, y0 = 160;
   if (!rows.length) { g.font = `600 40px ${IMG_FONT}`; g.fillText(ja ? '報告された余震はまだありません' : 'No aftershocks reported yet', 48, 300); }
   rows.forEach((r, i) => {
@@ -2899,12 +2920,67 @@ function drawAfterImage(lang) {
     g.fillStyle = bd.fg; g.textAlign = 'center'; g.font = `800 ${r.max_step && stepIn(r.max_step, lang).length > 1 ? 30 : 38}px ${IMG_FONT}`;
     g.fillText(r.max_step ? stepIn(r.max_step, lang) : '-', 99, y + rh / 2 + 13); g.textAlign = 'left';
     g.fillStyle = '#f5f5f0'; g.font = `500 24px ${IMG_FONT}`; g.globalAlpha = 0.75; g.fillText(r.time.slice(6), 158, y + 44); g.globalAlpha = 1;
-    g.font = `700 28px ${IMG_FONT}`; g.fillText(`M${r.magnitude} ${r.hypocenter || ''}`, 268, y + 33);
+    g.font = `700 28px ${IMG_FONT}`; g.fillText(`M${r.magnitude} ${hypoName(r.hypocenter, lang) || ''}`, 268, y + 33);
     g.font = `500 21px ${IMG_FONT}`; g.globalAlpha = 0.7;
     g.fillText(r.cities.length ? r.cities.map((c) => `${nameIn(c, lang)} ${stepIn(c.step, lang)}`).join(ja ? '、' : ' · ') : (ja ? '大都市の発表なし' : 'no big city reported'), 268, y + 60); g.globalAlpha = 1;
   });
   imgFooter(g, W, H, lang);
   return cv.toDataURL('image/png');
+}
+
+const REPORT_TSUNAMI = { None: ['この地震による津波の心配はありません。', 'No tsunami risk (JMA).'],
+  NonEffective: ['若干の海面変動の可能性がありますが、被害の心配はありません。', 'Slight sea-level change possible, no damage expected (JMA).'] };
+// The report card: one 1600x900 picture, shown in the Report window and saved as the share image.
+function drawReportCanvas(d) {
+  const W = 1600, H = 900, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'), F = IMG_FONT, fg = '#f5f5f0', dim = '#9a9a94';
+  const font = (w, px) => `${w} ${px}px ${F}`;
+  const rr = (x, y, w, h, r, fill) => { g.fillStyle = fill; g.beginPath(); g.roundRect(x, y, w, h, r); g.fill(); };
+  const fit = (txt, w, px, wt, min) => { while (px > min) { g.font = font(wt, px); if (g.measureText(txt).width <= w) break; px -= 1; } g.font = font(wt, px); };
+  g.fillStyle = '#0b0b0b'; g.fillRect(0, 0, W, H); g.textBaseline = 'alphabetic';
+  g.fillStyle = dim; g.font = font(700, 30); g.textAlign = 'left'; g.fillText('EARTHQUAKE REPORT  地震情報', 70, 90);
+  const t = d.time ? `${d.time.replace(/-/g, '/').replace(/ 0?(\d+):(\d\d)/, (m0, h, mi) => { const hh = +h; return `  ${hh % 12 || 12}:${mi} ${hh < 12 ? 'AM' : 'PM'}`; })} JST` : '';
+  g.textAlign = 'right'; g.fillText(t, W - 70, 90); g.textAlign = 'left';
+  rr(70, 130, 690, 640, 28, '#151515');
+  const top = d.max_place ? d.max_place.step : d.jma_max;
+  g.fillStyle = dim; g.font = font(700, 26); g.fillText('MAXIMUM SHINDO  最大震度', 110, 200);
+  const band = chipFor(top) || { bg: '#333333', fg: fg };
+  rr(110, 215, 260, 260, 36, band.bg);
+  g.fillStyle = band.fg; g.textAlign = 'center'; g.font = font(800, 150); g.fillText(top || '-', 240, 395); g.textAlign = 'left';
+  g.fillStyle = fg; g.font = font(800, 96); if (d.magnitude != null) g.fillText(`M${d.magnitude}`, 410, 335);
+  g.fillStyle = dim;
+  if (d.depth_km != null && d.depth_km >= 0) {
+    g.font = font(400, 30); g.fillText(d.depth_km === 0 ? 'Very shallow' : `Depth ${Math.round(d.depth_km)} km`, 414, 395);
+    g.font = font(400, 28); g.fillText(d.depth_km === 0 ? 'ごく浅い' : `深さ約${Math.round(d.depth_km)}km`, 414, 438);
+  }
+  const ja = d.hypocenter || '', en = hypoName(ja, 'en');
+  g.fillStyle = fg; fit(ja, 610, 58, 700, 30); g.fillText(ja, 110, 570);
+  if (en && en !== ja) { g.fillStyle = dim; fit(en, 610, 34, 400, 18); g.fillText(en, 110, 626); }
+  const tsu = REPORT_TSUNAMI[d.tsunami];
+  if (tsu) { g.fillStyle = dim; tsu.forEach((line, i) => { fit(line, 610, 24, 400, 14); g.fillText(line, 110, 700 + i * 36); }); }
+  rr(800, 130, 730, 640, 28, '#151515');
+  g.fillStyle = dim; g.font = font(700, 24); g.fillText('NEAREST STATION TO EACH CITY  最寄り観測点の震度', 840, 195);
+  const felt = d.cities.filter((c) => c.step && jma_rank(c.step) >= jma_rank('1'));
+  felt.sort((x, y) => (jma_rank(y.step) - jma_rank(x.step)) || (x.distance_km - y.distance_km));
+  let y = 225;
+  felt.slice(0, 5).forEach((c) => {
+    const bd = chipFor(c.step) || { bg: '#333333', fg: fg };
+    rr(840, y, 90, 72, 16, bd.bg); g.fillStyle = bd.fg; g.textAlign = 'center'; g.font = font(800, 44); g.fillText(c.step, 885, y + 52); g.textAlign = 'left';
+    g.fillStyle = fg; g.font = font(700, 40); g.fillText(c.en, 960, y + 50);
+    const w = g.measureText(c.en).width; g.fillStyle = dim; g.font = font(400, 30); g.fillText(c.ja, 960 + w + 18, y + 50);
+    g.textAlign = 'right'; g.font = font(400, 28); g.fillText(`${c.distance_km} km`, 1490, y + 50); g.textAlign = 'left';
+    y += 88;
+  });
+  if (!felt.length) {
+    g.fillStyle = fg; g.font = font(400, 32); g.fillText('No Shindo 1 or more at a major city', 840, 265);
+    g.fillStyle = dim; g.font = font(400, 28); g.fillText('主な都市で震度1以上の観測なし', 840, 315);
+    if (d.max_place) { g.font = font(700, 26); g.fillText('Strongest reading  最大震度の観測点', 840, 400); g.fillStyle = fg; fit(`${d.max_place.pref || ''}${d.max_place.station}`, 650, 38, 700, 22); g.fillText(`${d.max_place.pref || ''}${d.max_place.station}`, 840, 455); }
+  }
+  g.fillStyle = dim; g.font = font(400, 22);
+  g.fillText('Source: Japan Meteorological Agency (JMA), relayed by P2P地震情報. Distances are from the epicenter. Not an official alert.', 70, 820);
+  g.fillStyle = fg; g.font = font(700, 26); g.fillText('Shindo Screener', 70, 868);
+  g.textAlign = 'right'; g.font = font(700, 30); g.fillText('shindoscreener.com', W - 70, 868); g.textAlign = 'left';
+  return cv;
 }
 function citiesSaveImage() {
   const st = document.getElementById('citiesStatus'); const s = STRINGS[currentLang];
@@ -2912,8 +2988,10 @@ function citiesSaveImage() {
   if (!d || !d.ok || !window.pywebview) { st.textContent = s.citiesFail; return; }
   const when = ((citiesTab === 'after' ? d.main.time : d.time) || 'quake').replace(/[^0-9]/g, '');
   const kind = citiesTab === 'after' ? 'aftershocks' : 'cities';
-  const draw = citiesTab === 'after' ? drawAfterImage : drawCitiesImage;
-  Promise.all(['ja', 'en'].map((lang) => window.pywebview.api.save_share_image(draw(lang), `shindo-screener-${kind}-${when}-${lang}`)))
+  const jobs = citiesTab === 'after'
+    ? ['ja', 'en'].map((lang) => window.pywebview.api.save_share_image(drawAfterImage(lang), `shindo-screener-${kind}-${when}-${lang}`))
+    : [window.pywebview.api.save_share_image(drawReportCanvas(d).toDataURL('image/png'), `shindo-screener-report-${when}`)];
+  Promise.all(jobs)
     .then((rs) => { st.textContent = rs.every((r) => r && r.ok) ? `${s.citiesSaved} ${rs[0].path.replace(/[^\\/]+$/, '')}` : s.citiesFail; })
     .catch(() => { st.textContent = s.citiesFail; });
 }
@@ -2965,7 +3043,7 @@ const D_STR = {
     light: 'Light shaking is on the way.', shaking: 'Shaking is on the way.', detected: 'An earthquake was detected.',
     waitArea: 'YOUR AREA · WAITING FOR JMA', fcPref: (p) => `FORECAST · ${p}`, fcJapan: 'FORECAST · STRONGEST IN JAPAN', waitName: "Waiting for JMA's value for your area.", waitDesc: 'This usually takes 2 to 3 minutes.',
     prelimLabel: 'JMA PRELIMINARY REPORT · AREA LEVEL', prelimHead: (n) => `Shindo ${n} expected in your area.`, prelimPanel: (a) => `YOUR AREA · ${a} (PRELIMINARY)`,
-    finalLabel: 'JMA FINAL REPORT', noTsu: ' · NO TSUNAMI', finalHead: (n) => `Shindo ${n} felt here.`, finalPanel: 'FELT AT YOUR STATION (FINAL)', yourStationFinal: 'YOUR STATION (FINAL)',
+    finalLabel: 'JMA FINAL REPORT', noTsu: ' · NO TSUNAMI', finalHead: (n) => `Shindo ${n} felt here.`, finalPanel: 'FELT AT YOUR STATION (FINAL)', yourStationFinal: 'YOUR STATION (FINAL)', followFinal: (n) => `FELT AT ${n} (FINAL)`, followBelow1: (n) => `${n} (FINAL)`, stationLine: (n) => `Station: ${n}`,
     below1: 'Below Shindo 1', below1d: 'Not felt at your station.',
     expected: (n) => `Shindo ${n} expected`, strongest: (n, p) => `Strongest: Shindo ${n}${p ? ' in ' + p : ''} · weaker here`, strongestF: (n) => `Strongest forecast: Shindo ${n} · weaker here`,
     nearbyHead: 'Felt nearby. Not at your station.', nearbyName: (s) => `Shindo ${s} nearby`,
@@ -2987,7 +3065,7 @@ const D_STR = {
     light: '弱い揺れが近づいています。', shaking: '揺れが近づいています。', detected: '地震を検知しました。',
     waitArea: 'あなたの地域 · 気象庁の発表待ち', fcPref: (p) => `予報 · ${p}`, fcJapan: '予報 · 全国の最大', waitName: '地域の震度を待っています。', waitDesc: '通常2〜3分かかります。',
     prelimLabel: '気象庁 震度速報 · 地域の震度', prelimHead: (n) => `あなたの地域は震度${n}の予想。`, prelimPanel: (a) => `あなたの地域 · ${a}(速報)`,
-    finalLabel: '気象庁 確定情報', noTsu: ' · 津波の心配なし', finalHead: (n) => `ここでは震度${n}を観測。`, finalPanel: 'あなたの観測点の震度(確定)', yourStationFinal: 'あなたの観測点(確定)',
+    finalLabel: '気象庁 確定情報', noTsu: ' · 津波の心配なし', finalHead: (n) => `ここでは震度${n}を観測。`, finalPanel: 'あなたの観測点の震度(確定)', yourStationFinal: 'あなたの観測点(確定)', followFinal: (n) => `${n}の震度(確定)`, followBelow1: (n) => `${n}(確定)`, stationLine: (n) => `観測点: ${n}`,
     below1: '震度1未満', below1d: 'あなたの観測点では感じませんでした。',
     expected: (n) => `震度${n}の予想`, strongest: (n, p) => `最大: 震度${n}${p ? '(' + p + ')' : ''} · ここはより小さい`, strongestF: (n) => `最大予想: 震度${n} · ここはより小さい`,
     nearbyHead: '近くで揺れを観測。ここは震度1未満。', nearbyName: (s) => `近くで震度${s}`,
@@ -3146,11 +3224,13 @@ function dashRender(allowPlay) {
       const rng = af && af.to && af.to !== af.from ? `${dStepText(af.from)}${currentLang === 'ja' ? '〜' : ' to '}${dStepText(af.to)}${af.or_more ? (currentLang === 'ja' ? '以上' : ' or more') : ''}` : dStepText(step);
       name = t.expected(rng);
     } else {
-      plabel = mode === 'prelim' ? t.prelimPanel(st.area || st.home_area || currentHomeName) : (below1 ? t.yourStationFinal : t.finalPanel);
+      const followName = st.following && !st.viewing ? (currentLang === 'ja' ? currentHomeName : String(currentHomeName).split(',')[0]) : '';
+      plabel = mode === 'prelim' ? t.prelimPanel(st.area || st.home_area || currentHomeName)
+        : (followName ? (below1 ? t.followBelow1(followName) : t.followFinal(followName)) : (below1 ? t.yourStationFinal : t.finalPanel));
       name = below1 ? t.below1 : t.names[pstep];
     }
     desc = mode === 'wait' ? `${t.waitName} ${t.waitDesc}` : (below1 ? t.below1d : (t.descs[pstep] || ''));
-    if (nearby && mode === 'final') { desc = t.nearbyDesc(dStepText(nearby.step), nearby.station, Math.max(1, Math.round(nearby.station_km))); }
+    if (nearby && mode === 'final') { desc = t.nearbyDesc(dStepText(nearby.step), nearby.label || nearby.station, Math.max(1, Math.round(nearby.station_km))); }
     full = !below1 && pstep && jma_rank(pstep) >= jma_rank('5-');
     tileClass = 'd-tile outline';
   }
@@ -3158,6 +3238,7 @@ function dashRender(allowPlay) {
   panel.style.background = full ? b.bg : '';
   panel.style.color = full ? b.fg : '';
   dEl('dPLabel').textContent = plabel;
+  dEl('dStation').textContent = (mode === 'final' || mode === 'prelim') && st.station && (st.display_source === 'station' || st.display_source === 'station_below_1') ? t.stationLine(st.station_label || st.station) : '';
   tile.className = tileClass + (tileHtml.length > 6 ? ' small-n' : '');
   tile.innerHTML = tileHtml;
   tile.style.background = '';
@@ -3172,7 +3253,7 @@ function dashRender(allowPlay) {
     const mp = st.max_place, mx = (mp && mp.step) || st.jma_max;
     const sameAsNearby = nearby && mp && mp.name === nearby.station;   // already said in the text above
     if (mx && !sameAsNearby && (!curStep || jma_rank(mx) > jma_rank(curStep))) {
-      chip = (mp && mp.name && st.phase === 'measured') ? t.strongest(dStepText(mx), mp.name) : (st.phase === 'eew' ? t.strongestF(dStepText(mx)) : t.strongest(dStepText(mx), ''));
+      chip = (mp && mp.name && st.phase === 'measured') ? t.strongest(dStepText(mx), mp.label || mp.name) : (st.phase === 'eew' ? t.strongestF(dStepText(mx)) : t.strongest(dStepText(mx), ''));
       if (mode === 'wait' && st.phase === 'eew') chip = chip.replace(' · weaker here', '').replace(' · ここはより小さい', '');
     }
   }
@@ -3197,8 +3278,8 @@ function dashRender(allowPlay) {
   let h1 = '', h2 = '', h3 = '', h1small = false;
   if (mode === 'standby' || mode === 'cancelled') { h1 = currentHomeName || ''; h2 = t.watchMap; h1small = true; }
   else if (mode === 'prelim') { h1 = t.epiWait; h1small = true; if (st.magnitude != null) h3 = `M${st.magnitude.toFixed(1)}`; }
-  else if (mode === 'final') { h1 = st.hypocenter || ''; h1small = true; h2 = (st.magnitude != null ? `M${st.magnitude.toFixed(1)}` : '') + (st.origin_time ? ` · ${dTimeText(st.origin_time)}` : ''); }
-  else { h1 = epi || (st.hypocenter || ''); h2 = `${t.estimate}${st.hypocenter ? ' · ' + st.hypocenter : ''}`; if (st.magnitude != null) h3 = `M${st.magnitude.toFixed(1)}`; }
+  else if (mode === 'final') { h1 = hypoName(st.hypocenter) || ''; h1small = true; h2 = (st.magnitude != null ? `M${st.magnitude.toFixed(1)}` : '') + (st.origin_time ? ` · ${dTimeText(st.origin_time)}` : ''); }
+  else { h1 = epi || (st.hypocenter || ''); h2 = `${t.estimate}${st.hypocenter ? ' · ' + hypoName(st.hypocenter) : ''}`; if (st.magnitude != null) h3 = `M${st.magnitude.toFixed(1)}`; }
   const m1 = dEl('dMh1'); m1.textContent = h1; m1.classList.toggle('small', h1small); m1.classList.toggle('dist', !!epi);
   dEl('dMh2').textContent = h2; dEl('dMh3').textContent = h3;
 

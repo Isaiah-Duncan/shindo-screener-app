@@ -75,6 +75,7 @@ SENSITIVITY_LEVELS = ("high", "normal", "low", "off")
 FELT_LOG_RETENTION_DAYS = 30
 EEW_NOTICE_RADIUS_KM = 300    # show early warnings for quakes this close even when JMA hasn't warned your area
 FOLLOW_NEAR_KM = 100          # follow-the-quake keeps the saved place when the epicenter is this close to it
+FOLLOW_MARGIN_KM = 50         # ...and when no other place is at least this much nearer to the epicenter than the saved place
 HOME_CHANGE_REPLAY_MINUTES = 10  # re-show a recent quake against a newly chosen location, see recheck_last_events
 CHECK_INTERVAL_SECONDS = 15
 WS_STAT_SECONDS = 1800        # how often each feed writes its "still alive" line to the diagnostic log
@@ -503,6 +504,69 @@ def _load_places():
             traceback.print_exc()
             _places_cache = []
     return _places_cache
+
+
+_place_index = None
+
+
+def romanize_station(pref, addr):
+    """English municipality for a JMA station name ("宇城市豊野町" -> "Uki, Kumamoto Prefecture"), or None.
+    The station name itself is never changed; the caller shows it next to this."""
+    global _place_index
+    if not addr:
+        return None
+    if _place_index is None:
+        idx = {}
+        for p in _load_places():
+            keys = {p["j"]}
+            if "市" in p["j"][:-1]:
+                i = p["j"].index("市")
+                if p["j"][i + 1:].endswith("区"):
+                    keys.add(p["j"][:i] + p["j"][i + 1:])      # 札幌市中央区 -> 札幌中央区
+            for k in keys:
+                idx.setdefault(p["p"], []).append((k, p["e"]))
+        for v in idx.values():
+            v.sort(key=lambda kv: -len(kv[0]))
+        _place_index = idx
+    prefs = [pref] if pref in _place_index else list(_place_index)
+    found = []
+    for pf in prefs:
+        for k, e in _place_index[pf]:
+            if addr.startswith(k):
+                found.append((len(k), e))
+                break
+    if not found:
+        return None
+    top = max(n for n, _ in found)
+    names = {e for n, e in found if n == top}
+    return names.pop() if len(names) == 1 else None   # same name in several prefectures and no prefecture given: do not guess
+
+
+_home_name_map = None
+
+
+def localize_home_name(name, lang):
+    """The saved or followed place's name in the screen language ("Tsunagi, Kumamoto Prefecture" <-> "熊本県津奈木町").
+    The stored name is untouched; unknown names are shown as they are."""
+    global _home_name_map
+    if not name:
+        return name
+    if _home_name_map is None:
+        m = {}
+        for p in _load_places():
+            m[p["e"]] = {"en": p["e"], "ja": p["p"] + p["j"]}
+            m[p["p"] + p["j"]] = m[p["e"]]
+        _home_name_map = m
+    hit = _home_name_map.get(name)
+    return hit["ja" if lang == "ja" else "en"] if hit else name
+
+
+def station_label(pref, addr, lang):
+    """"Uki, Kumamoto Prefecture (宇城市豊野町)" in English, the plain station name in Japanese."""
+    if not addr or lang == "ja":
+        return addr
+    e = romanize_station(pref, addr)
+    return "%s (%s)" % (e, addr) if e else addr
 
 
 # ---- Town outlines for the map -------------------------------------------
@@ -1098,6 +1162,15 @@ class Listener:
         place = self.nearest_place(lat, lon)
         if place is None:
             return False
+        if saved and saved.get("lat") is not None:
+            d_saved = jma_sources.haversine_km(saved["lat"], saved["lon"], lat, lon)
+            d_place = jma_sources.haversine_km(place["lat"], place["lon"], lat, lon)
+            if d_saved - d_place < FOLLOW_MARGIN_KM:
+                # The saved place is about as close as the nearest town: keep showing the saved place.
+                if self.base_home is not None:
+                    self.restore_home()
+                    return True
+                return False
         if self.base_home is None:
             self.base_home = self._home
         self._home = place
@@ -1232,10 +1305,13 @@ class Listener:
         for pt in msg.get("points") or []:
             step = jma_sources.P2P_SCALE.get(pt.get("scale"))
             if step and not pt.get("isArea") and (top is None or jma_sources.rank(step) > jma_sources.rank(top["step"])):
-                top = {"step": step, "station": pt.get("addr"), "pref": pt.get("pref")}
+                top = {"step": step, "station": pt.get("addr"), "pref": pt.get("pref"),
+                       "label": station_label(pt.get("pref"), pt.get("addr"), (load_settings() or {}).get("language", "en"))}
         origin = base.get("origin_time")
         return {"ok": True, "viewing": self.viewing, "max_place": top, "hypocenter": base.get("hypocenter"),
                 "magnitude": base.get("magnitude"), "jma_max": base.get("jma_max_measured"),
+                "depth_km": ((msg.get("earthquake") or {}).get("hypocenter") or {}).get("depth"),
+                "tsunami": (msg.get("earthquake") or {}).get("domesticTsunami"),
                 "time": origin.astimezone(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M") if origin else None,
                 "cities": out}
 
@@ -1292,6 +1368,21 @@ class Listener:
                      home_lat=(self._home or {}).get("lat"), home_lon=(self._home or {}).get("lon"),
                      series_recent=bool(self._series_recent()) if dev_enabled() else False,
                      dev_available=dev_available(), dev_features=dev_enabled())
+        try:
+            lang = (load_settings() or {}).get("language", "en")
+            mp = state.get("max_place")
+            if isinstance(mp, dict) and (mp.get("name") or mp.get("station")):
+                nm = mp.get("name") or mp.get("station")
+                state["max_place"] = dict(mp, label=station_label(mp.get("pref"), nm, lang))
+            if state.get("monitoring"):
+                state["monitoring"] = localize_home_name(state["monitoring"], lang)
+            if state.get("station"):
+                state["station_label"] = station_label(None, state["station"], lang)
+            nb = state.get("nearby_max")
+            if isinstance(nb, dict) and nb.get("station"):
+                state["nearby_max"] = dict(nb, label=station_label(None, nb["station"], lang))
+        except Exception:
+            traceback.print_exc()
         self.current_state = state
         try:
             self.window.evaluate_js(f"window.applyState({json.dumps(state, ensure_ascii=False)})")
@@ -1565,6 +1656,11 @@ class Listener:
         with self.lock:
             same = self.event and jma_sources.same_quake(self.event.get("origin_time"), info["origin_time"])
             if not same and self.viewing:
+                self.restore_home()
+                info = jma_sources.parse_p2p_quake(msg, self.home_info) or info
+            if same and self.base_home is not None and not self.viewing and not info["felt_near_user"]:
+                # The quake was followed to another town (from the early warning) and that town did not
+                # feel it: go back to the saved place and show what JMA measured there.
                 self.restore_home()
                 info = jma_sources.parse_p2p_quake(msg, self.home_info) or info
             before_follow = (self._home, self.home_info, self.base_home)
