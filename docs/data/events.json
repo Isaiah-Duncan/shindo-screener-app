@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-18T02:52:25Z",
- "count": 361,
+ "updated_at": "2026-11-18T10:54:06Z",
+ "count": 362,
  "events": [
+  {
+   "id": "20261118183714",
+   "time": "2026-11-18T18:36:00+09:00",
+   "location_ja": "日本海中部",
+   "lat": 38.8,
+   "lon": 137.9,
+   "depth_km": 10.0,
+   "magnitude": 5.0,
+   "max_shindo": "3",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261118105214",
    "time": "2026-11-18T10:52:00+09:00",
