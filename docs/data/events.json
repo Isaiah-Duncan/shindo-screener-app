@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-22T03:09:45Z",
- "count": 460,
+ "updated_at": "2026-11-22T11:12:39Z",
+ "count": 461,
  "events": [
+  {
+   "id": "20261122191746",
+   "time": "2026-11-22T19:17:00+09:00",
+   "location_ja": "トカラ列島近海",
+   "lat": 29.3,
+   "lon": 129.6,
+   "depth_km": 0.0,
+   "magnitude": 2.2,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261122090925",
    "time": "2026-11-22T09:09:00+09:00",
