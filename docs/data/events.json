@@ -1,8 +1,80 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-22T11:12:39Z",
- "count": 461,
+ "updated_at": "2026-11-22T18:29:43Z",
+ "count": 467,
  "events": [
+  {
+   "id": "20261123031913",
+   "time": "2026-11-23T03:19:00+09:00",
+   "location_ja": "岐阜県飛騨地方",
+   "lat": 35.9,
+   "lon": 137.4,
+   "depth_km": 10.0,
+   "magnitude": 3.0,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261123030353",
+   "time": "2026-11-23T03:03:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.4,
+   "lon": 130.5,
+   "depth_km": 10.0,
+   "magnitude": 2.7,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261123024918",
+   "time": "2026-11-23T02:49:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.4,
+   "lon": 130.5,
+   "depth_km": 10.0,
+   "magnitude": 3.2,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261123024614",
+   "time": "2026-11-23T02:46:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.4,
+   "lon": 130.5,
+   "depth_km": 10.0,
+   "magnitude": 4.1,
+   "max_shindo": "3",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261122223336",
+   "time": "2026-11-22T22:33:00+09:00",
+   "location_ja": "神奈川県東部",
+   "lat": 35.5,
+   "lon": 139.7,
+   "depth_km": 80.0,
+   "magnitude": 3.0,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261122223155",
+   "time": "2026-11-22T22:31:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.3,
+   "lon": 130.4,
+   "depth_km": 10.0,
+   "magnitude": 3.0,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261122191746",
    "time": "2026-11-22T19:17:00+09:00",
