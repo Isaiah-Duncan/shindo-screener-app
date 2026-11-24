@@ -1,8 +1,80 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-24T11:49:58Z",
- "count": 481,
+ "updated_at": "2026-11-24T21:44:30Z",
+ "count": 487,
  "events": [
+  {
+   "id": "20261125053255",
+   "time": "2026-11-25T05:32:00+09:00",
+   "location_ja": "福島県会津",
+   "lat": 37.5,
+   "lon": 139.7,
+   "depth_km": 10.0,
+   "magnitude": 3.2,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261125041942",
+   "time": "2026-11-25T04:19:00+09:00",
+   "location_ja": "神奈川県西部",
+   "lat": 35.4,
+   "lon": 139.2,
+   "depth_km": 20.0,
+   "magnitude": 2.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261125014053",
+   "time": "2026-11-25T01:40:00+09:00",
+   "location_ja": "大隅半島東方沖",
+   "lat": 31.1,
+   "lon": 131.5,
+   "depth_km": 30.0,
+   "magnitude": 3.9,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261125001757",
+   "time": "2026-11-25T00:17:00+09:00",
+   "location_ja": "薩摩半島西方沖",
+   "lat": 31.6,
+   "lon": 130.3,
+   "depth_km": 0.0,
+   "magnitude": 1.8,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261124210714",
+   "time": "2026-11-24T21:07:00+09:00",
+   "location_ja": "福島県沖",
+   "lat": 37.0,
+   "lon": 141.1,
+   "depth_km": 20.0,
+   "magnitude": 4.0,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261124205828",
+   "time": "2026-11-24T20:58:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.3,
+   "lon": 130.4,
+   "depth_km": 10.0,
+   "magnitude": 3.4,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261124172105",
    "time": "2026-11-24T17:21:00+09:00",
