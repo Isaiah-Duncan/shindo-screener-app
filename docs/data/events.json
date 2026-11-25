@@ -1,8 +1,68 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-24T21:44:30Z",
- "count": 487,
+ "updated_at": "2026-11-25T04:36:00Z",
+ "count": 492,
  "events": [
+  {
+   "id": "20261125104240",
+   "time": "2026-11-25T10:42:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.2,
+   "lon": 130.4,
+   "depth_km": 0.0,
+   "magnitude": 1.6,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261125103522",
+   "time": "2026-11-25T10:35:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.3,
+   "lon": 130.4,
+   "depth_km": 10.0,
+   "magnitude": 2.9,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261125084049",
+   "time": "2026-11-25T08:40:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.2,
+   "lon": 130.4,
+   "depth_km": 10.0,
+   "magnitude": 1.8,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261125072004",
+   "time": "2026-11-25T07:20:00+09:00",
+   "location_ja": "福島県会津",
+   "lat": 37.4,
+   "lon": 139.5,
+   "depth_km": 10.0,
+   "magnitude": 3.4,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261125064641",
+   "time": "2026-11-25T06:46:00+09:00",
+   "location_ja": "福島県会津",
+   "lat": 37.4,
+   "lon": 139.5,
+   "depth_km": 10.0,
+   "magnitude": 3.8,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261125053255",
    "time": "2026-11-25T05:32:00+09:00",
