@@ -750,6 +750,13 @@ class Api:
             self._on_settings_saved({"name": name, "lat": lat, "lon": lon})
         return {"ok": True, "name": name}
 
+    def home_names(self, name):
+        """The same place in English and in Japanese, for labels that follow the language setting."""
+        try:
+            return {"en": localize_home_name(name, "en"), "ja": localize_home_name(name, "ja")}
+        except Exception:
+            return {"en": name, "ja": name}
+
     def set_language(self, lang):
         existing = load_settings()
         if existing:

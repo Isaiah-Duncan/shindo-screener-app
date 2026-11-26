@@ -240,6 +240,7 @@
     text-align: right;
     white-space: nowrap;
     flex-shrink: 0;
+    margin-left: auto;
   }
   .cities-btn { margin-top: 0.6vh; }
   .cities-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; padding: 3vh 4vw; }
@@ -519,11 +520,6 @@
   .row-card + .row-card { border-top: 1px solid rgba(245, 245, 240, 0.1); }
   .row-title { font-size: calc(14px * var(--text-scale)); font-weight: 700; }
   .row-desc { font-size: calc(12.5px * var(--text-scale)); opacity: 0.68; margin-top: 3px; }
-  .display-preview { border: 2px solid rgba(245, 245, 240, 0.15); border-radius: 22px; padding: 24px 26px; display: flex; gap: 22px; align-items: center; margin-top: 10px; }
-  .dp-tile { background: #6b6b66; border-radius: 14px; padding: 12px 18px; line-height: 0; flex: 0 0 auto; }
-  .dp-tile svg { width: calc(44px * var(--text-scale)); height: calc(44px * var(--text-scale)); display: block; }
-  .dp-label { font-size: calc(17px * var(--text-scale)); font-weight: 600; }
-  .dp-meta { font-size: calc(13px * var(--text-scale)); opacity: 0.75; margin-top: 6px; }
 
   /* Alerts */
   .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
@@ -548,21 +544,29 @@
   .pd-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
   .pd-pill { font-size: calc(12.5px * var(--text-scale)); padding: 5px 11px; border-radius: 20px; background: rgba(245, 245, 240, 0.08); display: inline-block; }
   .pd-pill.key { background: rgba(245, 245, 240, 0.18); font-weight: 700; }
-  .alert-preview { width: 100%; min-height: calc(330px * var(--text-scale)); border-radius: 28px; border: 2px solid rgba(245, 245, 240, 0.15); box-sizing: border-box; padding: 26px 28px; display: flex; flex-direction: column; position: relative; transition: background 300ms ease, color 300ms ease; }
-  .ap-tile { border-radius: 16px; padding: 14px 26px; font-size: calc(72px * var(--text-scale)); font-weight: 700; font-family: var(--f-num); line-height: 1; align-self: flex-start; }
-  .ap-big { font-size: calc(120px * var(--text-scale)); font-weight: 700; font-family: var(--f-num); line-height: 1; }
-  .ap-label { font-size: calc(15px * var(--text-scale)); margin-top: 16px; opacity: 0.9; }
-  .ap-explain { font-size: calc(13px * var(--text-scale)); margin-top: 8px; opacity: 0.8; max-width: 440px; line-height: 1.45; }
-  .ap-blank { font-size: calc(13px * var(--text-scale)); opacity: 0.55; text-align: center; }
-  .ap-blank.rest { font-size: calc(20px * var(--text-scale)); opacity: 0.7; }
-  .ap-meta { align-self: flex-end; text-align: right; line-height: 1.5; }
-  .ap-body { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 12px 0; min-width: 0; }
-  .ap-body.center { align-items: center; }
-  .ap-meta .k { font-size: calc(11px * var(--text-scale)); opacity: 0.6; letter-spacing: 0.06em; text-transform: uppercase; }
-  .ap-meta .v1 { font-size: calc(15px * var(--text-scale)); font-weight: 600; margin-top: 4px; }
-  .ap-meta .v2 { font-size: calc(13px * var(--text-scale)); opacity: 0.75; }
-  .ap-chips { margin-top: 8px; font-size: calc(12.5px * var(--text-scale)); font-weight: 600; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .ap-chips span { padding: 5px 12px; border-radius: 20px; background: rgba(128, 128, 128, 0.35); }
+  .alert-preview { width: 100%; }
+  /* Mini stage: a small picture of the real screen. Sizes use the stage width (cqw) so it scales as a whole. */
+  .mini { container-type: inline-size; width: 100%; aspect-ratio: 16 / 9; background: #0b0b0b; border-radius: 16px; border: 1px solid rgba(245, 245, 240, 0.14); position: relative; overflow: hidden; color: #f5f5f0; }
+  .mini .m-clock { position: absolute; right: 3cqw; top: 2.4cqw; text-align: right; line-height: 1.12; }
+  .mini .m-time { font-size: calc(4.6cqw * var(--ps, 1)); font-weight: 700; font-family: var(--f-clock, var(--f-num)); }
+  .mini .m-scale { display: flex; gap: 0.6cqw; align-items: flex-end; }
+  .mini .m-scale i { flex: 1; height: 2.2cqw; border-radius: 0.5cqw; opacity: 0.38; display: block; }
+  .mini .m-scale i.on { opacity: 1; height: 3.2cqw; }
+  .mini .m-scale i.hid { opacity: 0.12; }
+  .mini .m-head { position: absolute; left: 3cqw; top: 2.4cqw; display: flex; gap: 1.6cqw; align-items: center; }
+  .mini .m-icon { width: 5.6cqw; height: 5.6cqw; border-radius: 1.2cqw; }
+  .mini .m-hl { font-size: 3.4cqw; font-weight: 800; line-height: 1.1; }
+  .mini .m-sample { font-size: 1.7cqw; letter-spacing: 0.08em; opacity: 0.6; font-weight: 700; text-transform: uppercase; }
+  .mini .m-panel { position: absolute; left: 3cqw; top: 11.5cqw; width: 50cqw; bottom: 8cqw; background: #151515; border-radius: 1.8cqw; padding: 2cqw 2.4cqw; box-sizing: border-box; display: flex; flex-direction: column; }
+  .mini .m-plabel { font-size: 1.6cqw; letter-spacing: 0.08em; opacity: 0.7; font-weight: 700; text-transform: uppercase; }
+  .mini .m-row { display: flex; align-items: center; gap: 2cqw; margin-top: 1.6cqw; }
+  .mini .m-tile { width: 10.5cqw; height: 10.5cqw; border: 0.45cqw solid; border-radius: 1.8cqw; display: flex; align-items: center; justify-content: center; font-size: 6.4cqw; font-weight: 700; font-family: var(--f-num); background: #0b0b0b; flex: 0 0 auto; }
+  .mini .m-name { font-size: 3.6cqw; font-weight: 800; line-height: 1.1; }
+  .mini .m-desc { font-size: 2.5cqw; font-weight: 700; margin-top: 1.8cqw; line-height: 1.25; }
+  .mini .m-panel .m-scale { margin-top: auto; }
+  .mini .m-side { position: absolute; right: 3cqw; top: 14cqw; width: 38cqw; display: flex; flex-direction: column; gap: 1.4cqw; align-items: flex-start; }
+  .mini .m-chip { font-size: 2.1cqw; font-weight: 700; padding: 0.9cqw 1.8cqw; border-radius: 99px; background: rgba(245, 245, 240, 0.1); }
+  .mini .m-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 2.6cqw; opacity: 0.6; padding: 0 8cqw; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin: 16px 0 8px; }
   .chip {
     flex: 1 1 0; min-width: calc(40px * var(--text-scale)); height: calc(54px * var(--text-scale)); border-radius: 12px; border: none; position: relative; cursor: pointer;
@@ -578,7 +582,6 @@
   .yours-col { display: flex; flex-direction: column; gap: 8px; }
   .yours-title { font-size: calc(13px * var(--text-scale)); font-weight: 700; }
   .yours-help { font-size: calc(12.5px * var(--text-scale)); opacity: 0.7; max-width: calc(320px * var(--text-scale)); line-height: 1.45; }
-  .sub-title { font-size: calc(12.5px * var(--text-scale)); opacity: 0.65; margin: -4px 0 12px; line-height: 1.4; }
   .yours-sep { height: 1px; background: rgba(245, 245, 240, 0.1); margin: 6px 0 2px; }
   .test-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .test-btn { background: rgba(245, 245, 240, 0.08); border: 1px solid rgba(245, 245, 240, 0.3); color: #f5f5f0; border-radius: 20px; padding: 9px 16px; font-family: inherit; font-size: calc(13px * var(--text-scale)); font-weight: 600; cursor: pointer; }
@@ -621,7 +624,6 @@
   .bug-report-fallback { display: none; margin-top: 16px; padding: 14px 16px; border: 1px solid rgba(245, 245, 240, 0.14); border-radius: 12px; }
   .bug-report-fallback .t { font-size: calc(13px * var(--text-scale)); margin-bottom: 10px; }
   .bug-report-actions { display: flex; gap: 8px; }
-  button.text-btn { background: transparent; border: none; color: #999; font-size: calc(12px * var(--text-scale)); text-decoration: underline; cursor: pointer; font-family: inherit; }
 
   @media (max-width: 760px) {
     .settings-panel { flex-direction: column; }
@@ -724,7 +726,6 @@
   @keyframes dPop { 0% { opacity: 0; transform: scale(0.85); } 60% { opacity: 1; transform: scale(1.04); } 100% { opacity: 1; transform: scale(1); } }
   @keyframes dFade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes dGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-  @keyframes dRing { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
   @keyframes dZoom { from { transform: scale(0.35); } to { transform: scale(1); } }
   @keyframes dAlertIn { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
   .dash.play { animation: dFade 0.16s var(--d-ease) both; }
@@ -736,13 +737,8 @@
   .dash.play .d-foot { animation: dFade 0.48s var(--d-ease) 0.32s both; }
   .dash.play .d-fill { animation: dFade 0.64s var(--d-ease) 0.24s both; }
   .dash.play.final .d-fill { animation-delay: 0.48s; }
-  .dash.play .d-ring { transform-box: fill-box; transform-origin: center; animation: dRing 0.64s var(--d-ease) both; }
-  .dash.play .d-ring.r1 { animation-delay: 0.40s; } .dash.play .d-ring.r2 { animation-delay: 0.50s; } .dash.play .d-ring.r3 { animation-delay: 0.59s; }
-  .dash.play .d-rlab { animation: dFade 0.48s var(--d-ease) both; }
-  .dash.play .d-rlab.r1 { animation-delay: 0.56s; } .dash.play .d-rlab.r2 { animation-delay: 0.65s; } .dash.play .d-rlab.r3 { animation-delay: 0.75s; }
   .dash.play .d-epiline { animation: dFade 0.48s var(--d-ease) 0.64s both; }
   .dash.play .d-epix { transform-box: fill-box; transform-origin: center; animation: dPop 0.48s var(--d-ease) 0.64s both; }
-  .dash.play .d-epilab { animation: dFade 0.48s var(--d-ease) 0.72s both; }
   .dash.play.final .d-zoomg { animation: dZoom 1.12s var(--d-ease) 0.16s both; }
   .dash.play .d-alert { animation: dAlertIn 0.2s var(--d-ease) both; }
   @media (prefers-reduced-motion: reduce) { .dash.play, .dash.play * { animation: none !important; } }
@@ -767,10 +763,6 @@
   .location-label::before, .d-mon::before { content: ''; display: inline-block; width: 0.82em; height: 0.82em; margin-right: 0.28em; vertical-align: -0.08em; background: currentColor;
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.6A2.6 2.6 0 1 1 12 6.4a2.6 2.6 0 0 1 0 5.2z'/%3E%3C/svg%3E") center / contain no-repeat;
             mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.6A2.6 2.6 0 1 1 12 6.4a2.6 2.6 0 0 1 0 5.2z'/%3E%3C/svg%3E") center / contain no-repeat; }
-  .d-epihalo { transform-box: fill-box; transform-origin: center; animation: dHalo 1.8s ease-in-out infinite; }
-  @keyframes dHalo { 0%, 100% { transform: scale(0.75); opacity: 0.34; } 50% { transform: scale(1.15); opacity: 0.10; } }
-  body.nomotion .d-epihalo { animation: none; }
-  @media (prefers-reduced-motion: reduce) { .d-epihalo { animation: none; } }
   /* ===== Footer buttons: one size and one place in BOTH standby styles (classic and dashboard) ===== */
   :root {
     --u: min(calc(100vw / 1920), calc(100vh / 1080));
@@ -805,25 +797,37 @@
   .d-foot > .d-mon { align-self: flex-end; }
   .d-clock .dd { line-height: 1.2; }
   .d-head > .d-clock { align-self: flex-start; }
+  /* ===== Matching the dashboard: rounder, calmer, same type roles ===== */
+  .setup { background: #0b0b0b; gap: 14px; }
+  .setup .rings { width: calc(84px * var(--text-scale)); height: calc(84px * var(--text-scale)); }
+  .setup h1 { font-family: var(--f-body); font-size: calc(40px * var(--text-scale)); font-weight: 800; letter-spacing: 0; margin: 10px 0 0; }
+  .setup p { font-size: calc(17px * var(--text-scale)); opacity: 0.75; max-width: 520px; line-height: 1.45; font-weight: 600; }
+  .setup input { width: 420px; max-width: 80vw; border: 1px solid rgba(245, 245, 240, 0.22); border-radius: 14px; background: #151515; padding: 15px 20px; font-size: calc(18px * var(--text-scale)); font-weight: 600; }
+  .setup input:focus { border-color: #f5f5f0; }
+  .setup .candidates { background: #151515; border: 1px solid rgba(245, 245, 240, 0.14); border-radius: 14px; overflow: hidden; }
+  .setup button.primary { border-radius: 12px; padding: 12px 36px; font-size: calc(16px * var(--text-scale)); letter-spacing: 0; background: #f5f5f0; color: #0b0b0b; border-color: #f5f5f0; }
+  .setup button.primary:disabled { background: transparent; color: #f5f5f0; border-color: rgba(245, 245, 240, 0.3); }
+  .setup button.primary:hover:not(:disabled) { background: #fff; color: #000; }
+  .setup .lang-switch button { border-radius: 10px; padding: 6px 14px; }
+  button.primary { border-radius: 12px; font-family: var(--f-body); }
+  .settings-side-title { font-size: calc(18px * var(--text-scale)); font-weight: 800; padding: 0 8px 18px; }
+  .nav-row { border-radius: 10px; font-weight: 600; }
+  .settings-page h2 { font-size: calc(26px * var(--text-scale)); font-weight: 800; margin: 0 0 8px; }
+  .page-sub { font-size: calc(14px * var(--text-scale)); opacity: 0.75; margin-bottom: 26px; }
+  .card { background: #111; border-radius: 18px; }
+  .row-title { font-size: calc(15px * var(--text-scale)); font-weight: 800; }
+  .row-desc { font-size: calc(13px * var(--text-scale)); opacity: 0.72; line-height: 1.4; }
+  .row-card .seg-group { flex: 0 0 auto; flex-wrap: nowrap; }
+  .seg-group button, .seg { border-radius: 10px; }
+  .eyebrow { font-weight: 800; }
+  .setup .search-wrap { width: 420px; max-width: 80vw; }
 </style>
 </head>
 <body>
 
 <div class="screen" id="screen">
-  <div class="post-quake-badge" id="postQuakeBadge" style="display:none;" onclick="openPostQuakeBadge()" title="">
-    <svg class="post-quake-badge-icon" id="postQuakeBadgeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M2 13h3.2l2-7.5 3.3 15 3-10.5 2 5.5h3.3l2-2.5"/>
-    </svg>
-  </div>
-  <button class="dismiss-btn" id="dismissBtn" onclick="dismissActiveReading()" title="" aria-label="">
-    <span id="dismissBtnLabel"></span><span class="dismiss-btn-x" aria-hidden="true">&times;</span>
-  </button>
   <div class="top-row" id="topRow">
     <div class="meta-block">
-      <div id="eventSummaryLine" class="meta-line-1"></div>
-      <div id="jmaMaxLine" class="meta-line-2"></div>
-      <div id="maturityLine" class="meta-line-3"></div>
-      <button type="button" class="details-btn" id="detailsBtn" onclick="toggleDetails()" aria-expanded="false"></button>
       <button type="button" class="details-btn cities-btn" id="citiesBtn" onclick="openCities()"></button>
     </div>
     <div class="datetime">
@@ -831,19 +835,6 @@
       <span class="time" id="timeEl"></span>
     </div>
   </div>
-  <div class="tsunami-box" id="tsunamiBox" style="display:none;"></div>
-  <div class="mid" id="mid">
-    <div class="readout" id="readout">
-      <div class="readout-sub" id="readoutSub"></div>
-      <div class="estimate-label" id="estimateLabel"></div>
-      <div class="code" id="code"></div>
-      <div class="rule" id="rule"></div>
-      <div class="label" id="labelText"></div>
-      <div class="explain" id="explainText"></div>
-      <div class="readout-note" id="readoutNote"></div>
-    </div>
-  </div>
-  <div class="map-wrap" id="mapWrap" aria-hidden="true"><svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><g id="mapG"></g></svg></div>
   <div class="idle-line" id="idleLine"></div>
   <button class="gear-btn recent-btn" id="recentBtn" onclick="openSettings(); showSettingsPage('history')" title="Recent earthquakes" aria-label="Recent earthquakes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2-6 4 12 3-9 2 3h5"/></svg></button>
   <div class="bottom-row">
@@ -853,10 +844,6 @@
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
       </svg>
     </button>
-    <div class="meta-wrap">
-      <div class="meta" id="metaText"></div>
-      <div class="meta meta-sub" id="lastFeltText"></div>
-    </div>
     <div class="location-label" id="locationLabel"></div>
   </div>
 </div>
@@ -881,7 +868,6 @@
       <button type="button" class="ghost" id="citiesBack" onclick="citiesBack()" style="display:none;"></button>
       <button type="button" class="ghost" id="citiesCopyJa" onclick="citiesCopyText('ja')">Copy post (日本語)</button>
       <button type="button" class="ghost" id="citiesCopyEn" onclick="citiesCopyText('en')">Copy post (English)</button>
-      <button type="button" class="ghost" id="citiesSave" onclick="citiesSaveImage()"></button>
     </div>
     <div class="cities-status" id="citiesStatus"></div>
   </div>
@@ -1026,19 +1012,11 @@
           </div>
         </div>
         <div class="row-card">
-          <div><div class="row-title">Standby screen</div><div class="row-desc">Minimal is a quiet clock. Dashboard keeps the map and Shindo scale on screen between earthquakes.</div></div>
+          <div><div class="row-title" data-i18n="standbyTitle">Standby screen</div><div class="row-desc" data-i18n="standbyDesc">Minimal is a quiet clock. Dashboard keeps the map and Shindo scale on screen between earthquakes.</div></div>
           <div class="seg-group format-switch">
-            <button id="standbyMinBtn" onclick="setStandbyStyle('minimal')">Minimal</button>
-            <button id="standbyDashBtn" onclick="setStandbyStyle('dashboard')">Dashboard</button>
+            <button id="standbyMinBtn" onclick="setStandbyStyle('minimal')" data-i18n="standbyMin">Minimal</button>
+            <button id="standbyDashBtn" onclick="setStandbyStyle('dashboard')" data-i18n="standbyDash">Dashboard</button>
           </div>
-        </div>
-      </div>
-      <div class="eyebrow" style="margin-top:26px;" data-i18n="previewLabel">Preview</div>
-      <div class="display-preview">
-        <div class="dp-tile" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"><path d="M9 20H31"/></svg></div>
-        <div>
-          <div class="dp-label" id="dpLabel"></div>
-          <div class="dp-meta" id="dpMeta"></div>
         </div>
       </div>
     </section>
@@ -1226,265 +1204,16 @@ const MATURITY_EN = { preliminary: "Early warning, first report", updated: "Earl
 const MATURITY_JA = { preliminary: "緊急地震速報（第1報）", updated: "緊急地震速報（続報）", final: "緊急地震速報（最終報）",
   measured_quick: "気象庁 震度速報", measured_detail: "気象庁 震源・震度情報", test: "テスト表示（実際の地震ではありません）" };
 
-// Minor readings still rise to the full bright BANDS color on arrival
-// (now contained to the number's own card, not the whole screen, see
-// isAmbient in renderActive), so the display still does its job of
-// actually notifying someone. But holding that at full brightness for
-// the whole display window is overkill for something minor (see: being
-// woken at 2 AM for a reading that barely registered), so once it's
-// been seen, it settles back to the calm ambient tone over a single
-// short transition, background and text move together in one step,
-// not a slow fade with a separate color flip partway through, so
-// there's no stretch where both are mid-transition and the card just
-// looks washed out.
-//
-// Which readings get this quieter treatment, and how long they stay
-// lit before fading, is personal (Settings > Alerts > "Sensitivity"):
-// someone who gets woken by every light tremor wants every step shown
-// in full; someone used to frequent small quakes wants more steps
-// muted, and settling sooner. That's what quietSteps/holdMs/fadeMs
-// vary per level below. The RISE to brightness is deliberately not
-// one of those per-level knobs (see SAFE_RISE_MS above renderActive):
-// a fast flash is a photosensitivity risk regardless of how "low" the
-// sensitivity setting is, so every level rises at the same safe
-// speed and only differs in how long it stays and how slowly it
-// fades. "off"
-// skips the flash for its quiet steps entirely, going straight to
-// black.
-const QUIET_DIM = { bg: '#000000', fg: '#f5f5f0' };
-// SAFE_RISE_MS is a photosensitivity-safety floor, not a tunable: the
-// rise to full brightness must never be fast, regardless of
-// sensitivity setting, since a quick, high-contrast, dark-to-bright
-// transition is the exact pattern flash-sensitivity guidance (WCAG's
-// flash thresholds) treats as higher-risk, worse at night when the
-// eye is dark-adapted. Sensitivity is only allowed to control how
-// long a reading stays lit (holdMs) and how slowly it fades back
-// (fadeMs), never how abruptly it appears. Do not lower this to make
-// a profile feel "snappier": that was the exact bug ("low" used to
-// rise in 250ms, faster than every other setting, including the
-// genuine Shindo 4+ alert screen) that this constant replaced.
-const SAFE_RISE_MS = 700;
-let quietFadeTimer = null;
-
-function clearQuietTimers() {
-  clearTimeout(quietFadeTimer);
-  quietFadeTimer = null;
-}
-
 function applyScreenColors(bg, fg, transitionMs, easing) {
   els.screen.style.transition = `background ${transitionMs}ms ${easing}, color ${transitionMs}ms ${easing}`;
   els.screen.style.background = bg;
   els.screen.style.color = fg;
 }
 
-// Severity is communicated two different ways depending on how much it
-// actually warrants, instead of one register for everything:
-//   - Shindo 0-3 ("ambient"): this is near-continuous background
-//     seismicity (see the app's own thesis doc), not an event. The
-//     screen itself stays on one constant, calm dark tone the whole
-//     time; only the number's own card (#readout, via
-//     applyTileColors) moves through the band color, so the room
-//     doesn't flood with saturated light over something this common.
-//   - Shindo 4+ ("alert"): genuinely alert-worthy, so the existing
-//     full-screen flash (applyScreenColors straight to the band color)
-//     stays exactly as it was, uncontained, since that urgency is
-//     earned here.
 const AMBIENT_STEPS = ['0', '1', '2', '3'];
-const AMBIENT_SCREEN = { bg: '#0b0a08', fg: '#f5f5f0' };
 
-function applyTileColors(bg, fg, transitionMs, easing) {
-  els.readout.style.transition = `background ${transitionMs}ms ${easing}, color ${transitionMs}ms ${easing}, padding 400ms ease`;
-  els.readout.style.background = bg;
-  els.readout.style.color = fg;
-}
 
-function resetTile() {
-  els.readout.classList.remove('datum-tile');
-  els.readout.style.background = '';
-  els.readout.style.color = '';
-}
 
-// Reads the OS-level "reduce motion" accessibility preference, when
-// the webview exposes it. Checked fresh each time rather than cached,
-// since the person can change this OS setting while the app is
-// running. Unsupported (matchMedia missing or throws) is treated as
-// false, not true: this only ever makes the quiet-tier flash safer by
-// skipping it, never less safe by assuming consent to flash.
-function prefersReducedMotion() {
-  try {
-    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch (e) {
-    return false;
-  }
-}
-
-// Post-quake badge: a small persistent indicator (top-left corner) for
-// "something was actually felt here", separate from the main display's
-// own idle/active state, so it survives the screen going idle and stays
-// until the person dismisses it. It's an icon tinted to the severity
-// band's own color, nothing else — no digits, no elapsed-time counter,
-// no duration to tune or explain. A test reading (display_source ===
-// 'test') never triggers it: a Shindo Screener test is not a real
-// earthquake, so it must not look like a felt one.
-const FELT_BADGE_SOURCES = new Set(['station', 'area']);
-let postQuakeBadgeEventKey = null;
-
-// Called on every active-state render; only actually (re)shows the
-// badge when this is a *new* felt event (a different event_key), so
-// repeat pushes for the same ongoing quake (a detail report replacing a
-// quick one, say) don't keep resetting an already-dismissed badge.
-function showPostQuakeBadge(state) {
-  if (!FELT_BADGE_SOURCES.has(state.display_step ? state.display_source : '') || !state.display_step) return;
-  if (state.event_key === postQuakeBadgeEventKey) return;
-  postQuakeBadgeEventKey = state.event_key;
-  // The badge fills with the strongest level felt since the person last opened the
-  // calendar, so an aftershock after a main shock does not hide the main shock.
-  if (!postQuakeUnseenStep || jma_rank(state.display_step) > jma_rank(postQuakeUnseenStep)) postQuakeUnseenStep = state.display_step;
-  paintPostQuakeBadge(true);
-  els.postQuakeBadge.style.display = 'flex';
-  // Restart the finite pulse animation even if it is already mid-run.
-  els.postQuakeBadge.classList.remove('pulse');
-  void els.postQuakeBadge.offsetWidth;
-  els.postQuakeBadge.classList.add('pulse');
-}
-
-let postQuakeUnseenStep = null;
-function paintPostQuakeBadge(unseen) {
-  const b = els.postQuakeBadge, ja = currentLang === 'ja';
-  if (unseen && postQuakeUnseenStep) {
-    const band = BANDS[postQuakeUnseenStep] || BANDS["0"];
-    b.classList.add('unseen');
-    b.style.background = band.bg; b.style.color = band.fg;
-    b.title = ja ? `揺れを感知しました（最大${jaStep(postQuakeUnseenStep)}）。タップで履歴を表示` : `Shaking was felt here (up to Shindo ${postQuakeUnseenStep}). Tap to see the history`;
-  } else {
-    b.classList.remove('unseen');
-    b.style.background = ''; b.style.color = '';
-    b.title = ja ? '最近の地震を表示' : 'Show recent earthquakes';
-  }
-}
-
-// Opens Recent Earthquakes. The badge stays on screen; only its color returns to normal.
-function openPostQuakeBadge() {
-  postQuakeUnseenStep = null;
-  paintPostQuakeBadge(false);
-  els.postQuakeBadge.classList.remove('pulse');
-  openSettings();
-  showSettingsPage('history');
-}
-window.openPostQuakeBadge = openPostQuakeBadge;
-
-// ---- Map ------------------------------------------------------------------
-// Whole saved prefecture while a warning (or the waiting message) is up, shaded in the
-// color of JMA's prefecture maximum. When JMA reports a measured value the view zooms to
-// the saved town, filled in the color of that value. Nothing here is computed: it only
-// draws JMA's numbers on a map. No map is shown if the saved place has no town code.
-const MAP_NS = 'http://www.w3.org/2000/svg';
-let geo = null, geoKey = null, geoPending = false;
-let mapView = null, mapAnimId = 0, mapZoomedKey = null;
-
-function mapProject(c, k) { return [c[0] * k, -c[1]]; }
-function prepGeo(res) {
-  const lat0 = 40, k = Math.cos(lat0 * Math.PI / 180);
-  const homeSet = new Set(res.home);
-  let bb = [1e9, 1e9, -1e9, -1e9], hb = [1e9, 1e9, -1e9, -1e9];
-  const towns = res.towns.map((t) => {
-    let d = '', b = [1e9, 1e9, -1e9, -1e9];
-    t.g.forEach((poly) => poly.forEach((ring) => {
-      d += 'M' + ring.map((c) => { const q = mapProject(c, k); b = [Math.min(b[0], q[0]), Math.min(b[1], q[1]), Math.max(b[2], q[0]), Math.max(b[3], q[1])]; return q[0].toFixed(4) + ' ' + q[1].toFixed(4); }).join('L') + 'Z';
-    }));
-    const home = homeSet.has(t.c);
-    bb = [Math.min(bb[0], b[0]), Math.min(bb[1], b[1]), Math.max(bb[2], b[2]), Math.max(bb[3], b[3])];
-    if (home) hb = [Math.min(hb[0], b[0]), Math.min(hb[1], b[1]), Math.max(hb[2], b[2]), Math.max(hb[3], b[3])];
-    return { d, home };
-  });
-  return { towns, bb, hb };
-}
-function ensureGeo() {
-  if (geoKey === currentHomeName) return;   // also when the last try found no outline: do not ask again in a loop
-  if (geoPending || !window.pywebview || !window.pywebview.api.get_map) return;
-  geoPending = true;
-  const key = currentHomeName;
-  window.pywebview.api.get_map().then((res) => {
-    geoPending = false;
-    geoKey = key;
-    geo = res && res.ok ? prepGeo(res) : null;
-    mapBuilt = false;
-    if (lastActiveState) renderMap(lastActiveState);
-  }).catch(() => { geoPending = false; geoKey = key; geo = null; });
-}
-let mapBuilt = false;
-function mapBuild() {
-  const g = document.getElementById('mapG');
-  g.innerHTML = '';
-  geo.towns.forEach((t) => {
-    const p = document.createElementNS(MAP_NS, 'path');
-    p.setAttribute('d', t.d); p.setAttribute('stroke-linejoin', 'round');
-    g.appendChild(p); t.el = p;
-  });
-  mapBuilt = true;
-}
-function mapFit(bb, pad, w, h) {
-  let bw = (bb[2] - bb[0]) * (1 + pad), bh = (bb[3] - bb[1]) * (1 + pad);
-  const ar = w / h;
-  if (bw / bh < ar) bw = bh * ar; else bh = bw / ar;
-  return [(bb[0] + bb[2]) / 2 - bw / 2, (bb[1] + bb[3]) / 2 - bh / 2, bw, bh];
-}
-function mapSetView(v) {
-  mapView = v;
-  document.getElementById('mapSvg').setAttribute('viewBox', v.join(' '));
-  const sc = v[2] / 100;
-  geo.towns.forEach((t) => t.el.setAttribute('stroke-width', ((t.home ? 2.2 : 0.9) * sc * 0.6).toFixed(5)));
-}
-function mapAnimate(to, ms) {
-  const from = mapView, id = ++mapAnimId, t0 = performance.now();
-  if (!from || ms <= 0) { mapSetView(to); return; }
-  const ease = (t) => t * t * (3 - 2 * t);
-  (function tick(now) {
-    if (id !== mapAnimId) return;
-    const t = Math.min(1, (now - t0) / ms), e = ease(t);
-    mapSetView(from.map((a, i) => a + (to[i] - a) * e));
-    if (t < 1) requestAnimationFrame(tick);
-  })(t0);
-}
-function hideMap() {
-  els.screen.classList.remove('has-map');
-  mapAnimId++; mapView = null; mapZoomedKey = null;
-}
-function renderMap(state) {
-  const src = state.display_source;
-  const warnLike = src === 'area_warning' || src === 'none';
-  const below1 = src === 'station_below_1';
-  const measured = src === 'station' || src === 'area' || below1;
-  if (!warnLike && !measured) { hideMap(); return; }
-  ensureGeo();
-  if (!geo) { hideMap(); return; }
-  const fc = state.area_forecast;
-  const prefStep = state.pref_max || (fc && (fc.to || fc.from)) || state.alert_step;
-  if (!mapBuilt) mapBuild();
-  els.screen.classList.add('has-map');
-  const fullView = mapFit(geo.bb, 0.06, 100, 100 * (document.getElementById('mapWrap').clientHeight || 1) / (document.getElementById('mapWrap').clientWidth || 1));
-  const townView = mapFit(geo.hb, 1.1, 100, 100 * (document.getElementById('mapWrap').clientHeight || 1) / (document.getElementById('mapWrap').clientWidth || 1));
-  if (warnLike) {
-    // No level from JMA for this prefecture: draw it uncolored, so nothing is implied.
-    const c = prefStep ? (BANDS[prefStep] || BANDS['0']).bg : '#1d1d1b';
-    geo.towns.forEach((t) => { t.el.setAttribute('fill', c); t.el.setAttribute('stroke', t.home ? '#f5f5f0' : (prefStep ? 'rgba(0,0,0,0.45)' : '#3a3a36')); });
-    mapZoomedKey = null;
-    mapAnimId++; mapSetView(fullView);
-    return;
-  }
-  // Measured: dim the prefecture, fill the saved town with the measured level, zoom once per event.
-  const bandM = BANDS[state.display_step] || BANDS['0'];
-  geo.towns.forEach((t) => {
-    t.el.setAttribute('fill', t.home ? (below1 ? '#2e2e2b' : bandM.bg) : '#1d1d1b');
-    t.el.setAttribute('stroke', t.home ? '#f5f5f0' : '#3a3a36');
-  });
-  if (mapZoomedKey === state.event_key) { if (!mapView) mapSetView(townView); return; }
-  mapZoomedKey = state.event_key;
-  const animate = motionEffectsEnabled && !prefersReducedMotion();
-  if (!mapView) mapSetView(fullView);
-  mapAnimate(townView, animate ? 2200 : 0);
-}
-window.addEventListener('resize', () => { if (lastActiveState && els.screen.classList.contains('has-map')) { mapZoomedKey = null; renderMap(lastActiveState); } });
 
 // Manually clears the current reading back to idle, rather than
 // waiting out app.py's automatic idle timeout. Tells the backend first
@@ -1505,7 +1234,6 @@ const STRINGS = {
     setupSubtitle: "Type your city or town so this can tell you what you'd actually feel from a nearby earthquake. You only need to do this once.",
     inputPlaceholder: "e.g. Sapporo, Osaka, Naha",
     search: "Search",
-    lookingUp: "Looking that up...",
     somethingWrong: "Something went wrong, try again.",
     saveLabel: "Save",
     monitoring: "Monitoring",
@@ -1513,46 +1241,37 @@ const STRINGS = {
     groupLocation: "Location",
     groupDisplay: "Display",
     groupAlerts: "Alerts",
-    dataSourceHint: "All readings shown here are the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報). Delivery isn't guaranteed to be instant or complete, a report could stop arriving partway through, including before JMA's final update. For the most current information, also check the JMA website or TV/radio broadcasts.",
     groupHistory: "Recent Earthquakes",
-    groupHistorySummary: "View your felt-earthquake calendar",
-    feltLogLabel: "Earthquakes felt here",
+
     feltLogHint: "A personal calendar of readings this app actually showed you, kept for 30 days and then cleared automatically.",
-    feltLogOpenBtn: "View calendar",
     feltLogEmpty: "Nothing logged this month.",
     feltLogDownloadBtn: "Download log (CSV)",
-    calendarLegendText: "Each colored date is a reading this app showed you here. The number is the Shindo level felt that day.",
-    groupTesting: "Testing",
-    groupTestingSummary: "Try a sample reading on the display",
+
+
     groupSupport: "Support",
-    groupSupportSummary: "Data sources & bug reports",
     currentLocation: "Current location",
     changeLocation: "Change location",
     language: "Language",
     timeFormat: "Time format",
     textSize: "Text size",
-    alertThreshold: "Alert me at",
-    alertThresholdHint: "Wakes the screen and plays a chime at this Shindo level or stronger.",
+
     sensitivity: "Sensitivity",
-    sensitivityHint: "How calmly this reacts to minor shaking: which readings get a brief, dimmed response instead of the full display, and how long that response takes.",
     sensitivity_high: "High — I notice every small tremor",
     sensitivity_normal: "Normal",
     sensitivity_low: "Low — I'm used to these",
     sensitivity_off: "Off — don't light up for minor shaking",
     dismissReadingTitle: "Dismiss (return to idle)",
     dismissLabel: "Dismiss",
-    alertWakeScreen: "Wake screen automatically",
     alertVolume: "Chime volume",
     volumeQuiet: "Quiet",
     volumeNormal: "Normal",
     volumeLoud: "Loud",
-    onLabel: "On",
-    offLabel: "Off",
-    testEvent: "Test event",
-    testEventLink: "Show a sample reading on the display",
-    idleLabel: "idle",
-    testWarningText: "This puts a fake earthquake reading on your actual screen. If anyone else can see this display, make sure they know it's a test before you trigger it, a real-looking alert shown by mistake is not a good surprise.",
-    confirmTest: "Trigger test reading",
+
+
+
+
+
+
     saved: "Saved.",
     betaLabel: "Beta",
     bugReportLabel: "Report a bug",
@@ -1575,7 +1294,6 @@ const STRINGS = {
     setupSubtitle: "お住まいの市区町村名を入力してください。近くで地震が発生した際に、実際に感じる揺れの強さをお知らせします。設定は最初の一度だけです。",
     inputPlaceholder: "例：札幌、大阪、那覇",
     search: "検索",
-    lookingUp: "検索中...",
     somethingWrong: "エラーが発生しました。もう一度お試しください。",
     saveLabel: "保存",
     monitoring: "監視地点",
@@ -1583,46 +1301,37 @@ const STRINGS = {
     groupLocation: "地点",
     groupDisplay: "表示",
     groupAlerts: "アラート",
-    dataSourceHint: "表示される観測値はすべて気象庁が発表したもので、第三者の配信サービス（Wolfx、P2P地震情報）を経由してお届けしています。配信の即時性・確実性は保証されておらず、気象庁の最終報より前に配信が途絶える可能性があります。最新の情報は気象庁のウェブサイトやテレビ・ラジオの放送でも合わせてご確認ください。",
     groupHistory: "最近の地震",
-    groupHistorySummary: "体感した地震のカレンダーを見る",
-    feltLogLabel: "ここで感じた地震",
+
     feltLogHint: "このアプリが実際に表示した観測値の個人カレンダーです。30日間保存され、その後自動的に削除されます。",
-    feltLogOpenBtn: "カレンダーを見る",
     feltLogEmpty: "今月の記録はありません。",
     feltLogDownloadBtn: "記録をダウンロード（CSV）",
-    calendarLegendText: "色がついた日は、このアプリがここで表示した観測値があった日です。数字はその日に感じた震度を表します。",
-    groupTesting: "テスト",
-    groupTestingSummary: "テスト用の表示を試す",
+
+
     groupSupport: "サポート",
-    groupSupportSummary: "データ提供元・不具合報告",
     currentLocation: "現在の地点",
     changeLocation: "地点を変更",
     language: "言語",
     timeFormat: "時刻表示",
     textSize: "文字サイズ",
-    alertThreshold: "アラートを鳴らす震度",
-    alertThresholdHint: "この震度以上になると、画面を起動しチャイムを鳴らします。",
+
     sensitivity: "感度",
-    sensitivityHint: "わずかな揺れへの反応の穏やかさ。どの震度を控えめな表示にするか、またその表示がどれくらい続くかが変わります。",
     sensitivity_high: "高い — わずかな揺れにも気づきたい",
     sensitivity_normal: "普通",
     sensitivity_low: "低い — この程度の揺れには慣れている",
     sensitivity_off: "オフ — 軽微な揺れでは点灯させない",
     dismissReadingTitle: "消去（待機状態に戻す）",
     dismissLabel: "消去",
-    alertWakeScreen: "画面を自動的に起動する",
     alertVolume: "チャイムの音量",
     volumeQuiet: "小さめ",
     volumeNormal: "標準",
     volumeLoud: "大きめ",
-    onLabel: "オン",
-    offLabel: "オフ",
-    testEvent: "テスト表示",
-    testEventLink: "サンプル表示を画面に出す",
-    idleLabel: "待機",
-    testWarningText: "この機能は実際の画面に偽の地震情報を表示します。他の人がこの画面を見ている場合は、テストであることを事前に伝えてから実行してください。本物と間違われる表示は良い驚きではありません。",
-    confirmTest: "テスト表示を実行",
+
+
+
+
+
+
     saved: "保存しました。",
     betaLabel: "ベータ版",
     bugReportLabel: "不具合を報告",
@@ -1653,13 +1362,13 @@ const NEW_STRINGS = {
     locationSub: "Readings are for this place.",
     saveLocation: "Save location",
     saveOk: "Saved. Readings now follow {name}.",
-    displaySub: "Language, clock and text size.",
+    displaySub: "Language, clock, text size and standby screen.",
+    standbyTitle: "Standby screen", standbyDesc: "Minimal is a quiet clock. Dashboard also keeps the Shindo scale on screen between earthquakes.", standbyMin: "Minimal", standbyDash: "Dashboard",
     languageDesc: "Applies to the whole app.",
     timeFormatDesc: "How times show on readings.",
     time24: "24-hour",
     time12: "12-hour",
     textSizeDesc: "Larger text is easier to read.",
-    previewLabel: "Preview",
     alertsSub: "Pick the profile that sounds most like you. The preview shows what you will see.",
     whichSounds: "Your profile",
     whatYouSee: "Preview",
@@ -1690,9 +1399,8 @@ const NEW_STRINGS = {
     dataSourceShort: "All readings are from the Japan Meteorological Agency (JMA). Wolfx and P2P地震情報 relay them. Town outlines: MLIT National Land Numerical Information (administrative areas), simplified by SmartNews.",
     dataSourceWarn: "Delivery can be late or incomplete. For current information, also check the JMA website, TV or radio.",
     sampleData: "Sample data",
-    samplePlace: "Off test location",
-    testMessage: "This is a test message",
-    sampleDepth: "M 4.6 · Depth 40 km",
+
+
     apNothing: "Nothing appears.",
     apRestVisitor: "All quiet.",
     apFull: "Always full screen",
@@ -1701,7 +1409,7 @@ const NEW_STRINGS = {
     apRest: "Resting state",
     apNotify: "Notification + chime ({vol})",
     pillFrom: "Shows from {step}",
-    legend1: "Shindo 1-2", legend2: "Shindo 3-4", legend3: "Shindo 5- to 5+", legend4: "Shindo 6-", legend5: "Shindo 6+ and 7",
+legend2: "Shindo 3-4", legend3: "Shindo 5- to 5+", legend4: "Shindo 6-", legend5: "Shindo 6+ and 7",
     dayPick: "Tap a day for details.",
     dayNone: "No readings this day.",
     weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
@@ -1725,13 +1433,13 @@ const NEW_STRINGS = {
     locationSub: "この地点の観測値を表示します。",
     saveLocation: "地点を保存",
     saveOk: "保存しました。{name}の観測値を表示します。",
-    displaySub: "言語、時刻、文字サイズ。",
+    displaySub: "言語、時刻、文字サイズ、待機画面。",
+    standbyTitle: "待機画面", standbyDesc: "ミニマルは静かな時計だけを表示します。ダッシュボードは地震がないときも震度スケールを表示します。", standbyMin: "ミニマル", standbyDash: "ダッシュボード",
     languageDesc: "アプリ全体に適用します。",
     timeFormatDesc: "観測値の時刻の形式です。",
     time24: "24時間",
     time12: "12時間",
     textSizeDesc: "大きいほど読みやすくなります。",
-    previewLabel: "プレビュー",
     alertsSub: "自分に近いプロファイルを選びます。プレビューで表示を確認できます。",
     whichSounds: "プロファイル",
     whatYouSee: "プレビュー",
@@ -1762,9 +1470,8 @@ const NEW_STRINGS = {
     dataSourceShort: "観測値はすべて気象庁のものです。Wolfx、P2P地震情報が中継します。市区町村の境界: 国土交通省 国土数値情報（行政区域）をスマートニュースが簡素化したデータを加工して作成。",
     dataSourceWarn: "配信が遅れたり不完全になることがあります。最新の情報は気象庁のサイト、テレビ、ラジオでも確認してください。",
     sampleData: "サンプル",
-    samplePlace: "テスト用の地点沖",
-    testMessage: "これはテスト表示です",
-    sampleDepth: "M4.6・深さ 40 km",
+
+
     apNothing: "何も表示されません。",
     apRestVisitor: "異常なし。",
     apFull: "常に全画面で表示",
@@ -1773,7 +1480,7 @@ const NEW_STRINGS = {
     apRest: "待機状態",
     apNotify: "通知＋チャイム（{vol}）",
     pillFrom: "{step}から表示",
-    legend1: "震度1〜2", legend2: "震度3〜4", legend3: "震度5弱〜5強", legend4: "震度6弱", legend5: "震度6強〜7",
+legend2: "震度3〜4", legend3: "震度5弱〜5強", legend4: "震度6弱", legend5: "震度6強〜7",
     dayPick: "日付をタップすると詳細を表示します。",
     dayNone: "この日の観測値はありません。",
     weekdays: ["日", "月", "火", "水", "木", "金", "土"],
@@ -1824,39 +1531,35 @@ let currentTimeFormat = '24h';
 const REGION_EN = {"アフリカ中部":"Central Africa","アフリカ東部":"Eastern Africa","アフリカ西部":"Western Africa","アリューシャン列島":"Aleutian Islands","インドシナ半島付近":"Adjacent Indochina Peninsula","インドネシア付近":"Adjacent Indonesia","インド付近":"Adjacent India","インド洋":"Indian Ocean","ウラジオストク付近":"Adjacent Vladivostok","オホーツク海南部":"Southern Sea of Okhotsk","オーストラリア付近":"Adjacent Australia","カムチャツカ半島付近":"Adjacent Kamchatka Peninsula","グアム付近":"Adjacent Guam","サハリン南部付近":"Adjacent Southern Sakhalin","サハリン西方沖":"Off the west coast of Sakhalin","サハリン近海":"Near Sakhalin","シベリア付近":"Adjacent Siberia","シベリア南部":"Southern Siberia","トカラ列島近海":"Near Tokara Islands","ニューギニア付近":"Adjacent New Guinea","ニュージーランド付近":"Adjacent New Zealand","フィリピン付近":"Adjacent Philippines","マリアナ諸島":"Mariana Islands","ヨーロッパ中部":"Central Europe","ヨーロッパ東部":"Eastern Europe","ヨーロッパ西部":"Western Europe","ロシア中部":"Central Russia","ロシア東部":"Eastern Russia","ロシア西部":"Western Russia","三宅島近海":"Near Miyakejima Island","三河湾":"Mikawa Bay","三重県中部":"Central Mie Prefecture","三重県北部":"Northern Mie Prefecture","三重県南東沖":"Off the southeast coast of Mie Prefecture","三重県南部":"Southern Mie Prefecture","三陸沖":"Off the coast of Sanriku","上川地方中部":"Central Kamikawa Region, Hokkaido","上川地方北部":"Northern Kamikawa Region, Hokkaido","上川地方南部":"Southern Kamikawa Region, Hokkaido","与那国島近海":"Near Yonagunijima Island","中国中部":"Central China","中国地方":"Chugoku Region","中国東北部":"Northeastern China","中国東部":"Eastern China","中国西部":"Western China","中央アジア":"Central Asia","中東":"Middle East","中米":"Central America","九州地方":"Kyushu Region","九州地方南東沖":"Off the southeast coast of Kyushu","五島列島近海":"Near Goto Islands","京都府北部":"Northern Kyoto Prefecture","京都府南部":"Southern Kyoto Prefecture","京都府沖":"Off the coast of Kyoto Prefecture","伊予灘":"Iyonada Sea","伊勢湾":"Ise Bay","伊豆半島東方沖":"Off the east coast of Izu Peninsula","伊豆大島近海":"Near Izu-Oshima Island","佐渡付近":"Adjacent Sado","佐賀県北部":"Northern Saga Prefecture","佐賀県南部":"Southern Saga Prefecture","八丈島東方沖":"Off the east coast of Hachijojima Island","八丈島近海":"Near Hachijojima Island","兵庫県北方沖":"Off the north coast of Hyogo Prefecture","兵庫県北部":"Northern Hyogo Prefecture","兵庫県南東部":"Southeastern Hyogo Prefecture","兵庫県南西部":"Southwestern Hyogo Prefecture","内浦湾":"Uchiura Bay","北大西洋":"North Atlantic Ocean","北東太平洋":"Northeast Pacific Ocean","北極付近":"Near the North Pole","北海道北西沖":"Off the northwest coast of Hokkaido","北海道南東沖":"Off the southeast coast of Hokkaido","北海道南西沖":"Off the southwest coast of Hokkaido","北海道地方":"Hokkaido Region","北海道東方沖":"Off the east coast of Hokkaido","北海道西方沖":"Off the west coast of Hokkaido","北米中部":"Central North America","北米東部":"Eastern North America","北米西部":"Western North America","北西太平洋":"Northwest Pacific Ocean","北見地方":"Kitami Region, Hokkaido","北陸地方":"Hokuriku Region","十勝地方中部":"Central Tokachi Region, Hokkaido","十勝地方北部":"Northern Tokachi Region, Hokkaido","十勝地方南部":"Southern Tokachi Region, Hokkaido","十勝沖":"Off the coast of Tokachi","千島列島":"Kurile Islands","千島列島南東沖":"Off the southeast coast of Kurile Islands","千葉県北東部":"Northeastern Chiba Prefecture","千葉県北西部":"Northwestern Chiba Prefecture","千葉県南東沖":"Off the southeast coast of Chiba Prefecture","千葉県南部":"Southern Chiba Prefecture","千葉県東方沖":"Off the east coast of Chiba Prefecture","南大東島近海":"Near Minami-Daitojima Island","南大西洋":"South Atlantic Ocean","南太平洋":"South Pacific Ocean","南極付近":"Near the South Pole","南海道南方沖":"Off the south coast of Nankaido","南米中部":"Central South America","南米東部":"Eastern South America","南米西部":"Western South America","台湾付近":"the vicinity of Taiwan","周防灘":"Suonada Sea","和歌山県北部":"Northern Wakayama Prefecture","和歌山県南方沖":"Off the south coast of Wakayama Prefecture","和歌山県南部":"Southern Wakayama Prefecture","四国地方":"Shikoku Region","四国沖":"Off the coast of Shikoku","国後島付近":"Adjacent Kunashiri Island","土佐湾":"Tosa Bay","地中海":"Mediterranean","埼玉県北部":"Northern Saitama Prefecture","埼玉県南部":"Southern Saitama Prefecture","埼玉県秩父地方":"Chichibu Region, Saitama Prefecture","壱岐・対馬近海":"Near Ikishima Island and Tsushima Island","大分県中部":"Central Oita Prefecture","大分県北部":"Northern Oita Prefecture","大分県南部":"Southern Oita Prefecture","大分県西部":"Western Oita Prefecture","大阪府北部":"Northern Osaka Prefecture","大阪府南部":"Southern Osaka Prefecture","大阪湾":"Osaka Bay","大隅半島東方沖":"Off the east coast of Osumi Peninsula","天草灘":"Amakusanada Sea","奄美大島北東沖":"Off the northeast coast of Amami-Oshima Island","奄美大島北西沖":"Off the northwest coast of Amami-Oshima Island","奄美大島近海":"Near Amami-Oshima Island","奈良県":"Nara Prefecture","安芸灘":"Akinada Sea","宗谷地方北部":"Northern Soya Region, Hokkaido","宗谷地方南部":"Southern Soya Region, Hokkaido","宗谷東方沖":"Off the east coast of Soya","宗谷海峡":"Soya Strait","宮古島北西沖":"Off the northwest coast of Miyakojima Island","宮古島近海":"Near Miyakojima Island","宮城県中部":"Central Miyagi Prefecture","宮城県北部":"Northern Miyagi Prefecture","宮城県南部":"Southern Miyagi Prefecture","宮城県沖":"Off the coast of Miyagi Prefecture","宮崎県北部山沿い":"Area along Mountains of Northern Miyazaki Prefecture","宮崎県北部平野部":"Plain Area of Northern Miyazaki Prefecture","宮崎県南部山沿い":"Area along Mountains of Southern Miyazaki Prefecture","宮崎県南部平野部":"Plain Area of Southern Miyazaki Prefecture","富山湾":"Toyama Bay","富山県東部":"Eastern Toyama Prefecture","富山県西部":"Western Toyama Prefecture","小笠原地方":"Ogasawara Region","小笠原諸島東方沖":"Off the east coast of Ogasawara Islands","小笠原諸島西方沖":"Off the west coast of Ogasawara Islands","山口県中部":"Central Yamaguchi Prefecture","山口県北西沖":"Off the northwest coast of Yamaguchi Prefecture","山口県北部":"Northern Yamaguchi Prefecture","山口県東部":"Eastern Yamaguchi Prefecture","山口県西部":"Western Yamaguchi Prefecture","山形県庄内地方":"Shonai Region, Yamagata Prefecture","山形県最上地方":"Mogami Region, Yamagata Prefecture","山形県村山地方":"Murayama Region, Yamagata Prefecture","山形県沖":"Off the coast of Yamagata Prefecture","山形県置賜地方":"Okitama Region, Yamagata Prefecture","山梨県中・西部":"Central and Western Yamanashi Prefecture","山梨県東部・富士五湖":"Eastern Yamanashi Prefecture and Fuji Five Lakes","岐阜県美濃中西部":"Central and western Mino, Gifu Prefecture","岐阜県美濃東部":"Eastern Mino, Gifu Prefecture","岐阜県飛騨地方":"Hida, Gifu Prefecture","岡山県北部":"Northern Okayama Prefecture","岡山県南部":"Southern Okayama Prefecture","岩手県内陸北部":"Northern Inland of Iwate Prefecture","岩手県内陸南部":"Southern Inland of Iwate Prefecture","岩手県沖":"Off the coast of Iwate Prefecture","岩手県沿岸北部":"Northern Coast of Iwate Prefecture","岩手県沿岸南部":"Southern Coast of Iwate Prefecture","島根県東部":"Eastern Shimane Prefecture","島根県沖":"Off the coast of Shimane Prefecture","島根県西部":"Western Shimane Prefecture","広島県北部":"Northern Hiroshima Prefecture","広島県南東部":"Southeastern Hiroshima Prefecture","広島県南西部":"Southwestern Hiroshima Prefecture","後志地方北部":"Northern Shiribeshi Region, Hokkaido","後志地方東部":"Eastern Shiribeshi Region, Hokkaido","後志地方西部":"Western Shiribeshi Region, Hokkaido","徳島県北部":"Northern Tokushima Prefecture","徳島県南部":"Southern Tokushima Prefecture","愛媛県中予":"Chuyo, Ehime Prefecture","愛媛県南予":"Nanyo, Ehime Prefecture","愛媛県東予":"Toyo, Ehime Prefecture","愛知県東部":"Eastern Aichi Prefecture","愛知県西部":"Western Aichi Prefecture","房総半島南方沖":"Off the south coast of Boso Peninsula","択捉島付近":"Adjacent Etorofu Island","択捉島南東沖":"Off the southeast coast of Etorofu Island","播磨灘":"Harimanada Sea","新島・神津島近海":"Near Niijima Island, Kozushima Island","新潟県上中越沖":"Off the coast of Joetsu and Chuetsu, Niigata Prefecture","新潟県上越地方":"Joetsu, Niigata Prefecture","新潟県下越地方":"Kaetsu, Niigata Prefecture","新潟県下越沖":"Off the coast of Kaetsu, Niigata Prefecture","新潟県中越地方":"Chuetsu, Niigata Prefecture","日向灘":"Hyuganada Sea","日本海中部":"Central Sea of Japan","日本海北部":"Northern Sea of Japan","日本海西部":"Weatern Sea of Japan","日高地方中部":"Central Hidaka Region, Hokkaido","日高地方東部":"Eastern Hidaka Region, Hokkaido","日高地方西部":"Western Hidaka Region, Hokkaido","有明海":"Ariake Sea","朝鮮半島北部":"Northern Korean Peninsula","朝鮮半島南部":"Southern Korean Peninsula","本州南方沖":"Off the south coast of Honshu","東シナ海":"East China Sea","東京湾":"Tokyo Bay","東京都多摩東部":"Eastern Tama, Tokyo","東京都多摩西部":"Western Tama, Tokyo","東京都２３区":"23 wards, Tokyo","東北地方":"Tohoku Region","東北地方東方沖":"Off the east coast of Tohoku","東海地方":"Tokai Region","東海道南方沖":"Off the south coast of Tokaido","栃木県北部":"Northern Tochigi Prefecture","栃木県南部":"Southern Tochigi Prefecture","根室半島南東沖":"Off the southeast coast of the Nemuro Peninsula","根室地方中部":"Central Nemuro Region, Hokkaido","根室地方北部":"Northern Nemuro Region, Hokkaido","根室地方南部":"Southern Nemuro Region, Hokkaido","橘湾":"Tachibana Bay","檜山地方":"Hiyama Region, Hokkaido","沖縄地方":"Okinawa Region","沖縄本島北西沖":"Off the northwest coast of Okinawa Main Island","沖縄本島南方沖":"Off the south coast of Okinawa Main Island","沖縄本島近海":"Near Okinawa Main Island","津軽海峡":"Tsugaru Strait","浦河沖":"Off the coast of Urakawa","淡路島付近":"Adjacent Awajishima Island","渡島地方北部":"Northern Oshima Region, Hokkaido","渡島地方東部":"Eastern Oshima Region, Hokkaido","渡島地方西部":"Western Oshima Region, Hokkaido","滋賀県北部":"Northern Shiga Prefecture","滋賀県南部":"Southern Shiga Prefecture","瀬戸内海中部":"Central Setonaikai Sea","熊本県天草・芦北地方":"Amakusa and Ashikita Region, Kumamoto Prefecture","熊本県熊本地方":"Kumamoto Region, Kumamoto Prefecture","熊本県球磨地方":"Kuma Region, Kumamoto Prefecture","熊本県阿蘇地方":"Aso Region, Kumamoto Prefecture","父島近海":"Near Chichijima Island","留萌地方中北部":"Central and northern Rumoi Region, Hokkaido","留萌地方南部":"Southern Rumoi Region, Hokkaido","相模湾":"Sagami Bay","石垣島北西沖":"Off the northwest coast of Ishigakijima Island","石垣島南方沖":"Off the south coast of Ishigakijima Island","石垣島近海":"Near Ishigakijima Island","石川県加賀地方":"Kaga, Ishikawa Prefecture","石川県能登地方":"Noto, Ishikawa Prefecture","石川県西方沖":"Off the west coast of Ishikawa Prefecture","石狩地方中部":"Central Ishikari Region, Hokkaido","石狩地方北部":"Northern Ishikari Region, Hokkaido","石狩地方南部":"Southern Ishikari Region, Hokkaido","石狩湾":"Ishikari Bay","硫黄島近海":"Near Ioto Island","神奈川県東部":"Eastern Kanagawa Prefecture","神奈川県西部":"Western Kanagawa Prefecture","福井県嶺北":"Reihoku, Fukui Prefecture","福井県嶺南":"Reinan, Fukui Prefecture","福井県沖":"Off the coast of Fukui Prefecture","福岡県北九州地方":"Kitakyushu Region, Fukuoka Prefecture","福岡県北西沖":"Off the northwest coast of Fukuoka Prefecture","福岡県福岡地方":"Fukuoka Region, Fukuoka Prefecture","福岡県筑後地方":"Chikugo Region, Fukuoka Prefecture","福岡県筑豊地方":"Chikuho Region, Fukuoka Prefecture","福島県中通り":"Nakadori, Fukushima Prefecture","福島県会津":"Aizu, Fukushima Prefecture","福島県沖":"Off the coast of Fukushima Prefecture","福島県浜通り":"Hamadori, Fukushima Prefecture","秋田県内陸北部":"Northern Inland of Akita Prefecture","秋田県内陸南部":"Southern Inland of Akita Prefecture","秋田県沖":"Off the coast of Akita Prefecture","秋田県沿岸北部":"Northern Coast of Akita Prefecture","秋田県沿岸南部":"Southern Coast of Akita Prefecture","種子島南東沖":"Off the southeast coast of Tanegashima Island","種子島近海":"Near Tanegashima Island","空知地方中部":"Central Sorachi Region, Hokkaido","空知地方北部":"Northern Sorachi Region, Hokkaido","空知地方南部":"Southern Sorachi Region, Hokkaido","紀伊水道":"Kiisuido Strait","紋別地方":"Mombetsu Region, Hokkaido","網走地方":"Abashiri Region, Hokkaido","網走沖":"Off the coast of Abashiri","群馬県北部":"Northern Gunma Prefecture","群馬県南部":"Southern Gunma Prefecture","胆振地方中東部":"Central and eastern Iburi Region, Hokkaido","胆振地方西部":"Western Iburi Region, Hokkaido","能登半島沖":"Off the coast of Noto Peninsula","若狭湾":"Wakasa Bay","苫小牧沖":"Off the coast of Tomakomai","茨城県北部":"Northern Ibaraki Prefecture","茨城県南部":"Southern Ibaraki Prefecture","茨城県沖":"Off the coast of Ibaraki Prefecture","薩南諸島東方沖":"Off the east coast of Satsunan Islands","薩摩半島西方沖":"Off the west coast of Satsuma Peninsula","西表島付近":"Near Iriomotejima Island","豊後水道":"Bungosuido Strait","近畿地方":"Kinki Region","遠地":"Distant","遠州灘":"Enshunada Sea","釧路地方中南部":"Central and southern Kushiro Region, Hokkaido","釧路地方北部":"Northern Kushiro Region, Hokkaido","釧路沖":"Off the coast of Kushiro","長崎県北部":"Northern Nagasaki Prefecture","長崎県南西部":"Southwestern Nagasaki Prefecture","長崎県島原半島":"Shimabara Peninsula, Nagasaki Prefecture","長野県中部":"Central Nagano Prefecture","長野県北部":"Northern Nagano Prefecture","長野県南部":"Southern Nagano Prefecture","関東東方沖":"Off the east coast of Kanto","関東甲信地方":"Kanto Koushin Region","陸奥湾":"Mutsu Bay","隠岐島近海":"Near Oki Islands","青森県三八上北地方":"Sanpachi-Kamikita Region, Aomori Prefecture","青森県下北地方":"Shimokita Region, Aomori Prefecture","青森県東方沖":"Off the east coast of Aomori Prefecture","青森県津軽北部":"Northern Tsugaru, Aomori Prefecture","青森県津軽南部":"Southern Tsugaru, Aomori Prefecture","青森県西方沖":"Off the west coast of Aomori Prefecture","静岡県中部":"Central Shizuoka Prefecture","静岡県伊豆地方":"Izu, Shizuoka Prefecture","静岡県東部":"Eastern Shizuoka Prefecture","静岡県西部":"Western Shizuoka Prefecture","香川県東部":"Eastern Kagawa Prefecture","香川県西部":"Western Kagawa Prefecture","駿河湾":"Suruga Bay","駿河湾南方沖":"Off the south coast of Suruga Bay","高知県中部":"Central Kochi Prefecture","高知県東部":"Eastern Kochi Prefecture","高知県西部":"Western Kochi Prefecture","鳥取県中部":"Central Tottori Prefecture","鳥取県東部":"Eastern Tottori Prefecture","鳥取県沖":"Off the coast of Tottori Prefecture","鳥取県西部":"Western Tottori Prefecture","鳥島東方沖":"Off the east coast of Torishima Island","鳥島近海":"Near Torishima Island","鹿児島湾":"Kagoshima Bay","鹿児島県大隅地方":"Osumi Region, Kagoshima Prefecture","鹿児島県薩摩地方":"Satsuma Region, Kagoshima Prefecture","黄海":"Yellow Sea"};
 function hypoName(n, lang) { const L = lang || currentLang; return (L === 'en' && n && REGION_EN[n]) || n; }
 let currentHomeName = '';
-// The last state passed to renderActive(), so a language switch mid-reading
-// can re-render the same event in the new language instead of leaving it
-// stuck in whichever language was active when the event first came in.
-// null while idle (renderIdle() clears it).
-let lastActiveState = null;
+// currentHomeName stays the saved key (map lookups use it). What the screen shows follows the language.
+const homeNameCache = {};
+function homeLabel(name) {
+  const n = name === undefined ? currentHomeName : name;
+  const h = homeNameCache[n];
+  return (h && h[currentLang === 'ja' ? 'ja' : 'en']) || n || '';
+}
+function refreshHomeLabels() {
+  if (!currentHomeName) return;
+  els.locationLabel.textContent = homeLabel();
+  els.currentLocValue.textContent = homeLabel();
+  if (typeof dashRender === 'function') dashRender(false);
+}
+function ensureHomeNames(name) {
+  if (!name || homeNameCache[name] || !window.pywebview || !window.pywebview.api || !window.pywebview.api.home_names) return;
+  homeNameCache[name] = {};
+  window.pywebview.api.home_names(name).then((r) => {
+    if (r && r.en) { homeNameCache[name] = r; refreshHomeLabels(); } else { delete homeNameCache[name]; }
+  }).catch(() => { delete homeNameCache[name]; });
+}
 
 const els = {
   screen: document.getElementById('screen'),
-  postQuakeBadge: document.getElementById('postQuakeBadge'),
-  dismissBtn: document.getElementById('dismissBtn'),
-  dismissBtnLabel: document.getElementById('dismissBtnLabel'),
   topRow: document.getElementById('topRow'),
-  eventSummaryLine: document.getElementById('eventSummaryLine'),
-  jmaMaxLine: document.getElementById('jmaMaxLine'),
-  maturityLine: document.getElementById('maturityLine'),
-  estimateLabel: document.getElementById('estimateLabel'),
-  readoutSub: document.getElementById('readoutSub'),
-  readoutNote: document.getElementById('readoutNote'),
-  detailsBtn: document.getElementById('detailsBtn'),
   citiesBtn: document.getElementById('citiesBtn'),
   dateEl: document.getElementById('dateEl'),
   timeEl: document.getElementById('timeEl'),
-  mid: document.getElementById('mid'),
-  readout: document.getElementById('readout'),
-  rule: document.getElementById('rule'),
-  code: document.getElementById('code'),
-  labelText: document.getElementById('labelText'),
-  explainText: document.getElementById('explainText'),
-  metaText: document.getElementById('metaText'),
-  lastFeltText: document.getElementById('lastFeltText'),
   idleLine: document.getElementById('idleLine'),
   locationLabel: document.getElementById('locationLabel'),
-  tsunamiBox: document.getElementById('tsunamiBox'),
   setup: document.getElementById('setup'),
   cityInput: document.getElementById('cityInput'),
   setupCandidates: document.getElementById('setupCandidates'),
@@ -1892,9 +1595,6 @@ function applyLanguage() {
   els.setupSubtitle.textContent = s.setupSubtitle;
   els.cityInput.placeholder = s.inputPlaceholder;
   els.setupSaveBtn.textContent = s.saveLabel;
-  els.dismissBtn.title = s.dismissReadingTitle;
-  els.dismissBtn.setAttribute('aria-label', s.dismissReadingTitle);
-  els.dismissBtnLabel.textContent = s.dismissLabel;
   els.versionFooter.textContent = `${s.appTitle}: ${s.betaLabel} ${APP_VERSION}`;
   els.bugReportHint.textContent = s.bugReportHint;
   els.bugReportSubmitBtn.textContent = s.bugReportSubmit;
@@ -1909,13 +1609,9 @@ function applyLanguage() {
   document.getElementById('settingsLangEnBtn').classList.toggle('active', currentLang === 'en');
   document.getElementById('settingsLangJaBtn').classList.toggle('active', currentLang === 'ja');
   if (currentHomeName) {
-    els.locationLabel.textContent = `${currentHomeName}`;
-  }
-  // A reading already on screen was rendered in whichever language was
-  // active at the time; re-render it now so switching languages mid-event
-  // actually changes what's showing, not just the settings panel around it.
-  if (lastActiveState) {
-    renderActive(lastActiveState);
+    ensureHomeNames(currentHomeName);
+    els.locationLabel.textContent = homeLabel();
+    els.currentLocValue.textContent = homeLabel();
   }
   refreshSettingsPages();
 }
@@ -2067,43 +1763,33 @@ function renderAlertsPage() {
     `<div class="pd-pills"><span class="pd-pill key">${fmt2(s.pillFrom, { step: stepWord(p.showFrom) })}</span>` +
     `<span class="pd-pill">${p.explain ? s.pillExplain : s.pillNoExplain}</span></div></div>`;
 
-  // 3. Big preview of the chosen level under this preset
-  const L = previewLevel;
-  const band = BANDS[L];
-  const labels = currentLang === 'ja' ? LABELS_JA : LABELS_EN;
-  const explain = currentLang === 'ja' ? EXPLAIN_JA : EXPLAIN_EN;
+  // 3. Preview of the chosen level: a small picture of the real screen
+  const L = previewLevel, band = BANDS[L], dt = D_STR[currentLang] || D_STR.en;
   const isAmbient = AMBIENT_STEPS.includes(L);
   const hidden = p.hidden.includes(L);
   const rest = L === '0';
   const willNotify = !rest && jma_rank(L) >= jma_rank(currentAlertMinStep);
-  let bg, fg, inner, note, showMeta = true;
-  if (!isAmbient) {
-    bg = band.bg; fg = band.fg;
-    inner = `<div class="ap-big">${stepShort(L)}</div><div class="ap-label">${labels[L]}</div>`;
-    note = s.apFull;
-  } else if (rest || hidden) {
-    bg = '#000'; fg = '#f5f5f0'; showMeta = false;
-    const restText = rest && p.resting;
-    inner = `<div class="ap-blank${restText ? ' rest' : ''}">${restText ? s.apRestVisitor : s.apNothing}</div>`;
-    note = rest ? s.apRest : s.apOff;
-  } else {
-    bg = '#0b0a08'; fg = '#f5f5f0';
-    inner = `<div class="ap-tile" style="background:${band.bg};color:${band.fg};">${stepShort(L)}</div>` +
-      `<div class="ap-label">${labels[L]}</div>` +
-      (p.explain && explain[L] ? `<div class="ap-explain">${explain[L]}</div>` : '');
-    note = s.apShows;
-  }
-  const meta = showMeta
-    ? `<div class="ap-meta"><div class="k">${s.sampleData}</div><div class="v1">${s.samplePlace}</div>` +
-      `<div class="v2">${sampleTime(true)} JST</div><div class="v2">${s.sampleDepth}</div></div>`
-    : '';
-  const chips = `<div class="ap-chips"><span>${note}</span>` +
-    (willNotify ? `<span>${fmt2(s.apNotify, { vol: volumeWord(currentAlertVolume) })}</span>` : '') + `</div>`;
   const prev = document.getElementById('alertPreview');
-  prev.style.background = bg;
-  prev.style.color = fg;
-  const centered = isAmbient && (rest || hidden);
-  prev.innerHTML = meta + `<div class="ap-body${centered ? ' center' : ''}">${inner}</div>` + chips;
+  prev.style.background = ''; prev.style.color = '';
+  const scale = D_STEPS.map((id) => `<i class="${id === L ? 'on' : (p.hidden.includes(id) ? 'hid' : '')}" style="background:${BANDS[id].bg}"></i>`).join('');
+  const sampleBadge = `<div class="m-clock"><div class="m-sample">${s.sampleData}</div><div class="m-time" style="font-size:3.2cqw;">${sampleTime(true)}</div></div>`;
+  const chip = (txt) => `<span class="m-chip">${txt}</span>`;
+  let html;
+  if (rest || hidden) {
+    const msg = rest ? (p.resting ? s.apRestVisitor : s.apNothing) : s.apNothing;
+    html = sampleBadge + `<div class="m-center">${msg}</div>` +
+      `<div class="m-side" style="top:auto;bottom:9cqw;">${chip(rest ? s.apRest : s.apOff)}</div>`;
+  } else {
+    const explain = p.explain && dt.descs[L] ? `<div class="m-desc">${dt.descs[L]}</div>` : '';
+    html = sampleBadge +
+      `<div class="m-head"><div class="m-icon" style="background:${band.bg}"></div><div class="m-hl">${dt.finalHead(stepShort(L))}</div></div>` +
+      `<div class="m-panel"><div class="m-plabel">${dt.yourStationFinal}</div>` +
+      `<div class="m-row"><div class="m-tile" style="color:${band.bg};border-color:${band.bg}">${stepShort(L)}</div><div class="m-name">${dt.names[L]}</div></div>` +
+      explain + `<div class="m-scale">${scale}</div></div>` +
+      `<div class="m-side">${chip(isAmbient ? s.apShows : s.apFull)}` +
+      (willNotify ? chip(fmt2(s.apNotify, { vol: volumeWord(currentAlertVolume) })) : '') + `</div>`;
+  }
+  prev.innerHTML = `<div class="mini">${html}</div>`;
 
   // 4. Level chips: dim = stays off screen, bell = notifies
   const bell = '<svg class="bell" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>';
@@ -2233,17 +1919,8 @@ function playTestSound() {
 window.playTestSound = playTestSound;
 
 // ===== Display page preview =====
-function renderDisplayPreview() {
-  const lbl = document.getElementById('dpLabel');
-  if (!lbl) return;
-  const s = STRINGS[currentLang];
-  lbl.textContent = s.testMessage;
-  document.getElementById('dpMeta').textContent = `${sampleTime(false)} · ${s.samplePlace}`;
-}
-
 function refreshSettingsPages() {
   renderAlertsPage();
-  renderDisplayPreview();
   if (currentSettingsPage === 'history') renderCalendar();
 }
 
@@ -2257,7 +1934,6 @@ function showSettingsPage(id) {
     if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
   });
   if (id === 'alerts' || id === 'dev') renderAlertsPage();
-  if (id === 'display') renderDisplayPreview();
   if (id === 'history') loadHistory();
   document.getElementById('settingsMain').scrollTop = 0;
 }
@@ -2402,10 +2078,6 @@ window.applyAlertWakeScreenOnly = function () {};
 // from app.py on load) are kept so nothing needs re-wiring later.
 let motionEffectsEnabled = true;
 
-function setMotionEffects(enabled) {
-  motionEffectsEnabled = enabled;
-  if (window.pywebview) window.pywebview.api.set_motion_effects(enabled ? 'on' : 'off');
-}
 
 function applyMotionEffectsOnly(value) {
   motionEffectsEnabled = value === 'on';
@@ -2427,101 +2099,20 @@ const PREF_EN = {
 function prefEn(name) { return PREF_EN[name] || name; }
 // Highest value JMA listed for the user's prefecture during an early warning
 // (computed in jma_sources.parse_eew from JMA's own area list), else null.
-function prefMaxOf(state) {
-  return (state && state.phase === 'eew' && state.pref_name && state.pref_max) ? state.pref_max : null;
-}
 
 // Plain notes under the number while an early warning is on screen: what JMA
 // itself changed, that warnings can be revised, and when no measured value
 // has arrived for this location yet. All facts, no prediction.
-function eewNoteText(state) {
-  if (!state || state.phase !== 'eew') return '';
-  const ja = currentLang === 'ja';
-  const lines = [];
-  const a = state.first_magnitude, b = state.magnitude;
-  if (typeof a === 'number' && typeof b === 'number' && Math.abs(b - a) >= 1.0) {
-    lines.push(ja ? `最初の発表からマグニチュードが修正されました（M${a.toFixed(1)}からM${b.toFixed(1)}へ）。`
-                  : `Magnitude revised since the first report: M${a.toFixed(1)} to M${b.toFixed(1)}.`);
-  }
-  if (state.maturity !== 'final') {
-    lines.push(ja ? '続報で内容が変わる場合があります。' : 'This warning may be updated as more data arrives.');
-  }
-  const t = Date.parse(state.first_seen_at || '');
-  if (!Number.isNaN(t) && (Date.now() - t) >= 5 * 60 * 1000) {
-    lines.push(ja ? 'お住まいの地域の観測震度はまだ届いていません。' : 'No measured values for your location have arrived yet.');
-  }
-  return lines.join('\n');
-}
 
-let detailsOpen = false;
-function refreshDetailsBtn() {
-  const ja = currentLang === 'ja';
-  els.screen.classList.toggle('details-open', detailsOpen);
-  els.detailsBtn.setAttribute('aria-expanded', detailsOpen ? 'true' : 'false');
-  els.detailsBtn.textContent = detailsOpen ? (ja ? '詳細を閉じる' : 'Hide details') : (ja ? '詳細' : 'Details');
-}
-function toggleDetails() { detailsOpen = !detailsOpen; refreshDetailsBtn(); }
-window.toggleDetails = toggleDetails;
 
 function renderIdle() {
-  lastActiveState = null;
-  clearQuietTimers();
-  resetTile();
   applyScreenColors('#000000', '#f5f5f0', 700, 'ease');
-  els.dismissBtn.style.display = 'none';
   els.topRow.style.visibility = 'visible';
-  els.tsunamiBox.style.display = 'none';
-  els.eventSummaryLine.textContent = '';
-  els.jmaMaxLine.textContent = '';
-  els.maturityLine.textContent = '';
-  els.estimateLabel.textContent = '';
-  els.readoutSub.textContent = '';
-  els.readoutNote.textContent = '';
-  els.detailsBtn.style.display = 'none';
-  els.screen.classList.remove('is-active', 'details-open');
-  hideMap();
-  els.code.classList.remove('code-msg');
-  els.mid.style.display = 'none';
   els.idleLine.style.display = 'block';
-  els.rule.style.background = 'currentColor';
   els.idleLine.style.background = '#f5f5f0';
-  els.labelText.textContent = '';
-  els.explainText.textContent = '';
-  els.metaText.textContent = '';
-  els.lastFeltText.textContent = '';
 }
 
-// JMA withdrew the early warning that was on screen (app.py show_cancelled).
-// Says so plainly and calmly for a couple of minutes, then the backend
-// returns the screen to idle. No level, no color flash, no sound.
-function renderCancelled() {
-  renderIdle();
-  const ja = currentLang === 'ja';
-  els.dismissBtn.style.display = 'flex';
-  els.mid.style.display = 'flex';
-  els.idleLine.style.display = 'none';
-  els.code.textContent = '';
-  els.code.classList.remove('code-range', 'code-msg');
-  els.estimateLabel.textContent = ja ? '気象庁が緊急地震速報を取り消しました' : 'JMA cancelled the early warning';
-  els.labelText.textContent = ja ? '先ほどの警報は無効です。最新の情報は気象庁やNHKで確認してください。'
-                                 : 'The earlier warning no longer applies. Check JMA or NHK for current information.';
-}
 
-// Plain "time since the last felt earthquake here" line (steps 1-3
-// only, see renderActive). Reports the gap, nothing more: it never
-// editorializes about whether this one will feel stronger than usual
-// because of it. ISO timestamp comes from the backend's felt log
-// (app.py build_state -> last_felt_at), already excluding today's event.
-function describeLastFelt(iso, ja) {
-  const then = new Date(iso).getTime();
-  if (!iso || Number.isNaN(then)) return '';
-  const minutes = Math.max(0, Math.round((Date.now() - then) / 60000));
-  if (minutes < 60) return ja ? '前回この地域で地震を感じたのは1時間以内です' : 'Last felt here: within the last hour';
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return ja ? `前回この地域で地震を感じたのは約${hours}時間前です` : `Last felt here: about ${hours} hour${hours === 1 ? '' : 's'} ago`;
-  const days = Math.round(hours / 24);
-  return ja ? `前回この地域で地震を感じたのは約${days}日前です` : `Last felt here: about ${days} day${days === 1 ? '' : 's'} ago`;
-}
 
 function jaStep(step) { return String(step).replace('-', '弱').replace('+', '強'); }
 
@@ -2530,183 +2121,7 @@ function jaStep(step) { return String(step).replace('-', '弱').replace('+', '�
 // What to do, stated plainly. JMA's own warning flag (or a forecast of Shindo 5- or more, the
 // level JMA issues warnings for) gets the take-cover instruction; a lower forecast gets a
 // softer line. No app-made forecast is involved.
-function takeCoverText(state) {
-  const ja = currentLang === 'ja';
-  const strong = !!state.is_warning || (state.alert_step && jma_rank(state.alert_step) >= jma_rank('5-'));
-  const arrived = state.area_forecast && state.area_forecast.arrived;
-  if (strong) {
-    return arrived
-      ? (ja ? '強い揺れが到達しています。身の安全を確保してください。' : 'Strong shaking is arriving. Take cover now.')
-      : (ja ? '強い揺れが来ます。身の安全を確保してください。頭を守り、窓や倒れやすい家具から離れてください。'
-            : 'Strong shaking is expected. Take cover now: protect your head and stay away from windows and heavy furniture.');
-  }
-  return ja ? '揺れが予想されます。身の安全を確保できるよう備えてください。' : 'Shaking is expected. Be ready to take cover.';
-}
 
-function renderActive(state) {
-  const preset = PRESETS[currentSensitivity] || PRESETS.normal;
-  if (shouldHideReading(state, preset)) {
-    // This preset keeps this level off screen entirely (see PRESETS).
-    renderIdle();
-    return;
-  }
-  lastActiveState = state;
-  const ja = currentLang === 'ja';
-  const src = state.display_source;
-  const step = state.display_step;
-  const band = BANDS[step] || BANDS["0"];
-
-  clearQuietTimers();
-  els.screen.classList.add('is-active');
-  // A JMA warning issued for the user's own area always gets the full-screen
-  // register, whatever number it shows (presets never hide or dim a warning).
-  const isAmbient = AMBIENT_STEPS.includes(step) && src !== 'area_warning';
-
-  if (isAmbient) {
-    // Screen itself never leaves its constant calm tone for 0-3; only
-    // the number's own card lights. Whether a level shows at all is the
-    // preset's job (shouldHideReading above); once it shows, it stays lit
-    // at its band color. Same safe rise speed as always.
-    applyScreenColors(AMBIENT_SCREEN.bg, AMBIENT_SCREEN.fg, 500, 'ease');
-    els.readout.classList.add('datum-tile');
-    applyTileColors(band.bg, band.fg, SAFE_RISE_MS, 'ease');
-  } else {
-    // Shindo 4+: genuinely alert-worthy, so the full-screen flash is
-    // unchanged and earned here. No card, no containment.
-    resetTile();
-    applyScreenColors(band.bg, band.fg, 700, 'ease');
-  }
-  showPostQuakeBadge(state);
-  renderMap(state);
-  els.dismissBtn.style.display = 'flex';
-  els.topRow.style.visibility = 'visible';
-  els.mid.style.display = 'flex';
-  els.idleLine.style.display = 'none';
-  els.rule.style.background = 'currentColor';
-
-  const magStr = state.magnitude != null ? state.magnitude.toFixed(1) : '?';
-  els.eventSummaryLine.textContent = `M${magStr} — ${hypoName(state.hypocenter) || (ja ? '震源調査中' : 'Epicenter not yet known')}`;
-
-  const max = state.jma_max;
-  if (state.jma_max_kind === 'measured') {
-    els.jmaMaxLine.textContent = ja ? `気象庁発表の最大震度（観測）: ${max ? jaStep(max) : '?'}` : `JMA maximum intensity (measured): ${max ?? '?'}`;
-  } else if (state.jma_max_kind === 'forecast') {
-    const pm = prefMaxOf(state);
-    els.jmaMaxLine.textContent = pm
-      ? (ja ? `${state.pref_name}の予想最大震度: ${jaStep(pm)}` : `${prefEn(state.pref_name)} maximum (forecast): ${pm}`)
-      : (ja ? `気象庁の予想最大震度: ${max ? jaStep(max) : '?'}` : `JMA maximum intensity (forecast): ${max ?? '?'}`);
-  } else {
-    els.jmaMaxLine.textContent = ja ? '最大震度: テスト' : 'Maximum intensity: TEST';
-  }
-
-  const maturityWords = ja ? MATURITY_JA : MATURITY_EN;
-  const maturityText = maturityWords[state.maturity] || '';
-  // Only what helps the reader: no report numbers or report-type labels. A test
-  // keeps its "not a real earthquake" label, and a prefecture forecast keeps the
-  // nationwide maximum for comparison.
-  let matLine = state.maturity === 'test' ? maturityText : '';
-  if (state.jma_max_kind === 'forecast' && prefMaxOf(state) && max) {
-    matLine = ja ? `全国の予想最大震度: ${jaStep(max)}` : `Nationwide maximum (forecast): ${max}`;
-  }
-  els.maturityLine.textContent = matLine;
-
-  // Line above the big number: whose reading this is
-  const station = state.station || '';
-  const km = state.station_km != null ? state.station_km : null;
-  const kmTxt = km != null ? (ja ? `（約${km} km）` : ` (${km} km away)`) : '';
-  const area = state.area || state.home_area || '';
-  const heads = {
-    station:         ja ? `最寄りの観測点 ${station}${kmTxt}` : `Measured at your nearest station, ${station}${kmTxt}`,
-    station_below_1: ja ? `最寄りの観測点 ${station}${kmTxt}` : `Your nearest station, ${station}${kmTxt}`,
-    area:            ja ? `${area}で観測（速報）` : `Measured in your area, ${area} (quick report)`,
-    area_warning:    ja ? `${area}に緊急地震速報（警報）` : `JMA early warning for your area, ${area}`,
-    none:            ja ? '緊急地震速報' : 'JMA early warning',
-    test:            ja ? `テスト表示 — ${station}` : `Test reading — ${station}`,
-  };
-  els.estimateLabel.textContent = heads[src] || '';
-
-  if (state.tsunami_warning) {
-    els.tsunamiBox.style.display = 'inline-block';
-    els.tsunamiBox.textContent = ja ? `津波情報: ${state.tsunami_warning}` : `TSUNAMI: ${state.tsunami_warning}`;
-  } else {
-    els.tsunamiBox.style.display = 'none';
-  }
-
-  // Primary slot shows ONE value. A warning shows JMA's forecast for this area
-  // as a single level (the lower end of JMA's range); the whole range goes in
-  // the small line above, written with "to" (never a bare dash next to a
-  // "5-"/"5+" sign). Measured readings keep the single measured level. With
-  // nothing to show yet, the slot holds a plain waiting message.
-  let bigText = step || '';
-  let isMsg = false;
-  let subText = '';
-  const f0 = state.area_forecast;
-  if (src === 'area_warning' && f0) {
-    if (f0.to && f0.to !== f0.from) {
-      subText = ja ? `この地域の予想震度: ${jaStep(f0.from)}〜${jaStep(f0.to)}`
-                   : `Forecast range for your area: Shindo ${f0.from} to ${f0.to}`;
-    } else if (!f0.to) {
-      subText = ja ? `この地域の予想震度: ${jaStep(f0.from)}以上`
-                   : `Forecast for your area: Shindo ${f0.from} or stronger`;
-    }
-  } else if (src === 'none') {
-    bigText = ja ? '気象庁の観測震度を待っています。通常2〜3分かかります。'
-                 : "Waiting for JMA's measured Shindo for your area. This usually takes 2 to 3 minutes.";
-    isMsg = true;
-    const waitMax = (prefMaxOf(state) || (state.jma_max_kind === 'forecast' ? state.jma_max : null));
-    if (state.jma_max_kind === 'forecast' && waitMax) {
-      const pm = prefMaxOf(state);
-      subText = pm ? (ja ? `${state.pref_name}の予想最大震度は${jaStep(pm)}です` : `Maximum expected Shindo in ${prefEn(state.pref_name)} is ${pm}`)
-                   : (ja ? `予想される最大震度は${jaStep(waitMax)}です` : `Maximum expected Shindo is ${waitMax}`);
-      els.jmaMaxLine.textContent = '';   // same figure, now shown above the message
-    }
-  }
-  els.code.textContent = bigText;
-  els.code.classList.toggle('code-msg', isMsg);
-  els.code.classList.remove('code-range');
-  els.readoutSub.textContent = subText;
-
-  // Line under the big number: what it means
-  let label = (ja ? LABELS_JA[step] : LABELS_EN[step]) || '';
-  if (src === 'station_below_1') {
-    label = ja ? '震度1未満（揺れはほとんどありませんでした）' : 'Below Shindo 1 here (little or no shaking)';
-  } else if (src === 'area_warning' && state.area_forecast) {
-    label = takeCoverText(state);
-  } else if (src === 'none') {
-    // Waiting for this area's value: if JMA's own forecast maximum is strong, say so plainly.
-    const mx = state.jma_max_kind === 'forecast' ? state.jma_max : null;
-    label = (mx && jma_rank(mx) >= jma_rank('5-'))
-      ? (ja ? '日本のどこかで強い揺れが予想されています。身の安全を確保できるよう備えてください。'
-            : 'Strong shaking is forecast in parts of Japan. Be ready to take cover.')
-      : '';
-  }
-  els.labelText.textContent = label;
-  // Plain "what this means" line, only for presets that explain, only for
-  // a measured reading at 1-3 (not a warning, not a below-1 report).
-  const explainMap = ja ? EXPLAIN_JA : EXPLAIN_EN;
-  els.explainText.textContent = (preset.explain && isAmbient && (src === 'station' || src === 'area' || src === 'test'))
-    ? (explainMap[step] || '') : '';
-
-  // Bottom line: distance to the epicenter (plain geometry) and nearby context.
-  // Worded per JMA's guidance to make clear this is a distance to JMA's own
-  // reported epicenter, not an app-computed intensity forecast for this spot.
-  const parts = [];
-  if (state.epicenter_km != null) parts.push(ja ? `発表された震源から約${state.epicenter_km} km` : `~${state.epicenter_km} km from the reported epicenter`);
-  const srcText = state.phase === 'eew' ? (ja ? '気象庁の発表（Wolfx経由）' : 'Reported by JMA (via Wolfx)')
-                : (state.phase === 'measured' ? (ja ? '気象庁の発表（P2P地震情報経由）' : 'Reported by JMA (via P2P地震情報)') : '');
-  if (srcText) parts.push(srcText);
-  els.metaText.textContent = parts.join(' · ');
-  els.readoutNote.textContent = eewNoteText(state);
-  els.detailsBtn.style.display = 'inline-block';
-  refreshDetailsBtn();
-
-  // Neutral "time since last felt" context (see describeLastFelt):
-  // only for steps 1-3, where recency plausibly affects how a reading
-  // lands, and only once there's a prior felt event to compare to.
-  els.lastFeltText.textContent = (['1', '2', '3'].includes(step) && state.last_felt_at && src !== 'test' && !state.following && !state.viewing)
-    ? describeLastFelt(state.last_felt_at, ja)
-    : '';
-}
 
 let citiesViewing = false, citiesData = null, afterData = null, citiesTab = 'cities';
 
@@ -2732,7 +2147,6 @@ function refreshCities(pickTab) {
   document.getElementById('tabCities').textContent = s.citiesTabCities;
   document.getElementById('tabAfter').textContent = s.citiesTabAfter;
   document.getElementById('citiesBack').textContent = s.citiesBack;
-  document.getElementById('citiesSave').textContent = s.citiesSave;
   if (!window.pywebview) { document.getElementById('citiesList').textContent = s.citiesNone; return; }
   Promise.all([
     window.pywebview.api.get_cities(currentLang).catch(() => null),
@@ -2750,7 +2164,6 @@ function renderCitiesTab() {
   document.getElementById('tabCities').classList.toggle('active', citiesTab === 'cities');
   document.getElementById('tabAfter').classList.toggle('active', citiesTab === 'after');
   document.getElementById('citiesBack').style.display = (citiesData && citiesData.viewing && citiesTab === 'cities') ? 'inline-block' : 'none';
-  document.getElementById('citiesSave').textContent = citiesTab === 'cities' ? (ja ? '画像を保存' : 'Save image') : s.citiesSave;
   list.innerHTML = '';
   const rep = document.getElementById('citiesReport');
   rep.innerHTML = ''; rep.style.display = 'none'; list.style.display = '';
@@ -2860,74 +2273,6 @@ function citiesCopyText(lang) {
 }
 
 const IMG_FONT = "'DM Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif";
-function imgBase() {
-  const W = 1200, H = 675, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-  const g = cv.getContext('2d'); g.fillStyle = '#0a0a09'; g.fillRect(0, 0, W, H); return { W, H, cv, g };
-}
-function imgFooter(g, W, H, lang) {
-  g.fillStyle = '#f5f5f0'; g.globalAlpha = 0.65; g.font = `500 21px ${IMG_FONT}`; g.textAlign = 'left';
-  g.fillText(lang === 'ja' ? '数値はすべて気象庁の発表(P2P地震情報経由)  ·  shindoscreener.com' : 'All values relayed from JMA via P2P地震情報  ·  shindoscreener.com', 48, H - 22);
-  g.globalAlpha = 1;
-}
-function drawStepBlock(g, x, y, w, h, step, caption, lang) {
-  const band = chipFor(step) || { bg: '#e8e6dc', fg: '#0e0e0c' };
-  g.fillStyle = band.bg; g.beginPath(); g.roundRect(x, y, w, h, 20); g.fill();
-  g.fillStyle = band.fg; g.textAlign = 'center';
-  g.font = `600 26px ${IMG_FONT}`; g.fillText(caption, x + w / 2, y + 44);
-  const word = stepIn(step, lang);
-  g.font = `800 ${word.length > 1 ? 118 : 140}px ${IMG_FONT}`; g.fillText(word, x + w / 2, y + h - 28);
-  g.textAlign = 'left';
-}
-function drawCitiesImage(lang) {
-  const d = citiesData, ja = lang === 'ja';
-  const { W, H, cv, g } = imgBase();
-  const top = d.max_place ? d.max_place.step : d.jma_max;
-  drawStepBlock(g, 48, 40, 330, 230, top, ja ? '最大震度' : 'MAX SHINDO', lang);
-  g.fillStyle = '#f5f5f0'; g.font = `700 46px ${IMG_FONT}`; g.fillText(`M${d.magnitude}  ${hypoName(d.hypocenter, lang) || ''}`, 412, 98);
-  g.font = `500 28px ${IMG_FONT}`; g.globalAlpha = 0.75; g.fillText(d.time ? `${d.time} JST` : '', 412, 140); g.globalAlpha = 1;
-  if (d.max_place) {
-    g.font = `600 24px ${IMG_FONT}`; g.globalAlpha = 0.65; g.fillText(ja ? '最も強く観測した地点' : 'Strongest reading', 412, 204); g.globalAlpha = 1;
-    g.font = `700 38px ${IMG_FONT}`; g.fillText((ja ? `${d.max_place.pref || ''} ${d.max_place.station}` : (d.max_place.label || `${d.max_place.pref || ''} ${d.max_place.station}`)).trim(), 412, 252, 740);
-  }
-  g.font = `600 26px ${IMG_FONT}`; g.globalAlpha = 0.7; g.fillText(ja ? '震源に近い大都市の震度' : 'Big cities near the epicenter', 48, 322); g.globalAlpha = 1;
-  const list = citiesForPost(d), cols = 3, tw = 352, th = 118, gx = 24, gy = 20;
-  list.forEach((c, i) => {
-    const x = 48 + (i % cols) * (tw + gx), y = 346 + Math.floor(i / cols) * (th + gy);
-    g.fillStyle = '#1b1b19'; g.beginPath(); g.roundRect(x, y, tw, th, 16); g.fill();
-    const bd = c.step ? chipFor(c.step) : null;
-    g.fillStyle = bd ? bd.bg : '#2a2a27'; g.beginPath(); g.roundRect(x + 14, y + 14, 90, th - 28, 12); g.fill();
-    g.fillStyle = bd ? bd.fg : '#f5f5f0'; g.textAlign = 'center';
-    const w = valueWord(c, lang); g.font = `800 ${w.length > 2 ? 24 : 54}px ${IMG_FONT}`; g.fillText(w, x + 59, y + th / 2 + (w.length > 2 ? 9 : 19)); g.textAlign = 'left';
-    g.fillStyle = '#f5f5f0'; g.font = `700 36px ${IMG_FONT}`; g.fillText(nameIn(c, lang), x + 122, y + 58);
-    g.font = `500 20px ${IMG_FONT}`; g.globalAlpha = 0.6; g.fillText(ja ? `震源から${c.distance_km} km` : `${c.distance_km} km from epicenter`, x + 122, y + 90); g.globalAlpha = 1;
-  });
-  imgFooter(g, W, H, lang);
-  return cv.toDataURL('image/png');
-}
-function drawAfterImage(lang) {
-  const d = afterData, ja = lang === 'ja';
-  const { W, H, cv, g } = imgBase();
-  g.fillStyle = '#f5f5f0'; g.font = `800 54px ${IMG_FONT}`; g.fillText(ja ? '余震' : 'AFTERSHOCKS', 48, 84);
-  g.font = `600 28px ${IMG_FONT}`; g.globalAlpha = 0.75;
-  g.fillText(`M${d.main.magnitude} ${hypoName(d.main.hypocenter, lang) || ''}  ·  ${d.main.time} JST  ·  ${ja ? '最大震度' : 'max'} ${stepIn(d.main.max_step || '0', lang)}`, 48, 128); g.globalAlpha = 1;
-  const rows = d.rows.slice(0, 6), rh = 72, y0 = 160;
-  if (!rows.length) { g.font = `600 40px ${IMG_FONT}`; g.fillText(ja ? '報告された余震はまだありません' : 'No aftershocks reported yet', 48, 300); }
-  rows.forEach((r, i) => {
-    const y = y0 + i * (rh + 10);
-    g.fillStyle = '#1b1b19'; g.beginPath(); g.roundRect(48, y, W - 96, rh, 14); g.fill();
-    const bd = chipFor(r.max_step) || { bg: '#2a2a27', fg: '#f5f5f0' };
-    g.fillStyle = bd.bg; g.beginPath(); g.roundRect(60, y + 10, 78, rh - 20, 10); g.fill();
-    g.fillStyle = bd.fg; g.textAlign = 'center'; g.font = `800 ${r.max_step && stepIn(r.max_step, lang).length > 1 ? 30 : 38}px ${IMG_FONT}`;
-    g.fillText(r.max_step ? stepIn(r.max_step, lang) : '-', 99, y + rh / 2 + 13); g.textAlign = 'left';
-    g.fillStyle = '#f5f5f0'; g.font = `500 24px ${IMG_FONT}`; g.globalAlpha = 0.75; g.fillText(r.time.slice(6), 158, y + 44); g.globalAlpha = 1;
-    g.font = `700 28px ${IMG_FONT}`; g.fillText(`M${r.magnitude} ${hypoName(r.hypocenter, lang) || ''}`, 268, y + 33);
-    g.font = `500 21px ${IMG_FONT}`; g.globalAlpha = 0.7;
-    g.fillText(r.cities.length ? r.cities.map((c) => `${nameIn(c, lang)} ${stepIn(c.step, lang)}`).join(ja ? '、' : ' · ') : (ja ? '大都市の発表なし' : 'no big city reported'), 268, y + 60); g.globalAlpha = 1;
-  });
-  imgFooter(g, W, H, lang);
-  return cv.toDataURL('image/png');
-}
-
 const REPORT_TSUNAMI = { None: ['この地震による津波の心配はありません。', 'No tsunami risk (JMA).'],
   NonEffective: ['若干の海面変動の可能性がありますが、被害の心配はありません。', 'Slight sea-level change possible, no damage expected (JMA).'] };
 // The report card: one 1600x900 picture, shown in the Report window and saved as the share image.
@@ -2982,25 +2327,13 @@ function drawReportCanvas(d) {
   g.textAlign = 'right'; g.font = font(700, 30); g.fillText('shindoscreener.com', W - 70, 868); g.textAlign = 'left';
   return cv;
 }
-function citiesSaveImage() {
-  const st = document.getElementById('citiesStatus'); const s = STRINGS[currentLang];
-  const d = citiesTab === 'after' ? afterData : citiesData;
-  if (!d || !d.ok || !window.pywebview) { st.textContent = s.citiesFail; return; }
-  const when = ((citiesTab === 'after' ? d.main.time : d.time) || 'quake').replace(/[^0-9]/g, '');
-  const kind = citiesTab === 'after' ? 'aftershocks' : 'cities';
-  const jobs = citiesTab === 'after'
-    ? ['ja', 'en'].map((lang) => window.pywebview.api.save_share_image(drawAfterImage(lang), `shindo-screener-${kind}-${when}-${lang}`))
-    : [window.pywebview.api.save_share_image(drawReportCanvas(d).toDataURL('image/png'), `shindo-screener-report-${when}`)];
-  Promise.all(jobs)
-    .then((rs) => { st.textContent = rs.every((r) => r && r.ok) ? `${s.citiesSaved} ${rs[0].path.replace(/[^\\/]+$/, '')}` : s.citiesFail; })
-    .catch(() => { st.textContent = s.citiesFail; });
-}
 window.openCities = openCities; window.closeCities = closeCities; window.citiesBack = citiesBack; window.setCitiesTab = setCitiesTab;
-window.citiesCopyText = citiesCopyText; window.citiesSaveImage = citiesSaveImage;
+window.citiesCopyText = citiesCopyText;
 
 function followLabel(following, viewing) {
   const s = STRINGS[currentLang];
-  els.locationLabel.textContent = `${currentHomeName}`;
+  ensureHomeNames(currentHomeName);
+  els.locationLabel.textContent = homeLabel();
   if (following || viewing) {
     const tag = document.createElement('span');
     tag.className = 'follow-tag';
@@ -3013,21 +2346,14 @@ function applyState(state) {
   // Beta "follow the quake": the app may be showing a different place than the saved one.
   if (state.monitoring && state.monitoring !== currentHomeName) {
     currentHomeName = state.monitoring;
-    geo = null; geoKey = null; mapBuilt = false;
   }
   if (state.monitoring) followLabel(!!state.following, !!state.viewing);
   citiesViewing = !!state.viewing;
   els.citiesBtn.textContent = STRINGS[currentLang].citiesBtn;
-  if (state.status === 'active') {
-    renderActive(state);
-  } else if (state.status === 'cancelled') {
-    renderCancelled();
-  } else {
-    renderIdle();
-  }
-  // The Cities link goes with a reading that is actually on screen (a hidden faint one has no Details link either).
-  const showCities = (state.status === 'active' && state.phase === 'measured' && els.detailsBtn.style.display !== 'none') || !!state.series_recent;
-  els.citiesBtn.style.display = (showCities && devOn) ? 'inline-block' : 'none';
+  renderIdle();
+  // The Report button on the quiet clock screen. During an event the dashboard has its own.
+  const showReport = standbyStyle === 'minimal' && dashMode(state) === 'standby' && !!state.series_recent;
+  els.citiesBtn.style.display = (showReport && devOn) ? 'inline-block' : 'none';
   dashSyncFlags(state);
   dashApply(state);
 }
@@ -3097,6 +2423,8 @@ function dBand(step) { return BANDS[step] || BANDS['0']; }
 
 function dashMode(st) {
   if (!st || st.status === 'idle') return 'standby';
+  // The chosen alert profile keeps faint readings off the screen (Settings > Alerts).
+  if (st.status === 'active' && shouldHideReading(st, PRESETS[currentSensitivity] || PRESETS.normal)) return 'standby';
   if (st.status === 'cancelled') return 'cancelled';
   if (st.status !== 'active') return 'standby';
   const src = st.display_source;
@@ -3224,8 +2552,8 @@ function dashRender(allowPlay) {
       const rng = af && af.to && af.to !== af.from ? `${dStepText(af.from)}${currentLang === 'ja' ? '〜' : ' to '}${dStepText(af.to)}${af.or_more ? (currentLang === 'ja' ? '以上' : ' or more') : ''}` : dStepText(step);
       name = t.expected(rng);
     } else {
-      const followName = st.following && !st.viewing ? (currentLang === 'ja' ? currentHomeName : String(currentHomeName).split(',')[0]) : '';
-      plabel = mode === 'prelim' ? t.prelimPanel(st.area || st.home_area || currentHomeName)
+      const followName = st.following && !st.viewing ? (currentLang === 'ja' ? homeLabel() : String(homeLabel()).split(',')[0]) : '';
+      plabel = mode === 'prelim' ? t.prelimPanel(st.area || st.home_area || homeLabel())
         : (followName ? (below1 ? t.followBelow1(followName) : t.followFinal(followName)) : (below1 ? t.yourStationFinal : t.finalPanel));
       name = below1 ? t.below1 : t.names[pstep];
     }
@@ -3276,7 +2604,7 @@ function dashRender(allowPlay) {
   // --- map header ---
   const epi = (mode === 'eew' || mode === 'wait' || mode === 'alert') ? dEpiText(st) : null;
   let h1 = '', h2 = '', h3 = '', h1small = false;
-  if (mode === 'standby' || mode === 'cancelled') { h1 = currentHomeName || ''; h2 = t.watchMap; h1small = true; }
+  if (mode === 'standby' || mode === 'cancelled') { h1 = homeLabel(); h2 = t.watchMap; h1small = true; }
   else if (mode === 'prelim') { h1 = t.epiWait; h1small = true; if (st.magnitude != null) h3 = `M${st.magnitude.toFixed(1)}`; }
   else if (mode === 'final') { h1 = hypoName(st.hypocenter) || ''; h1small = true; h2 = (st.magnitude != null ? `M${st.magnitude.toFixed(1)}` : '') + (st.origin_time ? ` · ${dTimeText(st.origin_time)}` : ''); }
   else { h1 = epi || (st.hypocenter || ''); h2 = `${t.estimate}${st.hypocenter ? ' · ' + hypoName(st.hypocenter) : ''}`; if (st.magnitude != null) h3 = `M${st.magnitude.toFixed(1)}`; }
@@ -3569,12 +2897,12 @@ window.showSetupScreen = showSetupScreen;
 
 function showMainScreen(homeName) {
   currentHomeName = homeName;
-  geo = null; geoKey = null; mapBuilt = false;
   els.setup.style.display = 'none';
   els.screen.style.display = 'flex';
   dashSetupHidden = false;
-  els.locationLabel.textContent = `${homeName}`;
-  els.currentLocValue.textContent = homeName;
+  els.locationLabel.textContent = homeLabel(homeName);
+  ensureHomeNames(homeName);
+  els.currentLocValue.textContent = homeLabel(homeName);
   renderIdle();
   dashRender(false);
 }
@@ -3674,8 +3002,9 @@ async function saveSelected(context) {
     const result = await window.pywebview.api.confirm_location(state.selected.name, state.selected.lat, state.selected.lon);
     if (result.ok) {
       currentHomeName = result.name;
-      els.currentLocValue.textContent = result.name;
-      els.locationLabel.textContent = `${result.name}`;
+      ensureHomeNames(result.name);
+      els.currentLocValue.textContent = homeLabel(result.name);
+      els.locationLabel.textContent = homeLabel(result.name);
       dashLocationChanged(result.name);
       if (isSetup) {
         showMainScreen(result.name);
@@ -3839,7 +3168,6 @@ els.settingsCityInput.addEventListener('keydown', (e) => {
 
 function updateClock() {
   const now = new Date();
-  if (lastActiveState && lastActiveState.phase === 'eew') els.readoutNote.textContent = eewNoteText(lastActiveState);
   if (currentLang === 'ja') {
     els.dateEl.textContent = now.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
   } else {
