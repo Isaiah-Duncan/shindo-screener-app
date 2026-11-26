@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-26T15:31:33Z",
- "count": 511,
+ "updated_at": "2026-11-26T23:59:36Z",
+ "count": 512,
  "events": [
+  {
+   "id": "20261127043332",
+   "time": "2026-11-27T04:33:00+09:00",
+   "location_ja": "父島近海",
+   "lat": 28.4,
+   "lon": 141.2,
+   "depth_km": 30.0,
+   "magnitude": 5.5,
+   "max_shindo": "2",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261127001112",
    "time": "2026-11-27T00:11:00+09:00",
