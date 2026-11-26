@@ -315,7 +315,6 @@ SETTINGS_DEFAULTS = {
     "alert_voice": alert.DEFAULT_ALERT_VOICE,
     "sensitivity": "normal",
     "history_from": None,    # set when the saved place changes: the calendar backfill never reaches before it
-    "nearby_quakes": "on",   # show (and softly chime for) a quake felt at a neighbouring station but not at the user's own
     "standby_style": "minimal",   # "minimal" (the quiet black screen) or "dashboard" (quiet dashboard)
     "dev_features": "off",   # only honored in a dev build, see dev_available()
     "follow_quake": "off",   # beta: switch the monitored place to the one nearest each quake's epicenter
@@ -853,16 +852,6 @@ class Api:
             listener.quiet_hours = value == "on"
         return {"ok": True}
 
-    def set_nearby_quakes(self, value):
-        value = "on" if value == "on" else "off"
-        existing = load_settings()
-        if existing:
-            save_settings(merged_settings(existing, nearby_quakes=value))
-        listener = self._get_listener()
-        if listener is not None:
-            listener.nearby_quakes = value == "on"
-        return {"ok": True}
-
     def set_alert_voice(self, value):
         if value not in alert.VALID_ALERT_VOICE:
             return {"ok": False, "error": f"Not a voice setting: {value}"}
@@ -1059,10 +1048,8 @@ class Listener:
     def __init__(self, window, home, alert_min_step=alert.DEFAULT_ALERT_MIN_STEP,
                  alert_wake_screen=True, alert_volume=alert.DEFAULT_ALERT_VOLUME,
                  sensitivity="normal", quiet_hours=True, alert_voice=alert.DEFAULT_ALERT_VOICE,
-                 follow_quake=False, nearby_quakes=True):
+                 follow_quake=False):
         self.window = window
-        self.nearby_quakes = nearby_quakes
-        self.nearby_chimed = set()   # event keys that already played the "nearby" chime
         self.stations = jma_sources.load_stations(resource_path(STATIONS_JSON_RELATIVE_PATH))
         self._home = None
         self.home_info = {"area": None, "stations": []}
@@ -1415,10 +1402,6 @@ class Listener:
                 lang=(load_settings() or {}).get("language", "en"),
             )
             self.beta_ticked.add(key)
-        elif (state.get("nearby_only") and not is_test and key and key not in self.nearby_chimed
-                and state.get("status") == "active"):
-            self.nearby_chimed.add(key)
-            alert.trigger_nearby(self.window, resource_path, quiet_hours=self.quiet_hours)
         elif (self.follow_quake and not is_test and key and key not in self.beta_ticked
                 and state.get("status") == "active"):
             self.beta_ticked.add(key)
@@ -1682,7 +1665,7 @@ class Listener:
                     # "Nearby earthquakes" is for the saved place only, so go back to it and judge there.
                     self._home, self.home_info, self.base_home = before_follow
                     info = jma_sources.parse_p2p_quake(msg, self.home_info) or info
-                nearby = bool(self.nearby_quakes and not info["felt_near_user"] and info.get("nearby_max")
+                nearby = bool(not info["felt_near_user"] and info.get("nearby_max")
                               and info.get("reading") and info["reading"]["source"] == "station_below_1")
                 if not info["felt_near_user"] and not nearby:
                     note("quiet_not_felt")
@@ -2070,7 +2053,6 @@ def main():
             quiet_hours=settings.get("quiet_hours", alert.DEFAULT_QUIET_HOURS) == "on",
             alert_voice=settings.get("alert_voice", alert.DEFAULT_ALERT_VOICE),
             follow_quake=settings.get("follow_quake", "off") == "on" and dev_enabled(settings),
-            nearby_quakes=settings.get("nearby_quakes", "on") == "on",
         )
         listener_holder["instance"] = listener
         threading.Thread(target=listener.run, daemon=True).start()
@@ -2111,7 +2093,6 @@ def main():
             window.evaluate_js(f"window.applyAlertVolumeOnly({json.dumps(alert_volume)})")
             window.evaluate_js(f"window.applySensitivityOnly({json.dumps(sensitivity)})")
             window.evaluate_js(f"window.applyQuietHoursOnly({json.dumps(quiet_hours)})")
-            window.evaluate_js(f"window.applyNearbyQuakesOnly({json.dumps(settings.get('nearby_quakes', 'on'))})")
             window.evaluate_js(f"window.applyAlertVoiceOnly({json.dumps(alert_voice)})")
             window.evaluate_js(f"window.applyStandbyStyleOnly({json.dumps(settings.get('standby_style', 'minimal'))})")
             window.evaluate_js(f"window.applyDevFeaturesOnly({json.dumps(dev_available())}, {json.dumps(dev_enabled(settings))})")

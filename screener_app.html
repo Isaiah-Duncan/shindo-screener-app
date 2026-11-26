@@ -1055,10 +1055,6 @@
           <div class="seg-group" id="quietGroup"></div>
           <div class="yours-help" data-i18n="quietHelp">Below Shindo 5-, alerts use a soft chime that fades in, with no voice and no screen wake. Strong warnings always sound at full level.</div>
           <div class="yours-sep"></div>
-          <div class="yours-title" data-i18n="nearbyTitle">Nearby earthquakes</div>
-          <div class="seg-group" id="nearbyGroup"></div>
-          <div class="yours-help" data-i18n="nearbyHelp">Shows a quake that a station next to yours felt, even when your own station stayed below Shindo 1. One soft chime, silent in quiet hours. It is not added to your felt history.</div>
-          <div class="yours-sep"></div>
           <div class="yours-title" data-i18n="alertVoice">Spoken message</div>
           <div class="seg-group" id="voiceGroup"></div>
           <div class="yours-help" data-i18n="voiceHelp">A short spoken line after the chime. Warnings only is the default.</div>
@@ -1383,8 +1379,7 @@ const NEW_STRINGS = {
     testSoundHelp: "The only button that plays sound.",
     quietHours: "Quiet hours (22:00 to 07:00)",
     quietHelp: "Below Shindo 5-, alerts use a soft chime that fades in, with no voice and no screen wake. Strong warnings always sound at full level.",
-    quietOn: "On", quietOff: "Off",
-    nearbyTitle: "Nearby earthquakes", nearbyHelp: "Shows a quake that a station next to yours felt, even when your own station stayed below Shindo 1. One soft chime, silent in quiet hours. It is not added to your felt history.",
+    quietOn: "On", quietOff: "Off", 
     alertVoice: "Spoken message",
     voiceHelp: "A short spoken line after the chime. Warnings only is the default. This app does not replace your phone's warning.",
     voiceWarning: "Warnings only", voiceAll: "All alerts", voiceOff: "Off",
@@ -1454,8 +1449,7 @@ legend2: "Shindo 3-4", legend3: "Shindo 5- to 5+", legend4: "Shindo 6-", legend5
     testSoundHelp: "音が鳴るのはこのボタンだけです。",
     quietHours: "静かな時間帯（22:00〜7:00）",
     quietHelp: "震度5弱未満では、音が少しずつ大きくなる小さなチャイムのみで、音声と画面の自動点灯はありません。強い警報は常に通常の音量で鳴ります。",
-    quietOn: "オン", quietOff: "オフ",
-    nearbyTitle: "近くの地震", nearbyHelp: "あなたの観測点が震度1未満でも、隣接する観測点で揺れを観測した地震を表示します。やわらかいチャイムが1回鳴ります(静かな時間帯は無音)。体感の履歴には追加されません。",
+    quietOn: "オン", quietOff: "オフ", 
     alertVoice: "音声メッセージ",
     voiceHelp: "チャイムのあとに短い音声で知らせます。初期設定は「警報のみ」です。このアプリは携帯電話の警報の代わりにはなりません。",
     voiceWarning: "警報のみ", voiceAll: "すべての通知", voiceOff: "オフ",
@@ -1817,9 +1811,6 @@ function renderAlertsPage() {
   document.getElementById('quietGroup').innerHTML = ['on', 'off'].map((v) => (
     `<button class="seg${v === currentQuietHours ? ' active' : ''}" onclick="setQuietHours('${v}')">${s['quiet' + (v === 'on' ? 'On' : 'Off')]}</button>`
   )).join('');
-  document.getElementById('nearbyGroup').innerHTML = ['on', 'off'].map((v) => (
-    `<button class="seg${v === currentNearbyQuakes ? ' active' : ''}" onclick="setNearbyQuakes('${v}')">${s['quiet' + (v === 'on' ? 'On' : 'Off')]}</button>`
-  )).join('');
   document.getElementById('followGroup').innerHTML = ['on', 'off'].map((v) => (
     `<button class="seg${v === currentFollowQuake ? ' active' : ''}" onclick="setFollowQuake('${v}')">${s['follow' + (v === 'on' ? 'On' : 'Off')]}</button>`
   )).join('');
@@ -1888,10 +1879,6 @@ window.applyFollowQuakeOnly = function (v) { currentFollowQuake = v === 'on' ? '
 function setQuietHours(v) { currentQuietHours = v; if (window.pywebview) window.pywebview.api.set_quiet_hours(v); renderAlertsPage(); }
 function setAlertVoice(v) { currentAlertVoice = v; if (window.pywebview) window.pywebview.api.set_alert_voice(v); renderAlertsPage(); }
 window.setQuietHours = setQuietHours; window.setAlertVoice = setAlertVoice;
-let currentNearbyQuakes = 'on';
-function setNearbyQuakes(v) { currentNearbyQuakes = v; if (window.pywebview) window.pywebview.api.set_nearby_quakes(v); renderAlertsPage(); }
-window.setNearbyQuakes = setNearbyQuakes;
-window.applyNearbyQuakesOnly = function (v) { currentNearbyQuakes = v === 'off' ? 'off' : 'on'; renderAlertsPage(); };
 window.applyQuietHoursOnly = function (v) { currentQuietHours = v === 'off' ? 'off' : 'on'; renderAlertsPage(); };
 window.applyAlertVoiceOnly = function (v) { currentAlertVoice = ['warning', 'all', 'off'].includes(v) ? v : 'warning'; renderAlertsPage(); };
 
@@ -2504,7 +2491,7 @@ function dashRender(allowPlay) {
   const active = mode !== 'standby' && mode !== 'cancelled';
   const step = active && st.display_step && st.display_step !== '0' ? st.display_step : null;
   const below1 = active && (st.display_source === 'station_below_1' || st.display_step === '0');
-  // Felt at a neighbouring station, below Shindo 1 at the user's own (Settings > Alerts > Nearby earthquakes).
+  // Felt at a neighbouring station, below Shindo 1 at the user's own .
   const nearby = below1 && st.nearby_only && st.nearby_max ? st.nearby_max : null;
   const af = st && st.area_forecast;
   const topStep = mode === 'alert' ? ((af && (af.to || af.from)) || st.display_step) : null;
