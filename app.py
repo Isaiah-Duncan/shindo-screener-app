@@ -774,12 +774,6 @@ class Api:
             save_settings(merged_settings(existing, text_scale=scale))
         return {"ok": True}
 
-    def set_motion_effects(self, value):
-        existing = load_settings()
-        if existing:
-            save_settings(merged_settings(existing, motion_effects=value))
-        return {"ok": True}
-
     def set_alert_min_step(self, step):
         if step not in alert.SELECTABLE_ALERT_STEPS:
             return {"ok": False, "error": f"Not a selectable alert threshold: {step}"}
@@ -821,15 +815,6 @@ class Api:
         for the frontend to list and export. Entries older than
         FELT_LOG_RETENTION_DAYS are already dropped by load_felt_log."""
         return {"ok": True, "entries": load_felt_log()}
-
-    def set_alert_wake_screen(self, value):
-        existing = load_settings()
-        if existing:
-            save_settings(merged_settings(existing, alert_wake_screen=value))
-        listener = self._get_listener()
-        if listener is not None:
-            listener.alert_wake_screen = value == "on"
-        return {"ok": True}
 
     def set_alert_volume(self, value):
         if value not in alert.ALERT_SOUND_FILES:
@@ -942,25 +927,6 @@ class Api:
         if listener is not None:
             listener.view_back()
         return {"ok": True}
-
-    def save_share_image(self, data_url, stem="shindo-screener"):
-        """Saves the PNG the Cities panel drew to Pictures/Shindo Screener and returns its path."""
-        import base64
-        if not dev_enabled():
-            return {"ok": False, "error": "Developer features are off."}
-        try:
-            head, _, b64 = (data_url or "").partition(",")
-            if "image/png" not in head or not b64:
-                return {"ok": False, "error": "Not a PNG image."}
-            folder = os.path.join(os.path.expanduser("~"), "Pictures", "Shindo Screener")
-            os.makedirs(folder, exist_ok=True)
-            safe = "".join(c for c in str(stem) if c.isalnum() or c in "-_")[:60] or "shindo-screener"
-            path = os.path.join(folder, safe + ".png")
-            with open(path, "wb") as f:
-                f.write(base64.b64decode(b64))
-            return {"ok": True, "path": path}
-        except Exception as exc:
-            return {"ok": False, "error": str(exc)}
 
     def preview_alert_sound(self, volume):
         """Plays the chosen volume preset once, sound only, so a person
@@ -2079,7 +2045,6 @@ def main():
             text_scale = settings.get("text_scale", "normal")
             motion = settings.get("motion_effects", "on")
             alert_min_step = alert.normalize_alert_min_step(settings.get("alert_min_step", alert.DEFAULT_ALERT_MIN_STEP))
-            alert_wake_screen = settings.get("alert_wake_screen", "on")
             alert_volume = settings.get("alert_volume", alert.DEFAULT_ALERT_VOLUME)
             sensitivity = settings.get("sensitivity", "normal")
             quiet_hours = settings.get("quiet_hours", alert.DEFAULT_QUIET_HOURS)
@@ -2089,7 +2054,6 @@ def main():
             window.evaluate_js(f"window.applyTextScaleOnly({json.dumps(text_scale)})")
             window.evaluate_js(f"window.applyMotionEffectsOnly({json.dumps(motion)})")
             window.evaluate_js(f"window.applyAlertMinStepOnly({json.dumps(alert_min_step)})")
-            window.evaluate_js(f"window.applyAlertWakeScreenOnly({json.dumps(alert_wake_screen)})")
             window.evaluate_js(f"window.applyAlertVolumeOnly({json.dumps(alert_volume)})")
             window.evaluate_js(f"window.applySensitivityOnly({json.dumps(sensitivity)})")
             window.evaluate_js(f"window.applyQuietHoursOnly({json.dumps(quiet_hours)})")

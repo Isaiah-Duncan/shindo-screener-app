@@ -193,19 +193,6 @@ def trigger_beta(window, resource_path_fn, wake_screen=DEFAULT_ALERT_WAKE_SCREEN
     threading.Thread(target=_run, args=(window, resource_path_fn, p, "en"), daemon=True).start()
 
 
-def trigger_nearby(window, resource_path_fn, quiet_hours=True, hour=None):
-    """"Nearby earthquakes": JMA measured shaking at a station next to the user's, but not at the
-    user's own. One soft chime, no voice, no screen wake, and nothing at all in quiet hours."""
-    if not IS_WINDOWS:
-        return
-    if hour is None:
-        hour = time.localtime().tm_hour
-    if quiet_hours and in_quiet_hours(hour):
-        return
-    p = {"tier": "nearby", "sound": "soft", "voice_key": None, "voice_first": False, "wake": False}
-    threading.Thread(target=_run, args=(window, resource_path_fn, p, "en"), daemon=True).start()
-
-
 def _run(window, resource_path_fn, p, lang):
     if p["wake"]:
         _wake_display()
