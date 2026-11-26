@@ -1425,7 +1425,7 @@ function fmt(template, vars) {
   return String(template).replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] != null ? vars[k] : m));
 }
 
-const APP_VERSION = "0.5.0";
+const APP_VERSION = "0.6.0";
 let updateLatest = null;   // newest released version when it is newer than this one, else null
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
