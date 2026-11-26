@@ -159,9 +159,11 @@ def text_ja(d):
     def build(rows):
         lines = [f"【地震情報】{o.month}月{o.day}日 {o.hour}時{o.minute:02d}分ごろ",
                  f"震源: {d['place_ja']}{mag} {depth}".rstrip(),
-                 f"最大震度{JA_STEP.get(d['max_step'], d['max_step'])}" + (f"({'、'.join(d['strongest_ja'][:2])})" if d["strongest_ja"] else "")]
+                 f"最大震度{JA_STEP.get(d['max_step'], d['max_step'])}"]
+        if d["strongest_ja"]:
+            lines.append("最大震度の観測点: " + "、".join(d["strongest_ja"][:2]))
         if rows:
-            lines.append("主な都市: " + " / ".join(f"{r['ja']} {JA_STEP.get(r['step'], r['step'])}" for r in rows))
+            lines.append("近くの大都市の最寄り観測点の震度: " + " / ".join(f"{r['ja']} {JA_STEP.get(r['step'], r['step'])}" for r in rows))
         if tsu:
             lines.append(tsu)
         lines.append("気象庁発表(P2P地震情報経由) #地震")
@@ -181,7 +183,7 @@ def text_en(d):
     def build(rows):
         lines = [f"Earthquake in Japan: {when}", f"{place}{mag}{depth}", f"Max Shindo {d['max_step']} (JMA)"]
         if rows:
-            lines.append("Cities: " + " / ".join(f"{r['en']} {r['step']}" for r in rows))
+            lines.append("Big cities, nearest station: " + " / ".join(f"{r['en']} {r['step']}" for r in rows))
         if tsu:
             lines.append(tsu)
         lines.append("Source: JMA via P2P地震情報. Not an official alert. #earthquake")
@@ -242,7 +244,8 @@ def render_image(d, path):
             g.text((110, 672 + i * 36), line, font=_font(size, False), fill=dim)
     # right: cities
     g.rounded_rectangle((800, 130, 1530, 770), radius=28, fill="#151515")
-    g.text((840, 165), "JMA READING AT NEARBY CITIES  周辺の主な都市", font=_font(26), fill=dim)
+    g.text((840, 146), "NEAREST STATION TO NEARBY BIG CITIES", font=_font(26), fill=dim)
+    g.text((840, 182), "近くの大都市の最寄り観測点", font=_font(24), fill=dim)
     if d["cities"]:
         y = 225
         for r in d["cities"]:
@@ -254,8 +257,8 @@ def render_image(d, path):
             g.text((1490, y + 16), f"{r['km']} km", font=_font(28, False), fill=dim, anchor="ra")
             y += 88
     else:
-        g.text((840, 235), "No Shindo 1 or more at a major city", font=_font(32, False), fill=fg)
-        g.text((840, 285), "主な都市で震度1以上の観測なし", font=_font(28, False), fill=dim)
+        g.text((840, 235), "No Shindo 1 or more at the nearest stations", font=_font(32, False), fill=fg)
+        g.text((840, 285), "近くの大都市の最寄り観測点で震度1以上の観測なし", font=_font(28, False), fill=dim)
         if d["strongest_ja"]:
             g.text((840, 370), "Strongest reading  最大震度の観測点", font=_font(26), fill=dim)
             for i, n in enumerate(d["strongest_ja"]):
