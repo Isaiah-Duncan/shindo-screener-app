@@ -2765,9 +2765,14 @@ function devOpenCities(tab) { openCities(); if (tab) setCitiesTab(tab); }
 window.devPreview = devPreview; window.devEndPreview = devEndPreview; window.devOpenCities = devOpenCities;
 
 // A new saved place: forget the old place's map data and coordinates, then redraw.
-function dashLocationChanged(name) {
+function dashLocationChanged(name, lat, lon) {
   dMapHomeKey = null; dMapLL = null; dMapHome = null; dMapTowns = null; dMapTownsKey = null; dMapReqKey = null; dPathCache.clear(); dPathKey = null;
-  if (dashState) dashState = Object.assign({}, dashState, { home_lat: null, home_lon: null, monitoring: name });
+  devHome = null;   // the Developer page's sample quakes must also forget the old place
+  // The backend replays a recent quake for the new place and pushes it before this runs. Keep that
+  // state when it already carries the new place's coordinates; only blank out a state for the old place.
+  const already = dashState && lat != null && dashState.home_lat != null &&
+    Math.abs(dashState.home_lat - lat) < 1e-3 && Math.abs(dashState.home_lon - lon) < 1e-3;
+  if (dashState && !already) dashState = Object.assign({}, dashState, { home_lat: null, home_lon: null, monitoring: name });
   dashRender(false);
 }
 window.dashLocationChanged = dashLocationChanged;
@@ -2892,7 +2897,7 @@ async function saveSelected(context) {
       ensureHomeNames(result.name);
       els.currentLocValue.textContent = homeLabel(result.name);
       els.locationLabel.textContent = homeLabel(result.name);
-      dashLocationChanged(result.name);
+      dashLocationChanged(result.name, state.selected.lat, state.selected.lon);
       if (isSetup) {
         showMainScreen(result.name);
       } else {
