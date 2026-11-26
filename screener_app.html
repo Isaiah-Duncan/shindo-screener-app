@@ -744,6 +744,15 @@
   .seg-group button, .seg { border-radius: 10px; }
   .eyebrow { font-weight: 800; }
   .setup .search-wrap { width: 420px; max-width: 80vw; }
+  .settings-side .update-footer { display: none; margin: auto 8px 0; padding: 9px 12px; font-family: var(--f-body); font-size: calc(13px * var(--text-scale)); font-weight: 800; line-height: 1.2; text-align: center; color: #111; background: #f2c230; border: 0; border-radius: 10px; cursor: pointer; }
+  .settings-side .update-footer:hover { background: #f7d058; }
+  .settings-side .update-footer:focus-visible { outline: 2px solid #f5f5f0; outline-offset: 2px; }
+  .settings-side .update-footer.show + .version-footer { margin-top: 0; padding-top: 10px; }
+  .settings-side .update-footer.show { display: block; }
+  .update-card { display: none; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding: 14px 18px; background: rgba(242, 194, 48, 0.1); border: 1px solid rgba(242, 194, 48, 0.4); }
+  .update-card.show { display: flex; }
+  .update-card .u-text { font-size: calc(15px * var(--text-scale)); font-weight: 700; }
+  @media (max-width: 760px) { .settings-side .update-footer.show { display: none; } }
 </style>
 </head>
 <body>
@@ -879,6 +888,7 @@
     <button class="nav-row" data-page="history" onclick="showSettingsPage('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span data-i18n="groupHistory">Recent Earthquakes</span></button>
     <button class="nav-row" data-page="support" onclick="showSettingsPage('support')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 1 1 3.8 2.6c-.8.3-1 1-1 1.7v.3"/></svg><span data-i18n="groupSupport">Support</span></button>
     <button class="nav-row" data-page="dev" style="display:none" onclick="showSettingsPage('dev')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7 3 12l5 5M16 7l5 5-5 5M14 4l-4 16"/></svg><span>Developer</span></button>
+    <button type="button" class="update-footer" id="updateFooter" onclick="openReleases()"></button>
     <div class="version-footer" id="versionFooter">Shindo Screener: Beta</div>
   </nav>
 
@@ -910,7 +920,7 @@
     <!-- Display -->
     <section class="settings-page" id="page-display">
       <h2 data-i18n="groupDisplay">Display</h2>
-      <p class="page-sub" data-i18n="displaySub">Language, clock and text size. The preview at the bottom shows your choices together.</p>
+      <p class="page-sub" data-i18n="displaySub">Language, clock, text size and standby screen.</p>
       <div class="card">
         <div class="row-card">
           <div><div class="row-title" data-i18n="language">Language</div><div class="row-desc" data-i18n="languageDesc">Everything in the app, including alerts.</div></div>
@@ -939,6 +949,13 @@
           <div class="seg-group format-switch">
             <button id="standbyMinBtn" onclick="setStandbyStyle('minimal')" data-i18n="standbyMin">Minimal</button>
             <button id="standbyDashBtn" onclick="setStandbyStyle('dashboard')" data-i18n="standbyDash">Dashboard</button>
+          </div>
+        </div>
+        <div class="row-card" id="startupRow" style="display:none;">
+          <div><div class="row-title" data-i18n="startupTitle">Start with Windows</div><div class="row-desc" data-i18n="startupDesc">Opens the app when you sign in to Windows, so the screen is ready after a restart.</div></div>
+          <div class="seg-group format-switch">
+            <button id="startupOnBtn" onclick="setStartup(true)" data-i18n="quietOn">On</button>
+            <button id="startupOffBtn" onclick="setStartup(false)" data-i18n="quietOff">Off</button>
           </div>
         </div>
       </div>
@@ -1036,10 +1053,15 @@
     <section class="settings-page" id="page-support">
       <h2 data-i18n="groupSupport">Support</h2>
       <p class="page-sub" data-i18n="supportSub">Where the readings come from, and how to tell us when something is wrong.</p>
+      <div class="card update-card" id="updateCard">
+        <div class="u-text" id="updateCardText"></div>
+        <button class="primary" id="updateCardBtn" onclick="openReleases()"></button>
+      </div>
       <div class="card info-card">
         <div class="info-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8v.01"/></svg><span data-i18n="aboutData">About the data</span></div>
         <div class="info-text" data-i18n="dataSourceShort">Every reading is the Japan Meteorological Agency's own, relayed through third-party services (Wolfx, P2P地震情報).</div>
         <div class="info-text" data-i18n="mapCredit">Map: 「国土数値情報（行政区域データ）」（国土交通省）を加工して作成</div>
+        <div class="info-text" data-i18n="updateCheckNote">On launch the app asks GitHub once whether a newer version exists. No personal data is sent, and nothing is downloaded or installed for you.</div>
         <div class="info-warn" data-i18n="dataSourceWarn">Delivery may be delayed or incomplete, and a report can stop arriving partway through. For the most current information, also check the JMA website, TV or radio.</div>
       </div>
       <div class="row-title" id="bugReportLabel" data-i18n="bugReportLabel">Report a bug</div>
@@ -1276,7 +1298,10 @@ const NEW_STRINGS = {
     testSoundHelp: "The only button that plays sound.",
     quietHours: "Quiet hours (22:00 to 07:00)",
     quietHelp: "Below Shindo 5-, alerts use a soft chime that fades in, with no voice and no screen wake. Strong warnings always sound at full level.",
-    quietOn: "On", quietOff: "Off", 
+    quietOn: "On", quietOff: "Off",
+    startupTitle: "Start with Windows", startupDesc: "Opens the app when you sign in to Windows, so the screen is ready after a restart.",
+    updateAvail: "A newer version is available: {v}", updateBtn: "Open download page", updateFoot: "Update available: {v}",
+    updateCheckNote: "On launch the app asks GitHub once whether a newer version exists. No personal data is sent, and nothing is downloaded or installed for you.", 
     alertVoice: "Spoken message",
     voiceHelp: "A short spoken line after the chime. Warnings only is the default. This app does not replace your phone's warning.",
     voiceWarning: "Warnings only", voiceAll: "All alerts", voiceOff: "Off",
@@ -1346,7 +1371,10 @@ legend2: "Shindo 3-4", legend3: "Shindo 5- to 5+", legend4: "Shindo 6-", legend5
     testSoundHelp: "音が鳴るのはこのボタンだけです。",
     quietHours: "静かな時間帯（22:00〜7:00）",
     quietHelp: "震度5弱未満では、音が少しずつ大きくなる小さなチャイムのみで、音声と画面の自動点灯はありません。強い警報は常に通常の音量で鳴ります。",
-    quietOn: "オン", quietOff: "オフ", 
+    quietOn: "オン", quietOff: "オフ",
+    startupTitle: "Windows起動時に開始", startupDesc: "Windowsにサインインしたときにアプリを開き、再起動後もすぐに画面を表示します。",
+    updateAvail: "新しいバージョンがあります: {v}", updateBtn: "ダウンロードページを開く", updateFoot: "更新あり: {v}",
+    updateCheckNote: "起動時にGitHubへ新しいバージョンがあるかを1回だけ確認します。個人情報は送信せず、自動でダウンロードやインストールは行いません。", 
     alertVoice: "音声メッセージ",
     voiceHelp: "チャイムのあとに短い音声で知らせます。初期設定は「警報のみ」です。このアプリは携帯電話の警報の代わりにはなりません。",
     voiceWarning: "警報のみ", voiceAll: "すべての通知", voiceOff: "オフ",
@@ -1398,6 +1426,7 @@ function fmt(template, vars) {
 }
 
 const APP_VERSION = "0.5.0";
+let updateLatest = null;   // newest released version when it is newer than this one, else null
 const BUG_REPORT_EMAIL = "duncane.isaiah@gmail.com";
 // Replace with the deployed Google Apps Script Web App URL (see
 // BUG_REPORT_SETUP.md). Until it's a real https:// URL, "Submit report"
@@ -1475,6 +1504,7 @@ function applyLanguage() {
   els.cityInput.placeholder = s.inputPlaceholder;
   els.setupSaveBtn.textContent = s.saveLabel;
   els.versionFooter.textContent = `${s.appTitle}: ${s.betaLabel} ${APP_VERSION}`;
+  if (typeof refreshUpdateUI === 'function') refreshUpdateUI();
   els.bugReportHint.textContent = s.bugReportHint;
   els.bugReportSubmitBtn.textContent = s.bugReportSubmit;
   els.bugReportFallbackHint.textContent = s.bugReportFallbackHint;
@@ -3056,8 +3086,44 @@ let bridgeReady = false;
 els.cityInput.disabled = true;
 els.settingsCityInput.disabled = true;
 
+function refreshUpdateUI() {
+  const s = STRINGS[currentLang];
+  const on = !!updateLatest;
+  document.getElementById('updateCard').classList.toggle('show', on);
+  const f = document.getElementById('updateFooter');
+  f.classList.toggle('show', on);
+  if (on) {
+    document.getElementById('updateCardText').textContent = fmt(s.updateAvail, { v: updateLatest });
+    document.getElementById('updateCardBtn').textContent = s.updateBtn;
+    f.textContent = fmt(s.updateFoot, { v: updateLatest });
+  }
+}
+function openReleases() { if (window.pywebview) window.pywebview.api.open_releases_page(); }
+window.openReleases = openReleases;
+function checkForUpdate() {
+  if (!(window.pywebview && window.pywebview.api && window.pywebview.api.check_for_update)) return;
+  window.pywebview.api.check_for_update(APP_VERSION).then((r) => {
+    if (r && r.ok && r.newer) { updateLatest = r.latest; refreshUpdateUI(); }
+  }).catch(() => {});
+}
+function refreshStartup() {
+  if (!(window.pywebview && window.pywebview.api && window.pywebview.api.get_startup)) return;
+  window.pywebview.api.get_startup().then((r) => {
+    if (!r || !r.supported) return;
+    document.getElementById('startupRow').style.display = '';
+    document.getElementById('startupOnBtn').classList.toggle('active', !!r.enabled);
+    document.getElementById('startupOffBtn').classList.toggle('active', !r.enabled);
+  }).catch(() => {});
+}
+function setStartup(v) {
+  if (window.pywebview) window.pywebview.api.set_startup(!!v).then(refreshStartup).catch(refreshStartup);
+}
+window.setStartup = setStartup;
+
 function onBridgeReady() {
   bridgeReady = true;
+  refreshStartup();
+  checkForUpdate();
   els.cityInput.disabled = false;
   els.settingsCityInput.disabled = false;
 }

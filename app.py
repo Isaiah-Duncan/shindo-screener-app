@@ -24,6 +24,7 @@ correctly even when PyInstaller unpacks to a temp directory at runtime.
 import gzip
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -57,6 +58,10 @@ QUIET_IDLE_MINUTES = 1        # Shindo 0-2 readings (see QUIET_STEPS) clear afte
                                # 10-minute bucket below: it's the least significant reading the
                                # app shows, so it shouldn't sit on screen the longest.
 QUIET_STEPS = {"0", "1", "2"}
+RELEASES_API_URL = "https://api.github.com/repos/Isaiah-Duncan/shindo-screener-app/releases/latest"
+RELEASES_PAGE_URL = "https://github.com/Isaiah-Duncan/shindo-screener-app/releases"
+STARTUP_REG_PATH = r"Software\Microsoft\Windows\CurrentVersion\Run"
+STARTUP_REG_NAME = "ShindoScreener"
 NEARBY_IDLE_MINUTES = 3       # a "felt nearby, not at your station" card stays this long
 # Personalization for the quiet tier (Settings > Alerts > "Sensitivity").
 # Replaces the old binary "Don't light up for" opt-out with a single
@@ -319,6 +324,29 @@ SETTINGS_DEFAULTS = {
     "dev_features": "off",   # only honored in a dev build, see dev_available()
     "follow_quake": "off",   # beta: switch the monitored place to the one nearest each quake's epicenter
 }
+
+
+def _version_tuple(text):
+    """'v0.5.1' or '0.5.1-beta' -> (0, 5, 1). None when there is no x.y.z in the text."""
+    m = re.search(r"(\d+)\.(\d+)\.(\d+)", str(text or ""))
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
+def _startup_supported():
+    """Start with Windows only makes sense for the installed .exe on Windows."""
+    return sys.platform == "win32" and bool(getattr(sys, "frozen", False))
+
+
+def _startup_enabled():
+    if not _startup_supported():
+        return False
+    import winreg
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, STARTUP_REG_PATH) as key:
+            value, _ = winreg.QueryValueEx(key, STARTUP_REG_NAME)
+        return os.path.normcase(sys.executable) in os.path.normcase(str(value))
+    except OSError:
+        return False
 
 
 def merged_settings(existing, **changes):
@@ -927,6 +955,54 @@ class Api:
         if listener is not None:
             listener.view_back()
         return {"ok": True}
+
+    def check_for_update(self, current):
+        """One small request to GitHub's latest-release endpoint (no account, no personal data
+        sent beyond the app name). Returns {"ok": True, "newer": bool, "latest": "x.y.z"}.
+        Any failure, including "no release published yet", is {"ok": False}: the app just
+        stays quiet."""
+        try:
+            req = urllib.request.Request(RELEASES_API_URL, headers={
+                "User-Agent": "ShindoScreener", "Accept": "application/vnd.github+json"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            latest, mine = _version_tuple(data.get("tag_name")), _version_tuple(current)
+            if not latest or not mine or data.get("draft") or data.get("prerelease"):
+                return {"ok": False}
+            return {"ok": True, "newer": latest > mine, "latest": ".".join(str(n) for n in latest)}
+        except Exception:
+            return {"ok": False}
+
+    def open_releases_page(self):
+        """Opens the project's releases page in the default browser (a fixed address, never one
+        passed in from the page)."""
+        try:
+            import webbrowser
+            webbrowser.open(RELEASES_PAGE_URL)
+            return {"ok": True}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def get_startup(self):
+        return {"ok": True, "supported": _startup_supported(), "enabled": _startup_enabled()}
+
+    def set_startup(self, enabled):
+        """Adds or removes this app's per-user "start with Windows" entry (no admin rights)."""
+        if not _startup_supported():
+            return {"ok": False, "supported": False, "enabled": False}
+        import winreg
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, STARTUP_REG_PATH, 0, winreg.KEY_SET_VALUE) as key:
+                if enabled:
+                    winreg.SetValueEx(key, STARTUP_REG_NAME, 0, winreg.REG_SZ, '"%s"' % sys.executable)
+                else:
+                    try:
+                        winreg.DeleteValue(key, STARTUP_REG_NAME)
+                    except FileNotFoundError:
+                        pass
+            return {"ok": True, "supported": True, "enabled": _startup_enabled()}
+        except OSError as exc:
+            return {"ok": False, "supported": True, "enabled": _startup_enabled(), "error": str(exc)}
 
     def preview_alert_sound(self, volume):
         """Plays the chosen volume preset once, sound only, so a person
