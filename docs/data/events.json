@@ -1,8 +1,20 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-26T23:59:36Z",
- "count": 512,
+ "updated_at": "2026-11-27T07:25:56Z",
+ "count": 513,
  "events": [
+  {
+   "id": "20261127141004",
+   "time": "2026-11-27T14:09:00+09:00",
+   "location_ja": "福島県沖",
+   "lat": 37.4,
+   "lon": 141.9,
+   "depth_km": 30.0,
+   "magnitude": 4.3,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261127043332",
    "time": "2026-11-27T04:33:00+09:00",
