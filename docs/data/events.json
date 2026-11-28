@@ -1,8 +1,44 @@
 {
  "source": "JMA earthquake information, via Wolfx (https://api.wolfx.jp/jma_eqlist.json)",
- "updated_at": "2026-11-28T00:40:53Z",
- "count": 517,
+ "updated_at": "2026-11-28T08:26:49Z",
+ "count": 520,
  "events": [
+  {
+   "id": "20261128161419",
+   "time": "2026-11-28T16:14:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.2,
+   "lon": 130.4,
+   "depth_km": 0.0,
+   "magnitude": 2.5,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261128115713",
+   "time": "2026-11-28T11:57:00+09:00",
+   "location_ja": "熊本県天草・芦北地方",
+   "lat": 32.3,
+   "lon": 130.4,
+   "depth_km": 10.0,
+   "magnitude": 2.4,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
+  {
+   "id": "20261128095450",
+   "time": "2026-11-28T09:54:00+09:00",
+   "location_ja": "高知県西部",
+   "lat": 33.3,
+   "lon": 132.9,
+   "depth_km": 30.0,
+   "magnitude": 3.2,
+   "max_shindo": "1",
+   "report_type": "震源・震度情報",
+   "info_ja": "この地震による津波の心配はありません。"
+  },
   {
    "id": "20261128043207",
    "time": "2026-11-28T04:31:00+09:00",
